@@ -1,0 +1,120 @@
+plugins {
+    id 'java-library'; id 'maven-publish'; id 'signing'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+        compileJava.options.compilerArgs.addAll(['--release', '8'])
+    }
+}
+
+dependencies {
+    compileOnly depends.guava
+    implementation depends.dexlib2
+    implementation depends.findbugs
+}
+
+task unitTest(type: Test) {
+    dependsOn test
+}
+
+def validDev = 'NeonOrbit'
+def gpgKeyName, gpgPassword
+def mavenUsername, mavenPassword
+
+if (isLocalRelease || isMavenRelease) {
+    java {
+        withJavadocJar()
+        withSourcesJar()
+    }
+    signing {
+        useGpgCmd()
+        sign publishing.publications
+    }
+    if (!isMavenRelease) {
+        gpgKeyName = ext.get('signing.keyId')
+        gpgPassword = ext.get('signing.password')
+    } else {
+        (gpgKeyName, gpgPassword) = gpgKeyCredential()
+        (mavenUsername, mavenPassword) = mavenCredential()
+        validateDeveloperIdentity(gpgKeyName, mavenUsername)
+    }
+    ext {
+        set("signing.gnupg.keyName", gpgKeyName)
+        set("signing.gnupg.passphrase", gpgPassword)
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+
+            groupId = projectGroup
+            version = projectVersion
+            artifactId = mavenArtifact
+
+            pom {
+                name = projectName
+                description = 'A dex analyzing tool for finding java items from obfuscated code'
+                url = 'https://neonorbit.github.io/dexplore'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'NeonOrbit'
+                        name = 'NeonOrbit'
+                        email = 'acc.neonic@gmail.com'
+                        timezone = '0'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/NeonOrbit/Dexplore.git'
+                    developerConnection = 'scm:git:git@github.com:NeonOrbit/Dexplore.git'
+                    url = 'https://github.com/NeonOrbit/Dexplore'
+                }
+            }
+
+            repositories {
+                maven {
+                    if (!isMavenRelease) {
+                        url = mavenLocalRepo
+                        return
+                    }
+                    credentials {
+                        username mavenUsername
+                        password mavenPassword
+                    }
+                    if (version.endsWith('-SNAPSHOT')) {
+                        url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+                    } else {
+                        url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+                    }
+                }
+            }
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+}
+
+def validateDeveloperIdentity(gpg, maven) {
+    if (gpg != this.validDev) {
+        throw new IllegalArgumentException('Invalid gpg key')
+    } else if (maven != this.validDev) {
+        throw new IllegalArgumentException('Invalid maven id')
+    }
+}

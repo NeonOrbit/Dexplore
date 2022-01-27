@@ -1,0 +1,43 @@
+import org.codehaus.groovy.runtime.MethodClosure
+import javax.swing.*
+import java.awt.*
+
+ext {
+  userCredential = this.&userCredential as MethodClosure
+  mavenCredential = this.&mavenCredential as MethodClosure
+  gpgKeyCredential = this.&gpgKeyCredential as MethodClosure
+}
+
+static def mavenCredential() {
+  return userCredential("Maven")
+}
+
+static def gpgKeyCredential() {
+  return userCredential("GPG", "GpgKey")
+}
+
+static def userCredential(String name = "Login", String idLabel = null, String passLabel = null) {
+  String title = "$name Credential" as String
+  JPanel panel = new JPanel(new BorderLayout(10, 10))
+
+  JPanel label = new JPanel(new GridLayout(0, 1, 2, 2))
+  label.add(new JLabel(idLabel ? idLabel : "Username:", SwingConstants.LEFT))
+  label.add(new JLabel(passLabel ? passLabel : "Password:", SwingConstants.LEFT))
+  panel.add(label, BorderLayout.WEST)
+
+  JPanel input = new JPanel(new GridLayout(0, 1, 2, 2))
+  JTextField textField = new JTextField()
+  input.add(textField)
+  JPasswordField passField = new JPasswordField()
+  input.add(passField)
+  panel.add(input, BorderLayout.CENTER)
+
+  Frame frame = JOptionPane.getRootFrame()
+  try { frame.setAlwaysOnTop(true) } catch(ignored) {}
+  JOptionPane.showMessageDialog(frame, panel, title, JOptionPane.PLAIN_MESSAGE)
+
+  String id = textField.getText()
+  String pass = passField.getPassword()
+  if (!id.isBlank() && !pass.isBlank()) return [id,pass]
+  throw new GradleException(("$name credential is missing") as String)
+}

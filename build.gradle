@@ -1,0 +1,78 @@
+checkJDKCompatibility()
+
+apply from: "gradle/functions.gradle"
+
+allprojects {
+    group = 'io.github.neonorbit'
+    version = '1.0.0-SNAPSHOT'
+}
+
+task produceJar() {
+    dependsOn ':dexplore-cli:build'
+}
+
+task localRelease() {
+    dependsOn ':dexplore-lib:publish'
+}
+
+task mavenRelease() {
+    dependsOn ':dexplore-lib:clean'
+    dependsOn ':dexplore-lib:publish'
+}
+
+ext {
+    projectName     = project.name
+    projectGroup    = project.group
+    projectVersion  = project.version
+    projectRootPath = projectDir.absolutePath
+
+    mavenArtifact   = projectName.toLowerCase()
+    jarOutputPath   = projectRootPath + '/out'
+    mavenLocalRepo  = projectRootPath + '/out/maven'
+    isLocalRelease  = hasGradleTask('localRelease')
+    isMavenRelease  = hasGradleTask('mavenRelease')
+
+    depends = [
+        dexlib2       : 'org.smali:dexlib2:2.5.2',
+        jcommander    : 'com.beust:jcommander:1.82',
+        findbugs      : 'com.google.code.findbugs:jsr305:3.0.2',
+        guava         : 'com.google.guava:guava:27.1-android',
+        junit_api     : 'org.junit.jupiter:junit-jupiter-api:5.8.2',
+        junit_params  : 'org.junit.jupiter:junit-jupiter-params:5.8.2',
+        junit_engine  : 'org.junit.jupiter:junit-jupiter-engine:5.8.2',
+    ]
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    group = projectGroup
+    version = projectVersion
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testRuntimeOnly depends.junit_engine
+        testImplementation depends.junit_api
+        testImplementation depends.junit_params
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+}
+
+def hasGradleTask(name) {
+    return gradle.startParameter.taskNames.contains(name)
+}
+
+static def checkJDKCompatibility() {
+    if (!JavaVersion.current().isJava8Compatible()) {
+        throw new GradleException('Incompatible JDK version')
+    }
+}

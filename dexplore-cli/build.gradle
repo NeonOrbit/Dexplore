@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+    implementation depends.jcommander
+    implementation project(':dexplore-lib')
+}
+
+task unitTest(type: Test) {
+    dependsOn test
+}
+
+jar { // noinspection GroovyAssignabilityCheck
+    manifest {
+        attributes 'Main-Class': "${projectGroup}.dexplore.CommandLine"
+        attributes 'Implementation-Title': projectName
+        attributes 'Implementation-Version': projectVersion
+        attributes 'Build-Time': new Date().format("dd-MM-yyyy hh:mm:ss aa")
+    }
+    archiveBaseName.set(projectName)
+    from fileTree(dir: 'src/main', includes: ['assets/**'])
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    from(rootProject.projectDir) {
+        include 'LICENSE'
+        into('META-INF')
+    }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+    destinationDirectory = new File(jarOutputPath)
+}
