@@ -17,10 +17,20 @@
 package io.github.neonorbit.dexplore;
 
 import com.beust.jcommander.JCommander;
+import io.github.neonorbit.dexplore.filter.ClassFilter;
+import io.github.neonorbit.dexplore.filter.DexFilter;
+import io.github.neonorbit.dexplore.filter.MethodFilter;
+import io.github.neonorbit.dexplore.result.MethodData;
 
 public class CommandLine extends JCommander {
   public static void main(String[] args) {
-    Dexplore dexplore = new Dexplore();
-    System.out.println(dexplore.find());
+    String path = args[0];
+    String clazz = args[1];
+    String method = args[2];
+    Dexplore dexplore = Dexplore.of(path);
+    MethodData data = dexplore.findMethod(DexFilter.none(),
+                                          ClassFilter.ofClass(clazz),
+                                          MethodFilter.ofMethod(method));
+    System.out.println(data);
   }
 }

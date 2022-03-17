@@ -16,36 +16,51 @@
 
 package io.github.neonorbit.dexplore;
 
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedMethod;
+import io.github.neonorbit.dexplore.filter.ClassFilter;
+import io.github.neonorbit.dexplore.filter.DexFilter;
+import io.github.neonorbit.dexplore.filter.MethodFilter;
+import io.github.neonorbit.dexplore.result.ClassData;
+import io.github.neonorbit.dexplore.result.MethodData;
 
-import java.lang.reflect.Method;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Objects;
 
-public class Dexplore {
-  public static void main(String[] args) {
-    String path = args[0];
-    String clazz = args[1];
-    String method = args[2];
-    DexContainer container = new DexContainer(path, DexOptions.getOptimized());
-    for (DexEntry entry : container.getEntries()) {
-      System.out.println(entry.getDexName());
-      for (DexBackedClassDef classDef: entry.getDexFile().getClasses()) {
-        if (!classDef.getType().equals(clazz)) continue;
-        for (DexBackedMethod dexMethod: classDef.getMethods()) {
-          if (dexMethod.getName().equals(method)) {
-            System.out.println(dexMethod);
-            return;
-          }
-        }
-      }
-    }
+public interface Dexplore {
+  static Dexplore of(@Nonnull String path) {
+    return new DexploreImpl(Objects.requireNonNull(path));
   }
 
-  public Method find() {
-    try {
-      return Object.class.getDeclaredMethod("toString");
-    } catch (NoSuchMethodException e) {
-      return null;
-    }
+  static Dexplore of(@Nonnull String path, @Nonnull DexOptions options) {
+    return new DexploreImpl(Objects.requireNonNull(path),
+                            Objects.requireNonNull(options));
   }
+
+  @Nullable
+  ClassData findClass(@Nonnull DexFilter dexFilter,
+                      @Nonnull ClassFilter classFilter);
+
+  @Nonnull
+  List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
+                              @Nonnull ClassFilter classFilter, int maximum);
+
+  @Nullable
+  MethodData findMethod(@Nonnull DexFilter dexFilter,
+                        @Nonnull ClassFilter classFilter,
+                        @Nonnull MethodFilter methodFilter);
+
+  @Nonnull
+  List<MethodData> findMethods(@Nonnull DexFilter dexFilter,
+                               @Nonnull ClassFilter classFilter,
+                               @Nonnull MethodFilter methodFilter, int maximum);
+
+  void onClassSearchResults(@Nonnull DexFilter dexFilter,
+                            @Nonnull ClassFilter classFilter,
+                            @Nonnull Enumerator<ClassData> enumerator);
+
+  void onMethodSearchResults(@Nonnull DexFilter dexFilter,
+                             @Nonnull ClassFilter classFilter,
+                             @Nonnull MethodFilter methodFilter,
+                             @Nonnull Enumerator<MethodData> enumerator);
 }
