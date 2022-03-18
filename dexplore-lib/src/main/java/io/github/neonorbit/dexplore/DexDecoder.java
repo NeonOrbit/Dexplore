@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2022 NeonOrbit
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
@@ -85,7 +101,7 @@ public final class DexDecoder {
   private static ReferencePool decodeDexReferences(DexBackedDexFile dexFile,
                                                    ReferenceTypes types,
                                                    boolean resolve) {
-    final ReferencePoolBuffer buffer = new ReferencePoolBuffer(types);
+    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     if (types.hasString()) dexFile.getStringReferences().forEach(buffer::add);
     if (types.hasField()) dexFile.getFieldSection().forEach(buffer::add);
     if (types.hasMethod()) dexFile.getMethodSection().forEach(buffer::add);
@@ -96,7 +112,7 @@ public final class DexDecoder {
   private static ReferencePool decodeClassReferences(DexBackedClassDef dexClass,
                                                     ReferenceTypes types,
                                                      boolean resolve) {
-    final ReferencePoolBuffer buffer = new ReferencePoolBuffer(types);
+    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
     getMethods(dexClass, types).forEach(dexMethod -> {
       if (!AccessFlags.SYNTHETIC.isSet(dexMethod.accessFlags)) {
@@ -116,7 +132,7 @@ public final class DexDecoder {
 
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
                                           ReferenceTypes types,
-                                          ReferencePoolBuffer pool) {
+                                          RefsPoolBuffer pool) {
     if (!types.hasString()) return;
     dexClass.getStaticFields().forEach(field -> {
       EncodedValue value = field.getInitialValue();
@@ -129,14 +145,14 @@ public final class DexDecoder {
   private static ReferencePool decodeMethodReferences(DexBackedMethod dexMethod,
                                                       ReferenceTypes types,
                                                       boolean resolve) {
-    ReferencePoolBuffer buffer = new ReferencePoolBuffer(types);
+    RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     decodeMethodReferences(dexMethod, types, buffer);
     return buffer.getPool(resolve);
   }
 
   private static void decodeMethodReferences(DexBackedMethod dexMethod,
                                              ReferenceTypes types,
-                                             ReferencePoolBuffer pool) {
+                                             RefsPoolBuffer pool) {
     MethodImplementation implementation = dexMethod.getImplementation();
     if (implementation == null || types.hasNone()) return;
     for (Instruction instruction : implementation.getInstructions()) {
@@ -151,7 +167,7 @@ public final class DexDecoder {
 
   private static void decodeReference(Reference reference,
                                       ReferenceTypes types,
-                                      ReferencePoolBuffer pool) {
+                                      RefsPoolBuffer pool) {
     try {
       if (reference instanceof StringReference) {
         if (types.hasString()) pool.add(((StringReference) reference));
