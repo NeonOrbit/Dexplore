@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
+import io.github.neonorbit.dexplore.util.DexLog;
 import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
@@ -42,6 +43,7 @@ final class DexOperation {
       for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredDexName)) {
         if (dexFilter.verify(entry, decoder)) {
           DexBackedDexFile dexFile = entry.getDexFile();
+          DexLog.d("Processing Dex: " + entry.getDexName());
           if (enumerator.next(dexFile)) return;
         }
       }
@@ -64,6 +66,7 @@ final class DexOperation {
           }
         }
       } catch (AbortException e) {
+        DexLog.d("Aborted: " + e.getMessage());
         return true;
       }
       return false;
@@ -84,7 +87,9 @@ final class DexOperation {
             if (methodFilter.isUnique()) break;
           }
         }
-      } catch (AbortException e) {}
+      } catch (AbortException e) {
+        DexLog.d("Aborted: " + e.getMessage());
+      }
       return false;
     });
   }

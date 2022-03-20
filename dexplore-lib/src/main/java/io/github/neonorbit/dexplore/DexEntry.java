@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.util.DexLog;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 
 import javax.annotation.Nonnull;
@@ -44,6 +45,7 @@ public final class DexEntry implements Comparable<DexEntry> {
   public DexBackedDexFile getDexFile() {
     if (this.dexFile == null) {
       try {
+        DexLog.d("Loading Dex: " + this.dexName);
         this.dexFile = container.loadDexFile(this.dexName);
       } catch (IOException e) {
         throw new DexException("Failed to load dex file: " + this.dexName, e);
