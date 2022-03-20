@@ -28,15 +28,6 @@ import java.util.List;
 import java.util.Objects;
 
 public interface Dexplore {
-  static Dexplore of(@Nonnull String path) {
-    return new DexploreImpl(Objects.requireNonNull(path));
-  }
-
-  static Dexplore of(@Nonnull String path, @Nonnull DexOptions options) {
-    return new DexploreImpl(Objects.requireNonNull(path),
-                            Objects.requireNonNull(options));
-  }
-
   @Nullable
   ClassData findClass(@Nonnull DexFilter dexFilter,
                       @Nonnull ClassFilter classFilter);

@@ -27,7 +27,7 @@ public class CommandLine extends JCommander {
     String path = args[0];
     String clazz = args[1];
     String method = args[2];
-    Dexplore dexplore = Dexplore.of(path);
+    Dexplore dexplore = DexFactory.load(path);
     MethodData data = dexplore.findMethod(DexFilter.none(),
                                           ClassFilter.ofClass(clazz),
                                           MethodFilter.ofMethod(method));
