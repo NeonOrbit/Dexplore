@@ -39,28 +39,24 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 
 public final class DexDecoder {
+  private final boolean cache;
   private final PairedKeyMap<ReferencePool> dexCache;
   private final PairedKeyMap<ReferencePool> classCache;
 
-  DexDecoder() {
+  DexDecoder(DexOptions options) {
+    this.cache = options.enableCache;
     this.dexCache = new PairedKeyMap<>();
     this.classCache = new PairedKeyMap<>();
   }
 
   @Nonnull
-  ReferencePool decode(@Nonnull DexEntry dexEntry,
-                                @Nonnull ReferenceTypes types) {
-    return decode(dexEntry.getDexFile(), types);
-  }
-
-  @Nonnull
-  public ReferencePool decode(@Nonnull DexBackedDexFile dexFile,
+  public ReferencePool decode(@Nonnull DexEntry dexEntry,
                               @Nonnull ReferenceTypes types) {
     if (types.hasNone()) ReferencePool.emptyPool();
-    ReferencePool pool = dexCache.get(dexFile, types);
+    ReferencePool pool = cache ? dexCache.get(dexEntry, types) : null;
     if (pool == null) {
-      pool = decodeDexReferences(dexFile, types, false);
-      dexCache.put(dexFile, types, pool);
+      pool = decodeDexReferences(dexEntry.getDexFile(), types, false);
+      if (cache) dexCache.put(dexEntry, types, pool);
     }
     return pool;
   }
@@ -69,10 +65,10 @@ public final class DexDecoder {
   public ReferencePool decode(@Nonnull DexBackedClassDef dexClass,
                               @Nonnull ReferenceTypes types) {
     if (types.hasNone()) ReferencePool.emptyPool();
-    ReferencePool pool = classCache.get(dexClass, types);
+    ReferencePool pool = cache ? dexCache.get(dexClass.getType(), types) : null;
     if (pool == null) {
       pool = decodeClassReferences(dexClass, types, false);
-      classCache.put(dexClass, types, pool);
+      if (cache) classCache.put(dexClass.getType(), types, pool);
     }
     return pool;
   }

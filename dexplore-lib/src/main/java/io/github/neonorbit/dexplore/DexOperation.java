@@ -32,7 +32,7 @@ final class DexOperation {
   private final DexContainer dexContainer;
 
   DexOperation(String path, DexOptions options) {
-    this.dexDecoder = new DexDecoder();
+    this.dexDecoder = new DexDecoder(options);
     this.dexContainer = new DexContainer(path, options);
   }
 

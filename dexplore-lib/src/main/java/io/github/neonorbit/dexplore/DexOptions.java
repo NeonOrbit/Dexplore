@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore;
 
 public final class DexOptions {
+  public boolean enableCache = false;
   public boolean rootDexOnly = false;
   public DexOpcodes opcodes = DexOpcodes.none();
 

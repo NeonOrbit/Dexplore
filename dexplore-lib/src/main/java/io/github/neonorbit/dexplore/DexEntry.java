@@ -64,6 +64,11 @@ public final class DexEntry implements Comparable<DexEntry> {
   }
 
   @Override
+  public int hashCode() {
+    return this.dexName.hashCode();
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return (this == obj) || (obj instanceof DexEntry) &&
            (this.dexName.equals(((DexEntry)obj).dexName));
