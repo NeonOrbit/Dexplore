@@ -42,7 +42,7 @@ public final class DexUtils {
   @Nonnull
   public static String dexToJavaTypeName(@Nonnull String dexTypeName) {
     return !(dexTypeName.charAt(0) == 'L') ? ReflectionUtils.dexToJavaName(dexTypeName) :
-            dexTypeName.substring(1, dexTypeName.length() - 1).replace('/', '.');
+             dexTypeName.substring(1, dexTypeName.length() - 1).replace('/', '.');
   }
 
   @Nonnull

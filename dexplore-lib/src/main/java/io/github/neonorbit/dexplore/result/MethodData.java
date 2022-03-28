@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.DexDecoder;
+import io.github.neonorbit.dexplore.filter.ReferenceTypes;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.ReferencePool;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
@@ -28,20 +29,20 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public final class MethodData implements Comparable<MethodData> {
-  @Nonnull public final String clazz;
-  @Nonnull public final String method;
-  @Nonnull public final String[] params;
-  @Nonnull public final String returnType;
+public class MethodData implements Comparable<MethodData> {
+  @Nonnull public  final String clazz;
+  @Nonnull public  final String method;
+  @Nonnull public  final String[] params;
+  @Nonnull public  final String returnType;
   @Nonnull private final ClassData classData;
   @Nonnull private final ReferencePool referencePool;
 
-  private MethodData(@Nonnull String clazz,
-                     @Nonnull String method,
-                     @Nonnull String[] params,
-                     @Nonnull String returnType,
-                     @Nonnull ClassData classData,
-                     @Nonnull ReferencePool referencePool) {
+  protected MethodData(@Nonnull String clazz,
+                       @Nonnull String method,
+                       @Nonnull String[] params,
+                       @Nonnull String returnType,
+                       @Nonnull ClassData classData,
+                       @Nonnull ReferencePool referencePool) {
     this.clazz = clazz;
     this.method = method;
     this.params = params;
@@ -73,16 +74,16 @@ public final class MethodData implements Comparable<MethodData> {
   public static MethodData from(@Nonnull DexBackedMethod dexMethod,
                                 @Nullable ClassData sharedInstance) {
     if (sharedInstance == null) return from(dexMethod);
-    String className = DexUtils.dexClassToJavaTypeName(dexMethod.classDef);
+    final String className = DexUtils.dexClassToJavaTypeName(dexMethod.classDef);
     if (!sharedInstance.clazz.equals(className)) {
       throw new IllegalArgumentException("Shared instance must be from the same class");
     }
     return new MethodData(className,
-                            dexMethod.getName(),
-                            DexUtils.getJavaParamList(dexMethod).toArray(new String[0]),
-                            DexUtils.dexToJavaTypeName(dexMethod.getReturnType()),
-                            sharedInstance,
-                            DexDecoder.decodeFully(dexMethod));
+                          dexMethod.getName(),
+                          DexUtils.getJavaParamList(dexMethod).toArray(new String[0]),
+                          DexUtils.dexToJavaTypeName(dexMethod.getReturnType()),
+                          sharedInstance,
+                          DexDecoder.decodeFully(dexMethod));
   }
 
   @Nonnull
@@ -114,9 +115,9 @@ public final class MethodData implements Comparable<MethodData> {
         final int pIndex = Math.min(2, raw.length - 1);
         final String[] params = Arrays.copyOfRange(raw, pIndex, raw.length - 1);
         return new MethodData(raw[0], raw[1], params,
-                                raw[raw.length - 1],
-                                ClassData.deserialize(raw[0]),
-                                ReferencePool.emptyPool());
+                              raw[raw.length - 1],
+                              ClassData.deserialize(raw[0]),
+                              ReferencePool.emptyPool());
       }
     } catch (Exception ignore) {}
     return null;
@@ -134,11 +135,15 @@ public final class MethodData implements Comparable<MethodData> {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof MethodData) &&
-           (this.clazz.equals(((MethodData) obj).clazz)) &&
-           (this.method.equals(((MethodData) obj).method)) &&
-           (this.returnType.equals(((MethodData) obj).returnType)) &&
-           (Arrays.equals(this.params, ((MethodData) obj).params));
+    if (this == obj) return true;
+    if (obj instanceof MethodData) {
+      MethodData another = (MethodData) obj;
+      return this.clazz.equals(another.clazz) &&
+             this.method.equals(another.method) &&
+             this.returnType.equals(another.returnType) &&
+             Arrays.equals(this.params, another.params);
+    }
+    return false;
   }
 
   @Override

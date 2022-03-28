@@ -1,3 +1,6 @@
+//file:noinspection GroovyAssignabilityCheck
+//file:noinspection GroovyImplicitNullArgumentCall
+
 plugins {
     id 'java-library'; id 'maven-publish'; id 'signing'
 }
@@ -20,7 +23,7 @@ task unitTest(type: Test) {
     dependsOn test
 }
 
-def validDev = 'NeonOrbit'
+ext.validDev = 'NeonOrbit'
 def gpgKeyName, gpgPassword
 def mavenUsername, mavenPassword
 
@@ -111,10 +114,11 @@ publishing {
     }
 }
 
+@SuppressWarnings('GrMethodMayBeStatic')
 def validateDeveloperIdentity(gpg, maven) {
-    if (gpg != this.validDev) {
+    if (gpg != validDev) {
         throw new IllegalArgumentException('Invalid gpg key')
-    } else if (maven != this.validDev) {
+    } else if (maven != validDev) {
         throw new IllegalArgumentException('Invalid maven id')
     }
 }

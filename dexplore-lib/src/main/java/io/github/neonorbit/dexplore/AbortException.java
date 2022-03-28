@@ -16,7 +16,7 @@
 
 package io.github.neonorbit.dexplore;
 
-public class AbortException extends RuntimeException{
+public final class AbortException extends RuntimeException{
   public AbortException() {
     this(null);
   }

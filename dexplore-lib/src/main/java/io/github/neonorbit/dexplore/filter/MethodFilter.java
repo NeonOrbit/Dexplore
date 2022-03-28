@@ -153,6 +153,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Set method modifiers. eg: public, static, final etc...
      * @param modifiers see {@link java.lang.reflect.Modifier}
+     *
+     * @return this builder
      */
     public Builder setModifiers(int modifiers) {
       this.flag = modifiers;
@@ -162,6 +164,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Methods with matching modifiers will be skipped
      * @param modifiers see {@link Builder#setModifiers(int)}
+     *
+     * @return this builder
      */
     public Builder skipModifiers(int modifiers) {
       this.skipFlag = modifiers;

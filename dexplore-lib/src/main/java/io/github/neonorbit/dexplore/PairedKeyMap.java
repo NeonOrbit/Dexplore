@@ -37,7 +37,7 @@ final class PairedKeyMap<T> {
     public boolean equals(Object obj) {
       if (this == obj) return true;
       if (obj instanceof Key) {
-        final Key another = (Key) obj;
+        Key another = (Key) obj;
         return this.first.equals(another.first) &&
                this.second.equals(another.second);
       }

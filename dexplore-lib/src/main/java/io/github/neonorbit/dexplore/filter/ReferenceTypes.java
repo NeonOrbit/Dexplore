@@ -147,6 +147,8 @@ public final class ReferenceTypes {
 
     /**
      * Include all details: name, class, type
+     *
+     * @return this builder
      */
     public Builder addFieldWithDetails() {
       this.flags |= FIELD | F_INFO;
@@ -155,6 +157,8 @@ public final class ReferenceTypes {
 
     /**
      * Include full signature: name, class, params, return type
+     *
+     * @return this builder
      */
     public Builder addMethodWithDetails() {
       this.flags |= METHOD | M_INFO;

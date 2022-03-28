@@ -120,7 +120,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
     public Builder allowPreferredDexOnly(boolean prefDexOnly) {
       if (preferredDexName == null) {
-        throw new IllegalArgumentException("Preferred Dex was not defined");
+        throw new IllegalStateException("Preferred Dex was not defined");
       }
       this.preferredDexOnly = prefDexOnly;
       return this;
@@ -128,7 +128,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
     public Builder skipPreferredDexCheck(boolean skipPrefDexCheck) {
       if (preferredDexName == null) {
-        throw new IllegalArgumentException("Preferred Dex was not defined");
+        throw new IllegalStateException("Preferred Dex was not defined");
       }
       this.preferredDexPass = skipPrefDexCheck;
       return this;

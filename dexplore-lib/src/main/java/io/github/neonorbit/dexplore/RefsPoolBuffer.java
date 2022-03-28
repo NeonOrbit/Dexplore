@@ -32,8 +32,8 @@ import java.util.List;
 
 final class RefsPoolBuffer {
   private boolean needsCopy;
-  private List<TypeReferenceData> types;
   private List<StringReferenceData> strings;
+  private List<TypeReferenceData> types;
   private List<FieldReferenceData> fields;
   private List<MethodReferenceData> methods;
   private final boolean fieldDetails, methodDetails;
@@ -59,8 +59,8 @@ final class RefsPoolBuffer {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   private void resolve() {
-    types.forEach(TypeReferenceData::toString);
     strings.forEach(StringReferenceData::toString);
+    types.forEach(TypeReferenceData::toString);
     fields.forEach(FieldReferenceData::toString);
     methods.forEach(MethodReferenceData::toString);
   }
@@ -68,7 +68,7 @@ final class RefsPoolBuffer {
   @Nonnull
   public ReferencePool getPool() {
     needsCopy = true;
-    return new ReferencePool(types, strings, fields, methods);
+    return new ReferencePool(strings, types, fields, methods);
   }
 
   @Nonnull

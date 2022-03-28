@@ -55,6 +55,8 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getName()}
+   *
+   * @return method name
    */
   @Nonnull
   public String getName() {
@@ -63,6 +65,8 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getReturnType()}
+   *
+   * @return return type
    */
   @Nonnull
   public String getReturnType() {
@@ -71,6 +75,8 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getParameterTypes()}
+   *
+   * @return parameter types
    */
   @Nonnull
   public List<String> getParameterTypes() {
@@ -79,6 +85,8 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getDeclaringClass()}
+   *
+   * @return declaring class
    */
   @Nonnull
   public String getDeclaringClass() {

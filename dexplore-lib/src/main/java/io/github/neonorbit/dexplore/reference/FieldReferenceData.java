@@ -51,6 +51,8 @@ public final class FieldReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Field#getName()}
+   *
+   * @return field name
    */
   @Nonnull
   public String getName() {
@@ -59,6 +61,8 @@ public final class FieldReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Field#getType()}
+   *
+   * @return field type
    */
   @Nonnull
   public String getType() {
@@ -67,6 +71,8 @@ public final class FieldReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Field#getDeclaringClass()}
+   *
+   * @return declaring class
    */
   @Nonnull
   public String getDeclaringClass() {

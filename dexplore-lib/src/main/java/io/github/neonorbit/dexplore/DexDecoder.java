@@ -106,7 +106,7 @@ public final class DexDecoder {
   }
 
   private static ReferencePool decodeClassReferences(DexBackedClassDef dexClass,
-                                                    ReferenceTypes types,
+                                                     ReferenceTypes types,
                                                      boolean resolve) {
     final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
@@ -127,8 +127,8 @@ public final class DexDecoder {
   }
 
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
-                                          ReferenceTypes types,
-                                          RefsPoolBuffer pool) {
+                                                 ReferenceTypes types,
+                                                 RefsPoolBuffer pool) {
     if (!types.hasString()) return;
     dexClass.getStaticFields().forEach(field -> {
       EncodedValue value = field.getInitialValue();

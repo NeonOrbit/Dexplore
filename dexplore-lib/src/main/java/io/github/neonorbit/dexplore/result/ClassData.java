@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ClassData implements Comparable<ClassData> {
-  @Nonnull public final String clazz;
+  @Nonnull public  final String clazz;
   @Nonnull private final ReferencePool refPool;
   @Nonnull private final Map<String, MethodData> methods;
 
@@ -54,7 +54,7 @@ public class ClassData implements Comparable<ClassData> {
   }
 
   @Nonnull
-  public static ClassData from(@Nonnull final DexBackedClassDef dexClass) {
+  public static ClassData from(@Nonnull DexBackedClassDef dexClass) {
     String name = DexUtils.dexClassToJavaTypeName(dexClass);
     ReferencePool pool = DexDecoder.decodeFully(dexClass);
     Map<String, MethodData> methods = new HashMap<>();

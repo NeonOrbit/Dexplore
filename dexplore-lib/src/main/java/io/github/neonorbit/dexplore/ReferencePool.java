@@ -27,17 +27,17 @@ import java.util.List;
 import java.util.StringJoiner;
 
 public final class ReferencePool {
-  private final List<TypeReferenceData> types;
   private final List<StringReferenceData> strings;
+  private final List<TypeReferenceData> types;
   private final List<FieldReferenceData> fields;
   private final List<MethodReferenceData> methods;
 
-  ReferencePool(List<TypeReferenceData> types,
-                List<StringReferenceData> strings,
+  ReferencePool(List<StringReferenceData> strings,
+                List<TypeReferenceData> types,
                 List<FieldReferenceData> fields,
                 List<MethodReferenceData> methods) {
-    this.types = Collections.unmodifiableList(types);
     this.strings = Collections.unmodifiableList(strings);
+    this.types = Collections.unmodifiableList(types);
     this.fields = Collections.unmodifiableList(fields);
     this.methods = Collections.unmodifiableList(methods);
   }
@@ -50,9 +50,9 @@ public final class ReferencePool {
   }
 
   public boolean isEmpty() {
-    return types.isEmpty() &&
-           strings.isEmpty() &&
-           fields.isEmpty() &&
+    return strings.isEmpty() &&
+           types.isEmpty()   &&
+           fields.isEmpty()  &&
            methods.isEmpty();
   }
 
@@ -157,9 +157,9 @@ public final class ReferencePool {
   public String toString() {
     StringJoiner joiner = new StringJoiner("\n");
     strings.forEach(s -> joiner.add(s.toString()));
+    types.forEach(t -> joiner.add(t.toString()));
     fields.forEach(f -> joiner.add(f.toString()));
     methods.forEach(m -> joiner.add(m.toString()));
-    types.forEach(t -> joiner.add(t.toString()));
     return joiner.toString();
   }
 }

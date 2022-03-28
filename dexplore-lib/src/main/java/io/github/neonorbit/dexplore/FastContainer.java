@@ -31,8 +31,7 @@ final class FastContainer extends ZipDexContainer {
   private final boolean rootDexOnly;
   private FastContainer(@Nonnull File zipFilePath,
                         @Nullable Opcodes opcodes,
-                        boolean isApkFile,
-                        boolean rootDexOnly) {
+                        boolean isApkFile, boolean rootDexOnly) {
     super(zipFilePath, opcodes);
     this.isApkFile = isApkFile;
     this.rootDexOnly = rootDexOnly;

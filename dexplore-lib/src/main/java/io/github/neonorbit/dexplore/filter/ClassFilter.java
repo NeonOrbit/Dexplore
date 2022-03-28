@@ -154,6 +154,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      * Specify a list of packages that should be excluded during the search operation
      * @param packages list of packages to exclude
      * @param exception an exception list to allow sub packages
+     *
+     * @return this builder
      */
     public Builder skipPackages(@Nullable List<String> packages,
                                 @Nullable List<String> exception) {
@@ -177,6 +179,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     /**
      * Set class modifiers. eg: public, static, final etc...
      * @param modifiers see {@link java.lang.reflect.Modifier}
+     *
+     * @return this builder
      */
     public Builder setModifiers(int modifiers) {
       this.flag = modifiers;
@@ -187,6 +191,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      * Classes with matching modifiers will be skipped
      * @param modifiers see {@link #setModifiers(int)}
      * @see #setModifiers(int)
+     *
+     * @return this builder
      */
     public Builder skipModifiers(int modifiers) {
       this.skipFlag = modifiers;
