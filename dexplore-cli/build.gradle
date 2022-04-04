@@ -1,6 +1,21 @@
+import proguard.gradle.ProGuardTask
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath depends.shadow_gradle
+        classpath (depends.proguard) {
+            exclude group: 'com.android.tools.build'
+        }
+    }
+}
+
 plugins {
     id 'java'
 }
+apply plugin: 'com.github.johnrengelman.shadow'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -36,5 +51,28 @@ jar { // noinspection GroovyAssignabilityCheck
         into('META-INF')
     }
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
-    destinationDirectory = new File(jarOutputPath)
+    destinationDirectory = file(jarOutputPath)
 }
+
+task proguard(type: ProGuardTask, dependsOn: shadowJar) {
+    injars shadowJar.getArchiveFile()
+    outjars jar.archiveFile.get().asFile
+
+    def home = System.getProperty("java.home")
+    if (!JavaVersion.current().isJava9Compatible()) {
+        libraryjars home + '/lib/rt.jar'
+    } else {
+        libraryjars home + '/jmods', jarfilter: '!**.jar', filter: '!module-info.class'
+    }
+
+    dontoptimize
+    dontobfuscate
+    keep 'class io.github.neonorbit.dexplore.** { *; }'
+    keep 'class com.beust.jcommander.** { *; }'
+    keepclassmembers 'enum * {                                       \
+                          public static **[] values();                \
+                          public static ** valueOf(java.lang.String);  \
+                      }'
+}
+
+build.dependsOn(proguard)

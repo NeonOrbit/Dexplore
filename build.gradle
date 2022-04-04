@@ -37,9 +37,11 @@ ext {
         jcommander    : 'com.beust:jcommander:1.82',
         findbugs      : 'com.google.code.findbugs:jsr305:3.0.2',
         guava         : 'com.google.guava:guava:27.1-android',
+        proguard      : 'com.guardsquare:proguard-gradle:7.2.1',
         junit_api     : 'org.junit.jupiter:junit-jupiter-api:5.8.2',
         junit_params  : 'org.junit.jupiter:junit-jupiter-params:5.8.2',
         junit_engine  : 'org.junit.jupiter:junit-jupiter-engine:5.8.2',
+        shadow_gradle : 'gradle.plugin.com.github.johnrengelman:shadow:7.1.2',
     ]
 }
 
