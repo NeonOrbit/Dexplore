@@ -13,7 +13,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'io.github.neonorbit.dexplore:1.0.0'
+    implementation 'io.github.neonorbit:dexplore:1.0.0'
 }
 ```
 
