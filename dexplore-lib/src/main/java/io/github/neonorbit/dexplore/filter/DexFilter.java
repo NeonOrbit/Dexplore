@@ -25,22 +25,23 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public final class DexFilter extends BaseFilter<DexEntry> {
-  public  final String preferredDexName;
   private final boolean preferredDexOnly;
   private final boolean preferredDexPass;
   private final Set<String> definedClassNames;
+  public  final List<String> preferredDexNames;
 
   private final String definedClassName;
 
   private DexFilter(Builder builder) {
     super(builder);
-    this.preferredDexName = builder.preferredDexName;
     this.preferredDexOnly = builder.preferredDexOnly;
     this.preferredDexPass = builder.preferredDexPass;
+    this.preferredDexNames = builder.preferredDexNames;
     this.definedClassNames = builder.definedClassNames;
     if (this.definedClassNames == null ||
         this.definedClassNames.size() != 1) {
@@ -53,7 +54,8 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   @Override
   public boolean verify(@Nonnull DexEntry dexEntry,
                         @Nonnull LazyDecoder<DexEntry> decoder) {
-    boolean isPreferred = dexEntry.getDexName().equals(preferredDexName);
+    boolean isPreferred = preferredDexNames != null &&
+                          preferredDexNames.contains(dexEntry.getDexName());
     if (preferredDexOnly && !isPreferred) {
       throw new AbortException();
     }
@@ -88,18 +90,18 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   }
 
   public static class Builder extends BaseFilter.Builder<Builder, DexFilter> {
-    public String preferredDexName;
-    public boolean preferredDexOnly;
-    public boolean preferredDexPass;
+    private boolean preferredDexOnly;
+    private boolean preferredDexPass;
     private Set<String> definedClassNames;
+    private List<String> preferredDexNames;
 
     public Builder() {}
 
     private Builder(DexFilter instance) {
       super(instance);
-      this.preferredDexName = instance.preferredDexName;
       this.preferredDexOnly = instance.preferredDexOnly;
       this.preferredDexPass = instance.preferredDexPass;
+      this.preferredDexNames = instance.preferredDexNames;
       this.definedClassNames = instance.definedClassNames;
     }
 
@@ -113,13 +115,16 @@ public final class DexFilter extends BaseFilter<DexEntry> {
       return new DexFilter(this);
     }
 
-    public Builder setPreferredDex(@Nullable String dexName) {
-      this.preferredDexName = dexName;
+    public Builder setPreferredDexNames(@Nullable String... dexNames) {
+      if (dexNames == null || dexNames.length == 0)
+        this.preferredDexNames = null;
+      else
+        this.preferredDexNames = Arrays.asList(dexNames);
       return this;
     }
 
     public Builder allowPreferredDexOnly(boolean prefDexOnly) {
-      if (preferredDexName == null) {
+      if (preferredDexNames == null) {
         throw new IllegalStateException("Preferred Dex was not defined");
       }
       this.preferredDexOnly = prefDexOnly;
@@ -127,7 +132,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     }
 
     public Builder skipPreferredDexCheck(boolean skipPrefDexCheck) {
-      if (preferredDexName == null) {
+      if (preferredDexNames == null) {
         throw new IllegalStateException("Preferred Dex was not defined");
       }
       this.preferredDexPass = skipPrefDexCheck;
@@ -136,7 +141,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
     public Builder setDefinedClasses(@Nullable String... classes) {
       this.definedClassNames = classes == null || classes.length == 0 ? null :
-                               new HashSet<>(DexUtils.javaToDexTypeName(Arrays.asList(classes)));
+              new HashSet<>(DexUtils.javaToDexTypeName(Arrays.asList(classes)));
       return this;
     }
   }

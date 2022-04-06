@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 final class DexContainer {
@@ -54,14 +55,14 @@ final class DexContainer {
   }
 
   @Nonnull
-  public List<DexEntry> getEntries(@Nullable String preferred) {
-    DexEntry dexEntry;
+  public List<DexEntry> getEntries(@Nullable List<String> preferred) {
     List<DexEntry> dexEntries = getEntries();
-    if (dexEntries.size() > 1 && ((dexEntry = getEntry(preferred)) != null)) {
-      int index = dexEntries.indexOf(dexEntry);
-      if (index > 0 && dexEntries.remove(dexEntry)) {
-        dexEntries.add(0, dexEntry);
-      }
+    if (preferred != null) {
+      dexEntries.sort(Comparator.comparing(e -> {
+        if (preferred.contains(e.getDexName()))
+          return preferred.indexOf(e.getDexName());
+        return preferred.size();
+      }));
     }
     return dexEntries;
   }
@@ -82,7 +83,7 @@ final class DexContainer {
         for (String dexName : getContainer().getDexEntryNames()) {
           this.dexEntries.add(new DexEntry(this, dexName));
         }
-        this.dexEntries.sort(null);
+        if(rootDexOnly) this.dexEntries.sort(null);
       } catch (IOException e) {
         throw new DexException("Failed to load dex entries", e);
       }

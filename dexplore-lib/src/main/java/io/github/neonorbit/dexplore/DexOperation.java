@@ -40,7 +40,7 @@ final class DexOperation {
                          @Nonnull Enumerator<DexBackedDexFile> enumerator) {
     LazyDecoder<DexEntry> decoder = dexDecoder::decode;
     try {
-      for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredDexName)) {
+      for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredDexNames)) {
         if (dexFilter.verify(entry, decoder)) {
           DexBackedDexFile dexFile = entry.getDexFile();
           DexLog.d("Processing Dex: " + entry.getDexName());
