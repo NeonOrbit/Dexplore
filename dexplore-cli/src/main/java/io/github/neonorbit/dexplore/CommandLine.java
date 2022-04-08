@@ -23,8 +23,6 @@ import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
-import io.github.neonorbit.dexplore.result.ClassData;
-import io.github.neonorbit.dexplore.result.MethodData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,13 +40,16 @@ final class CommandLine extends JCommander {
   @Parameter(names = {"-h", "--help"}, order = 0, help = true, description = "Print this help message")
   private boolean help = false;
 
-  @Parameter(names = {"-t", "--type"}, order = 1, description = "Item to find: c: to find class, m: to find method")
-  private String itemType = "";
-
-  @Parameter(names = {"-m", "--maximum"}, order = 2, description = "Maximum results")
+  @Parameter(names = {"-m", "--maximum"}, order = 1, description = "Maximum results")
   private int maximum = 1;
 
-  @Parameter(names = {"-rt", "--ref-type"}, order = 3, description = "Reference types: a: all, s: string, t: type, f: field, m: method")
+  @Parameter(names = {"-d", "--print-details"}, order = 1, description = "Print details: c: class details, m: method details only, n: none (default)")
+  private String printDetails = "n";
+
+  @Parameter(names = {"-t", "--type"}, order = 2, description = "Item to find: c: to find class, m: to find method")
+  private String itemType = "";
+
+  @Parameter(names = {"-rt", "--ref-type"}, order = 3, description = "Reference types: a: all (default), s: string, t: type, f: field, m: method")
   private String refType = "a";
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -113,23 +114,55 @@ final class CommandLine extends JCommander {
       result = files.stream()
                     .flatMap(file -> DexFactory.load(file)
                             .findClasses(dexFilter, classFilter, maximum).stream())
-                    .map(ClassData::toString)
+                    .map(d -> {
+                      String str = ' ' + d.toString();
+                      if (printDetails.equals("c")) {
+                        str += '\n' + flattenReferencePool(d.getReferencePool()) + '\n';
+                      }
+                      return str;
+                    })
                     .collect(Collectors.toList());
     } else {
       result = files.stream()
                     .flatMap(file -> DexFactory.load(file)
                             .findMethods(dexFilter, classFilter, methodFilter, maximum).stream())
-                    .map(MethodData::toString)
+                    .map(d -> {
+                      String str = ' ' + d.toString();
+                      if (!printDetails.equals("n")) {
+                        str += '\n';
+                        str += printDetails.equals("m") ?
+                                 flattenReferencePool(d.getReferencePool()) :
+                                 flattenReferencePool(d.getClassResult().getReferencePool());
+                        str += '\n';
+                      }
+                      return str;
+                    })
                     .collect(Collectors.toList());
     }
 
     if (!result.isEmpty()) {
       System.out.println("\nResult:");
-      result.stream().map(s -> ' ' + s).forEach(System.out::println);
+      result.forEach(System.out::println);
     } else {
       System.out.println("\n  Not Found!");
     }
-    System.out.println();
+  }
+
+  private String flattenReferencePool(ReferencePool pool) {
+    StringJoiner joiner = new StringJoiner("\n   ");
+    joiner.add("   String References: ");
+    pool.getStringSection().forEach(s -> joiner.add("  " + s.toString()));
+    if (pool.getStringSection().isEmpty()) joiner.add("  none");
+    joiner.add("Type References: ");
+    pool.getTypeSection().forEach(t -> joiner.add("  " + t.toString()));
+    if (pool.getTypeSection().isEmpty()) joiner.add("  none");
+    joiner.add("Field References: ");
+    pool.getFieldSection().forEach(f -> joiner.add("  " + f.toString()));
+    if (pool.getFieldSection().isEmpty()) joiner.add("  none");
+    joiner.add("Method References: ");
+    pool.getMethodSection().forEach(m -> joiner.add("  " + m.toString()));
+    if (pool.getMethodSection().isEmpty()) joiner.add("  none");
+    return joiner.toString();
   }
 
   private boolean validateArgs() {
