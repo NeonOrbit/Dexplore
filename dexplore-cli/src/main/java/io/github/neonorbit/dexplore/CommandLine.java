@@ -95,7 +95,7 @@ final class CommandLine extends JCommander {
 
     ReferenceFilter filter = ReferenceFilter.containsAll(references.toArray(String[]::new));
 
-    DexFilter dexFilter = DexFilter.none();
+    DexFilter dexFilter = DexFilter.MATCH_ALL;
 
     ClassFilter classFilter = ClassFilter.builder()
                                          .setReferenceTypes(types)

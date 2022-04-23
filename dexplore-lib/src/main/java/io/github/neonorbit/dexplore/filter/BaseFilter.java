@@ -23,25 +23,25 @@ import javax.annotation.Nullable;
 
 abstract class BaseFilter<T> {
   protected final boolean pass;
+  protected final boolean unique;
   protected final ReferenceTypes types;
   protected final ReferenceFilter filter;
 
-  protected BaseFilter(Builder<?,?> builder) {
-    if (builder.types == null ||
-        builder.filter == null ||
-        builder.types.hasNone()) {
-      this.pass = true;
-      this.types = ReferenceTypes.none();
-      this.filter = referencePool -> true;
-    } else {
-      this.pass = false;
-      this.types = builder.types;
-      this.filter = builder.filter;
-    }
+  protected BaseFilter(Builder<?,?> builder, boolean unique) {
+    this.pass   = builder.types  == null ||
+                  builder.filter == null ||
+                  builder.types.hasNone();
+    this.types  = builder.types;
+    this.filter = builder.filter;
+    this.unique = unique;
+  }
+
+  public boolean isUnique() {
+    return unique;
   }
 
   public boolean verify(@Nonnull T dexItem, @Nonnull LazyDecoder<T> decoder) {
-    return pass || filter.verify(decoder.decode(dexItem, types));
+    return pass || filter.accept(decoder.decode(dexItem, types));
   }
 
   protected static abstract class Builder<B extends Builder<B,?>,
@@ -54,6 +54,10 @@ abstract class BaseFilter<T> {
     protected Builder(T instance) {
       this.types = instance.types;
       this.filter = instance.filter;
+    }
+
+    protected boolean isDefault() {
+      return types == null && filter == null;
     }
 
     protected abstract B getThis();

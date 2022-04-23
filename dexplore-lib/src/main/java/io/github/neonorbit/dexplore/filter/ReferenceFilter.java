@@ -22,14 +22,14 @@ import javax.annotation.Nonnull;
 import java.util.Arrays;
 
 public interface ReferenceFilter {
-  boolean verify(ReferencePool pool);
+  boolean accept(ReferencePool pool);
 
   default ReferenceFilter and(@Nonnull ReferenceFilter other) {
-    return pool -> verify(pool) && other.verify(pool);
+    return pool -> accept(pool) && other.accept(pool);
   }
 
   default ReferenceFilter or(@Nonnull ReferenceFilter other) {
-    return pool -> verify(pool) || other.verify(pool);
+    return pool -> accept(pool) || other.accept(pool);
   }
 
   static ReferenceFilter contains(@Nonnull String value) {

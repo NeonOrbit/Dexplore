@@ -25,9 +25,7 @@ import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.security.InvalidParameterException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -36,80 +34,49 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
+  private static final int M1 = -1;
+  /** A {@code ClassFilter} instance that matches all dex classes. */
+  public static final ClassFilter MATCH_ALL = new ClassFilter(builder());
+
   private final int flag;
   private final int skipFlag;
   private final String superClass;
   private final Pattern pkgPattern;
+  private final Set<String> classNames;
   private final List<String> interfaces;
-  private final Set<String> inClassNames;
-
-  private final String className;
-  private final boolean isUnique;
-  private final boolean noInterface;
 
   private ClassFilter(Builder builder) {
-    super(builder);
+    super(builder, Utils.isSingle(builder.classNames));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
     this.pkgPattern = builder.pkgPattern;
     this.superClass = builder.superClass;
+    this.classNames = builder.classNames;
     this.interfaces = builder.interfaces;
-    this.inClassNames = builder.inClassNames;
-    if (builder.inClassNames == null ||
-        builder.inClassNames.size() != 1) {
-      this.className = null;
-    } else {
-      this.className = this.inClassNames.iterator().next();
-    }
-    this.noInterface = this.interfaces != null &&
-                       this.interfaces.isEmpty();
-    this.isUnique = className != null;
-  }
-
-  public boolean isUnique() {
-    return isUnique;
   }
 
   @Override
   public boolean verify(@Nonnull DexBackedClassDef dexClass,
                         @Nonnull LazyDecoder<DexBackedClassDef> decoder) {
-    if (!checkClassName(dexClass)) return false;
+    if (this == MATCH_ALL) return true;
+    if (classNames != null && !classNames.contains(dexClass.getType())) return false;
     boolean result = (
-            (flag == 0 || (dexClass.getAccessFlags() & flag) == flag) &&
-            (skipFlag == 0 || (dexClass.getAccessFlags() & skipFlag) == 0) &&
+            (flag == M1 || (dexClass.getAccessFlags() & flag) == flag) &&
+            (skipFlag == M1 || (dexClass.getAccessFlags() & skipFlag) == 0) &&
             (superClass == null || superClass.equals(dexClass.getSuperclass())) &&
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
-            checkInterface(dexClass) && super.verify(dexClass, decoder)
+            (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
+            super.verify(dexClass, decoder)
     );
-    if (isUnique && !result) {
+    if (unique && !result) {
       throw new AbortException("Class found but the filter didn't match");
     }
     return result;
   }
 
-  private boolean checkClassName(DexBackedClassDef dexClass) {
-    if (className != null)
-      return className.equals(dexClass.getType());
-    if (inClassNames != null)
-      return inClassNames.contains(dexClass.getType());
-    return true;
-  }
-
-  private boolean checkInterface(DexBackedClassDef dexClass) {
-    if (noInterface)
-      return dexClass.getInterfaces().isEmpty();
-    if (interfaces != null)
-      return dexClass.getInterfaces().equals(interfaces);
-    return true;
-  }
-
   public static ClassFilter ofClass(@Nonnull String clazz) {
     Objects.requireNonNull(clazz);
-    return builder().setClassNames(clazz).build();
-  }
-
-  public static ClassFilter none() {
-    return builder().build();
+    return builder().setClasses(clazz).build();
   }
 
   public Builder toBuilder() {
@@ -121,12 +88,12 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   }
 
   public static class Builder extends BaseFilter.Builder<Builder, ClassFilter> {
-    private int flag;
-    private int skipFlag;
+    private int flag = M1;
+    private int skipFlag = M1;
     private Pattern pkgPattern;
     private String superClass;
+    private Set<String> classNames;
     private List<String> interfaces;
-    private Set<String> inClassNames;
 
     public Builder() {}
 
@@ -136,8 +103,19 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       this.skipFlag = instance.skipFlag;
       this.pkgPattern = instance.pkgPattern;
       this.superClass = instance.superClass;
+      this.classNames = instance.classNames;
       this.interfaces = instance.interfaces;
-      this.inClassNames = instance.inClassNames;
+    }
+
+    @Override
+    protected boolean isDefault() {
+      return super.isDefault()  &&
+             flag == M1         &&
+             skipFlag == M1     &&
+             pkgPattern == null &&
+             superClass == null &&
+             interfaces == null &&
+             classNames == null;
     }
 
     @Override
@@ -147,7 +125,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     @Override
     public ClassFilter build() {
-      return new ClassFilter(this);
+      return isDefault() ? MATCH_ALL : new ClassFilter(this);
     }
 
     /**
@@ -165,14 +143,14 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
                  !(exception == null || Utils.isValidName(exception))) {
         throw new InvalidParameterException("Invalid Package Name");
       } else {
-        this.pkgPattern = getPattern(packages, exception);
+        this.pkgPattern = getPackagePattern(packages, exception);
       }
       return this;
     }
 
-    public Builder setClassNames(@Nullable String... classes) {
-      this.inClassNames = classes == null || classes.length == 0 ? null :
-                          new HashSet<>(DexUtils.javaToDexTypeName(Arrays.asList(classes)));
+    public Builder setClasses(@Nonnull String... classes) {
+      List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
+      this.classNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
 
@@ -200,8 +178,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     public Builder setSuperClass(@Nullable String superClass) {
-      this.superClass = superClass == null ? null :
-                        DexUtils.javaToDexTypeName(superClass);
+      this.superClass = superClass == null ? null : DexUtils.javaToDexTypeName(superClass);
       return this;
     }
 
@@ -210,18 +187,16 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       return this;
     }
 
-    public Builder setInterfaces(@Nullable String... interfaces) {
-      this.interfaces = interfaces == null ? null :
-                        interfaces.length == 0 ? Collections.emptyList() :
-                        DexUtils.javaToDexTypeName(Arrays.asList(interfaces));
+    public Builder setInterfaces(@Nullable List<String> iFaces) {
+      this.interfaces = iFaces == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(iFaces));
       return this;
     }
 
     public Builder noInterfaces() {
-      return setInterfaces();
+      return setInterfaces(Collections.emptyList());
     }
 
-    private static Pattern getPattern(List<String> packages, List<String> exception) {
+    private static Pattern getPackagePattern(List<String> packages, List<String> exception) {
       Function<String, String> mapper = s -> 'L' + s.replaceAll("\\.", "/")
                                                     .replaceAll("\\$", "\\\\\\$")
                                            + '/';

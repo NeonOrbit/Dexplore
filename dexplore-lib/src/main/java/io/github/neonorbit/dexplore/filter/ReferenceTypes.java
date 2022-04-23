@@ -16,6 +16,9 @@
 
 package io.github.neonorbit.dexplore.filter;
 
+import javax.annotation.Nonnull;
+import java.util.Objects;
+
 public final class ReferenceTypes {
   private static final int NONE   = 0x0000;
   private static final int STRING = 0x0001;
@@ -165,8 +168,8 @@ public final class ReferenceTypes {
       return this;
     }
 
-    public Builder setScope(Scope scope) {
-      this.scope = scope;
+    public Builder setScope(@Nonnull Scope scope) {
+      this.scope = Objects.requireNonNull(scope);
       return this;
     }
   }

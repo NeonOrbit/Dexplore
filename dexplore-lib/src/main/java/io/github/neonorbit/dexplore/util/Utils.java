@@ -18,14 +18,42 @@ package io.github.neonorbit.dexplore.util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class Utils {
-  public static class Lists {
-    @Nullable
-    public static <T> T findFirst(@Nonnull List<T> list) {
-      return list.isEmpty() ? null : list.get(0);
-    }
+  public static boolean isSingle(@Nullable Collection<?> c) {
+    return c != null && c.size() == 1;
+  }
+
+  @Nullable
+  public static <T> T findFirst(@Nonnull Collection<T> c) {
+    return c.isEmpty() ? null : c.iterator().next();
+  }
+
+  public static <T> Set<T> optimizedSet(@Nonnull Collection<T> c) {
+    if (c.isEmpty()) return Collections.emptySet();
+    if (c.size() == 1) return Collections.singleton(findFirst(c));
+    return Collections.unmodifiableSet(new HashSet<>(c));
+  }
+
+  public static <T> List<T> optimizedList(@Nonnull Collection<T> c) {
+    if (c.isEmpty()) return Collections.emptyList();
+    if (c.size() == 1) return Collections.singletonList(findFirst(c));
+    return Collections.unmodifiableList(new ArrayList<>(c));
+  }
+
+  public static <T> List<T> nonNullList(T[] a) {
+    Objects.requireNonNull(a);
+    if (Arrays.stream(a).anyMatch(Objects::isNull))
+      throw new NullPointerException();
+    return Arrays.asList(a);
   }
 
   public static boolean isValidName(List<String> names) {

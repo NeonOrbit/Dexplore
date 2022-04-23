@@ -20,65 +20,61 @@ import io.github.neonorbit.dexplore.AbortException;
 import io.github.neonorbit.dexplore.DexEntry;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public final class DexFilter extends BaseFilter<DexEntry> {
-  private final boolean preferredDexOnly;
-  private final boolean preferredDexPass;
-  private final Set<String> definedClassNames;
-  public  final List<String> preferredDexNames;
+  /** A {@code DexFilter} instance that matches all dex files. */
+  public static final DexFilter MATCH_ALL = new DexFilter(builder());
 
-  private final String definedClassName;
+  private final boolean preferredDexOnly;
+  private final Set<String> definedClassNames;
+  private final List<String> preferredDexNames;
 
   private DexFilter(Builder builder) {
-    super(builder);
+    super(builder, Utils.isSingle(builder.definedClassNames));
     this.preferredDexOnly = builder.preferredDexOnly;
-    this.preferredDexPass = builder.preferredDexPass;
     this.preferredDexNames = builder.preferredDexNames;
     this.definedClassNames = builder.definedClassNames;
-    if (this.definedClassNames == null ||
-        this.definedClassNames.size() != 1) {
-      this.definedClassName = null;
-    } else {
-      this.definedClassName = this.definedClassNames.iterator().next();
-    }
+  }
+
+  public List<String> preferredList() {
+    return preferredDexNames;
   }
 
   @Override
   public boolean verify(@Nonnull DexEntry dexEntry,
                         @Nonnull LazyDecoder<DexEntry> decoder) {
-    boolean isPreferred = preferredDexNames != null &&
-                          preferredDexNames.contains(dexEntry.getDexName());
-    if (preferredDexOnly && !isPreferred) {
-      throw new AbortException();
+    if (this == MATCH_ALL) return true;
+    if (shouldTerminate(dexEntry)) {
+      throw AbortException.silently();
     }
-    if (preferredDexPass && isPreferred) {
-      return true;
-    } else if (definedClassName != null) {
-      return dexEntry.getDexFile().getClasses().stream()
-                     .anyMatch(c -> definedClassName.equals(c.getType()));
-    } else if (definedClassNames != null) {
-      return dexEntry.getDexFile().getClasses().stream()
-                     .anyMatch(c -> definedClassNames.contains(c.getType()));
-    } else {
-      return super.verify(dexEntry, decoder);
+    if (definedClassNames != null &&
+        dexEntry.getDexFile().getClasses().stream()
+                .noneMatch(c -> definedClassNames.contains(c.getType()))) {
+      return false;
     }
+    boolean result = super.verify(dexEntry, decoder);
+    if (unique && !result) {
+      throw new AbortException("Dex found but the filter didn't match");
+    }
+    return result;
+  }
+
+  private boolean shouldTerminate(DexEntry dexEntry) {
+    if (preferredDexOnly && preferredDexNames != null) {
+      return !preferredDexNames.contains(dexEntry.getDexName());
+    }
+    return false;
   }
 
   public static DexFilter ofDefinedClass(@Nonnull String clazz) {
     Objects.requireNonNull(clazz);
     return builder().setDefinedClasses(clazz).build();
-  }
-
-  public static DexFilter none() {
-    return builder().build();
   }
 
   public Builder toBuilder() {
@@ -91,7 +87,6 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
   public static class Builder extends BaseFilter.Builder<Builder, DexFilter> {
     private boolean preferredDexOnly;
-    private boolean preferredDexPass;
     private Set<String> definedClassNames;
     private List<String> preferredDexNames;
 
@@ -100,9 +95,16 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     private Builder(DexFilter instance) {
       super(instance);
       this.preferredDexOnly = instance.preferredDexOnly;
-      this.preferredDexPass = instance.preferredDexPass;
       this.preferredDexNames = instance.preferredDexNames;
       this.definedClassNames = instance.definedClassNames;
+    }
+
+    @Override
+    protected boolean isDefault() {
+      return super.isDefault() &&
+             !preferredDexOnly &&
+             definedClassNames == null &&
+             preferredDexNames == null;
     }
 
     @Override
@@ -112,36 +114,26 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
     @Override
     public DexFilter build() {
-      return new DexFilter(this);
+      return isDefault() ? MATCH_ALL : new DexFilter(this);
     }
 
-    public Builder setPreferredDexNames(@Nullable String... dexNames) {
-      if (dexNames == null || dexNames.length == 0)
-        this.preferredDexNames = null;
-      else
-        this.preferredDexNames = Arrays.asList(dexNames);
+    public Builder setPreferredDexNames(@Nonnull String... names) {
+      List<String> list = Utils.nonNullList(names);
+      this.preferredDexNames = list.isEmpty() ? null : Utils.optimizedList(list);
       return this;
     }
 
-    public Builder allowPreferredDexOnly(boolean prefDexOnly) {
+    public Builder allowPreferredDexOnly(boolean allow) {
       if (preferredDexNames == null) {
-        throw new IllegalStateException("Preferred Dex was not defined");
+        throw new IllegalStateException("Preferred dex was not specified");
       }
-      this.preferredDexOnly = prefDexOnly;
+      this.preferredDexOnly = allow;
       return this;
     }
 
-    public Builder skipPreferredDexCheck(boolean skipPrefDexCheck) {
-      if (preferredDexNames == null) {
-        throw new IllegalStateException("Preferred Dex was not defined");
-      }
-      this.preferredDexPass = skipPrefDexCheck;
-      return this;
-    }
-
-    public Builder setDefinedClasses(@Nullable String... classes) {
-      this.definedClassNames = classes == null || classes.length == 0 ? null :
-              new HashSet<>(DexUtils.javaToDexTypeName(Arrays.asList(classes)));
+    public Builder setDefinedClasses(@Nonnull String... classes) {
+      List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
+      this.definedClassNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
   }

@@ -40,14 +40,18 @@ final class DexOperation {
                          @Nonnull Enumerator<DexBackedDexFile> enumerator) {
     LazyDecoder<DexEntry> decoder = dexDecoder::decode;
     try {
-      for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredDexNames)) {
+      for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredList())) {
         if (dexFilter.verify(entry, decoder)) {
           DexBackedDexFile dexFile = entry.getDexFile();
           DexLog.d("Processing Dex: " + entry.getDexName());
-          if (enumerator.next(dexFile)) return;
+          if (enumerator.next(dexFile) || dexFilter.isUnique()) {
+            return;
+          }
         }
       }
-    } catch (AbortException ignore) {}
+    } catch (AbortException e) {
+      if (!e.isSilent()) DexLog.w("Aborted: " + e.getMessage());
+    }
   }
 
   public void onClasses(@Nonnull DexFilter dexFilter,
@@ -66,7 +70,7 @@ final class DexOperation {
           }
         }
       } catch (AbortException e) {
-        DexLog.d("Aborted: " + e.getMessage());
+        DexLog.w("Aborted: " + e.getMessage());
         return true;
       }
       return false;
@@ -88,7 +92,7 @@ final class DexOperation {
           }
         }
       } catch (AbortException e) {
-        DexLog.d("Aborted: " + e.getMessage());
+        DexLog.w("Aborted: " + e.getMessage());
       }
       return false;
     });

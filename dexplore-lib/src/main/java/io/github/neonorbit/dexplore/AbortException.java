@@ -17,11 +17,23 @@
 package io.github.neonorbit.dexplore;
 
 public final class AbortException extends RuntimeException{
-  public AbortException() {
-    this(null);
+  private final boolean silent;
+
+  private AbortException() {
+    super(null, null, false, false);
+    silent = true;
   }
 
   public AbortException(String msg) {
     super(msg, null, false, false);
+    silent = false;
+  }
+
+  public boolean isSilent() {
+    return silent;
+  }
+
+  public static AbortException silently() {
+    return new AbortException();
   }
 }

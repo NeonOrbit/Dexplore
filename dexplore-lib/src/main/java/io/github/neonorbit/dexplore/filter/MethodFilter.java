@@ -19,91 +19,67 @@ package io.github.neonorbit.dexplore.filter;
 import io.github.neonorbit.dexplore.AbortException;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public final class MethodFilter extends BaseFilter<DexBackedMethod> {
+  private static final int M1 = -1;
+  /** A {@code MethodFilter} instance that matches all dex methods. */
+  public static final MethodFilter MATCH_ALL = new MethodFilter(builder());
+
   private final int flag;
   private final int skipFlag;
   private final int paramSize;
   private final String returnType;
-  private final List<String> paramList;
-  private final Set<String> inMethodNames;
-
-  private final boolean isUnique;
-  private final String methodName;
+  private final Set<String> methodNames;
+  private final List<String> parameters;
 
   private MethodFilter(Builder builder) {
-    super(builder);
+    super(builder, Utils.isSingle(builder.methodNames) &&
+         (builder.parameters != null || builder.paramSize == 0));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
     this.paramSize = builder.paramSize;
-    this.paramList = builder.paramList;
+    this.parameters = builder.parameters;
     this.returnType = builder.returnType;
-    this.inMethodNames = builder.inMethodNames;
-    if (builder.inMethodNames == null ||
-        builder.inMethodNames.size() != 1) {
-      this.methodName = null;
-    } else {
-      this.methodName = builder.inMethodNames.iterator().next();
-    }
-    this.isUnique = methodName != null && (paramSize == 0 || paramList != null);
-  }
-
-  public boolean isUnique() {
-    return isUnique;
+    this.methodNames = builder.methodNames;
   }
 
   @Override
   public boolean verify(@Nonnull DexBackedMethod dexMethod,
                         @Nonnull LazyDecoder<DexBackedMethod> decoder) {
-    if(!checkMethodSignature(dexMethod)) return false;
+    if (this == MATCH_ALL) return true;
+    if (!checkMethodSignature(dexMethod)) return false;
     boolean result = (
-            (flag == 0 || (dexMethod.accessFlags & flag) == flag) &&
-            (skipFlag == 0 || (dexMethod.accessFlags & skipFlag) == 0) &&
+            (flag == M1 || (dexMethod.accessFlags & flag) == flag) &&
+            (skipFlag == M1 || (dexMethod.accessFlags & skipFlag) == 0) &&
             (returnType == null || returnType.equals(dexMethod.getReturnType())) &&
             super.verify(dexMethod, decoder)
     );
-    if (isUnique && !result) {
+    if (unique && !result) {
       throw new AbortException("Method found but the filter didn't match");
     }
     return result;
   }
 
   private boolean checkMethodSignature(DexBackedMethod dexMethod) {
-    if (!checkMethodName(dexMethod)) {
+    if (methodNames != null && !methodNames.contains(dexMethod.getName())) {
       return false;
-    } else if (paramList != null) {
+    } else if (parameters != null) {
       List<String> list = dexMethod.getParameterTypes();
-      return paramList.size() == list.size() && list.equals(paramList);
+      return parameters.size() == list.size() && list.equals(parameters);
     }
     return paramSize < 0 || dexMethod.getParameterTypes().size() == paramSize;
   }
 
-  private boolean checkMethodName(DexBackedMethod dexMethod) {
-    if (methodName != null)
-      return methodName.equals(dexMethod.getName());
-    if (inMethodNames != null)
-      return inMethodNames.contains(dexMethod.getName());
-    return true;
-  }
-
   public static MethodFilter ofMethod(@Nonnull String method,
-                                      @Nonnull String... paramList) {
-    return builder().setMethodNames(Objects.requireNonNull(method))
-                    .setParamList(Objects.requireNonNull(paramList))
-                    .build();
-  }
-
-  public static MethodFilter none() {
-    return builder().build();
+                                      @Nonnull List<String> params) {
+    return builder().setMethodNames(method).setParamList(params).build();
   }
 
   public Builder toBuilder() {
@@ -115,12 +91,12 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   }
 
   public static class Builder extends BaseFilter.Builder<Builder, MethodFilter> {
-    private int flag;
-    private int skipFlag;
-    private int paramSize = -1;
+    private int flag = M1;
+    private int skipFlag = M1;
+    private int paramSize = M1;
     private String returnType;
-    private List<String> paramList;
-    private Set<String> inMethodNames;
+    private Set<String> methodNames;
+    private List<String> parameters;
 
     public Builder() {}
 
@@ -129,9 +105,20 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
       this.flag = instance.flag;
       this.skipFlag = instance.skipFlag;
       this.paramSize = instance.paramSize;
-      this.paramList = instance.paramList;
+      this.parameters = instance.parameters;
       this.returnType = instance.returnType;
-      this.inMethodNames = instance.inMethodNames;
+      this.methodNames = instance.methodNames;
+    }
+
+    @Override
+    protected boolean isDefault() {
+      return super.isDefault()  &&
+             flag == M1         &&
+             skipFlag == M1     &&
+             paramSize == M1    &&
+             parameters == null &&
+             returnType == null &&
+             methodNames == null;
     }
 
     @Override
@@ -141,12 +128,12 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
 
     @Override
     public MethodFilter build() {
-      return new MethodFilter(this);
+      return isDefault() ? MATCH_ALL : new MethodFilter(this);
     }
 
-    public Builder setMethodNames(@Nullable String... methods) {
-      this.inMethodNames = methods == null || methods.length == 0 ? null :
-                           new HashSet<>(Arrays.asList(methods));
+    public Builder setMethodNames(@Nonnull String... names) {
+      List<String> list = Utils.nonNullList(names);
+      this.methodNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
 
@@ -173,23 +160,17 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     public Builder setReturnType(@Nullable String returnType) {
-      this.returnType = returnType == null ? null :
-                        DexUtils.javaToDexTypeName(returnType);
+      this.returnType = returnType == null ? null : DexUtils.javaToDexTypeName(returnType);
       return this;
     }
 
-    public Builder setParamSize(int paramSize) {
-      this.paramSize = paramSize;
+    public Builder setParamSize(int size) {
+      this.paramSize = size;
       return this;
     }
 
-    public Builder setParamList(@Nullable String... paramList) {
-      if (paramList == null)
-        this.paramList = null;
-      else if (paramList.length == 0)
-        this.paramSize = 0;
-      else
-        this.paramList = DexUtils.javaToDexTypeName(Arrays.asList(paramList));
+    public Builder setParamList(@Nullable List<String> params) {
+      this.parameters = params == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(params));
       return this;
     }
   }

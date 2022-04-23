@@ -44,7 +44,7 @@ final class DexploreImpl implements Dexplore {
   @Nullable
   public ClassData findClass(@Nonnull DexFilter dexFilter,
                              @Nonnull ClassFilter classFilter) {
-    return Utils.Lists.findFirst(classQuery(dexFilter, classFilter, 1));
+    return Utils.findFirst(classQuery(dexFilter, classFilter, 1));
   }
 
   @Nonnull
@@ -57,7 +57,7 @@ final class DexploreImpl implements Dexplore {
   public MethodData findMethod(@Nonnull DexFilter dexFilter,
                                @Nonnull ClassFilter classFilter,
                                @Nonnull MethodFilter methodFilter) {
-    return Utils.Lists.findFirst(methodQuery(dexFilter, classFilter, methodFilter, 1));
+    return Utils.findFirst(methodQuery(dexFilter, classFilter, methodFilter, 1));
   }
 
   @Nonnull
