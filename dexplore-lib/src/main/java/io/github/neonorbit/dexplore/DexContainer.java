@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.util.DexException;
 import org.jf.dexlib2.DexFileFactory;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.MultiDexContainer;
@@ -65,6 +66,10 @@ final class DexContainer {
       }));
     }
     return dexEntries;
+  }
+
+  String getPath() {
+    return this.path;
   }
 
   DexBackedDexFile loadDexFile(String dexName) throws IOException {

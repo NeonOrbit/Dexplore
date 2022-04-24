@@ -32,7 +32,7 @@ public final class DexOpcodes {
     return this.opcodes;
   }
 
-  static DexOpcodes none() {
+  static DexOpcodes auto() {
     return new DexOpcodes(null);
   }
 

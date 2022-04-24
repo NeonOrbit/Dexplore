@@ -27,33 +27,50 @@ import java.util.List;
 import java.util.StringJoiner;
 
 public final class ReferencePool {
+  private String toString;
+  private final static ReferencePool EMPTY_POOL;
   private final List<StringReferenceData> strings;
   private final List<TypeReferenceData> types;
   private final List<FieldReferenceData> fields;
   private final List<MethodReferenceData> methods;
 
-  ReferencePool(List<StringReferenceData> strings,
-                List<TypeReferenceData> types,
-                List<FieldReferenceData> fields,
-                List<MethodReferenceData> methods) {
+  static {
+    EMPTY_POOL = new ReferencePool(
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList()
+    );
+  }
+
+  private ReferencePool(List<StringReferenceData> strings,
+                        List<TypeReferenceData> types,
+                        List<FieldReferenceData> fields,
+                        List<MethodReferenceData> methods) {
     this.strings = Collections.unmodifiableList(strings);
     this.types = Collections.unmodifiableList(types);
     this.fields = Collections.unmodifiableList(fields);
     this.methods = Collections.unmodifiableList(methods);
   }
 
+  static ReferencePool build(List<StringReferenceData> strings,
+                             List<TypeReferenceData> types,
+                             List<FieldReferenceData> fields,
+                             List<MethodReferenceData> methods) {
+    if (strings.isEmpty() && types.isEmpty() &&
+        fields.isEmpty() && methods.isEmpty()) {
+      return EMPTY_POOL;
+    } else {
+      return new ReferencePool(strings, types, fields, methods);
+    }
+  }
+
   public static ReferencePool emptyPool() {
-    return new ReferencePool(Collections.emptyList(),
-                             Collections.emptyList(),
-                             Collections.emptyList(),
-                             Collections.emptyList());
+    return EMPTY_POOL;
   }
 
   public boolean isEmpty() {
-    return strings.isEmpty() &&
-           types.isEmpty()   &&
-           fields.isEmpty()  &&
-           methods.isEmpty();
+    return this == EMPTY_POOL;
   }
 
   @Nonnull
@@ -155,11 +172,14 @@ public final class ReferencePool {
 
   @Override
   public String toString() {
-    StringJoiner joiner = new StringJoiner("\n");
-    strings.forEach(s -> joiner.add(s.toString()));
-    types.forEach(t -> joiner.add(t.toString()));
-    fields.forEach(f -> joiner.add(f.toString()));
-    methods.forEach(m -> joiner.add(m.toString()));
-    return joiner.toString();
+    if (toString == null) {
+      StringJoiner joiner = new StringJoiner("\n");
+      strings.forEach(s -> joiner.add(s.toString()));
+      types.forEach(t -> joiner.add(t.toString()));
+      fields.forEach(f -> joiner.add(f.toString()));
+      methods.forEach(m -> joiner.add(m.toString()));
+      toString = joiner.toString();
+    }
+    return toString;
   }
 }

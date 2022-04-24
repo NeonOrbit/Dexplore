@@ -33,8 +33,4 @@ public abstract class DexLogger {
   public void warn(String msg) {
     LOGGER.log(Level.WARNING, msg);
   }
-
-  public void error(String msg, Throwable t) {
-    LOGGER.log(Level.SEVERE, msg, t);
-  }
 }

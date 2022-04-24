@@ -52,7 +52,7 @@ public final class DexDecoder {
   @Nonnull
   public ReferencePool decode(@Nonnull DexEntry dexEntry,
                               @Nonnull ReferenceTypes types) {
-    if (types.hasNone()) ReferencePool.emptyPool();
+    if (types.hasNone()) return ReferencePool.emptyPool();
     ReferencePool pool = cache ? dexCache.get(dexEntry, types) : null;
     if (pool == null) {
       pool = decodeDexReferences(dexEntry.getDexFile(), types, false);
@@ -64,11 +64,11 @@ public final class DexDecoder {
   @Nonnull
   public ReferencePool decode(@Nonnull DexBackedClassDef dexClass,
                               @Nonnull ReferenceTypes types) {
-    if (types.hasNone()) ReferencePool.emptyPool();
-    ReferencePool pool = cache ? dexCache.get(dexClass.getType(), types) : null;
+    if (types.hasNone()) return ReferencePool.emptyPool();
+    ReferencePool pool = cache ? classCache.get(dexClass, types) : null;
     if (pool == null) {
       pool = decodeClassReferences(dexClass, types, false);
-      if (cache) classCache.put(dexClass.getType(), types, pool);
+      if (cache) classCache.put(dexClass, types, pool);
     }
     return pool;
   }
@@ -97,7 +97,7 @@ public final class DexDecoder {
   private static ReferencePool decodeDexReferences(DexBackedDexFile dexFile,
                                                    ReferenceTypes types,
                                                    boolean resolve) {
-    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
+    final RefPoolRBuffer buffer = new RefPoolRBuffer(types);
     if (types.hasString()) dexFile.getStringReferences().forEach(buffer::add);
     if (types.hasField()) dexFile.getFieldSection().forEach(buffer::add);
     if (types.hasMethod()) dexFile.getMethodSection().forEach(buffer::add);
@@ -108,7 +108,7 @@ public final class DexDecoder {
   private static ReferencePool decodeClassReferences(DexBackedClassDef dexClass,
                                                      ReferenceTypes types,
                                                      boolean resolve) {
-    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
+    final RefPoolRBuffer buffer = new RefPoolRBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
     getMethods(dexClass, types).forEach(dexMethod -> {
       if (!AccessFlags.SYNTHETIC.isSet(dexMethod.accessFlags)) {
@@ -128,7 +128,7 @@ public final class DexDecoder {
 
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
                                                  ReferenceTypes types,
-                                                 RefsPoolBuffer pool) {
+                                                 RefPoolRBuffer pool) {
     if (!types.hasString()) return;
     dexClass.getStaticFields().forEach(field -> {
       EncodedValue value = field.getInitialValue();
@@ -141,14 +141,14 @@ public final class DexDecoder {
   private static ReferencePool decodeMethodReferences(DexBackedMethod dexMethod,
                                                       ReferenceTypes types,
                                                       boolean resolve) {
-    RefsPoolBuffer buffer = new RefsPoolBuffer(types);
+    RefPoolRBuffer buffer = new RefPoolRBuffer(types);
     decodeMethodReferences(dexMethod, types, buffer);
     return buffer.getPool(resolve);
   }
 
   private static void decodeMethodReferences(DexBackedMethod dexMethod,
                                              ReferenceTypes types,
-                                             RefsPoolBuffer pool) {
+                                             RefPoolRBuffer pool) {
     MethodImplementation implementation = dexMethod.getImplementation();
     if (implementation == null || types.hasNone()) return;
     for (Instruction instruction : implementation.getInstructions()) {
@@ -163,7 +163,7 @@ public final class DexDecoder {
 
   private static void decodeReference(Reference reference,
                                       ReferenceTypes types,
-                                      RefsPoolBuffer pool) {
+                                      RefPoolRBuffer pool) {
     try {
       if (reference instanceof StringReference) {
         if (types.hasString()) pool.add(((StringReference) reference));

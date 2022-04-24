@@ -110,6 +110,25 @@ public final class MethodReferenceData implements DexReferenceData {
            );
   }
 
+  /**
+   * Signature: class.<b>method</b>(param1,param2,...paramN):returnType
+   * <p> Example: com.util.Time.<b>setNow</b>(int,java.lang.String,int):int </p>
+   *
+   * @return method signature
+   */
+  public String getSignature() {
+    if (signature == null) {
+      MethodReference ref = getData();
+      String name = ref.getName();
+      String from = details ? ref.getDefiningClass() : "[blank]";
+      String type = details ? ref.getReturnType() : "[blank]";
+      List<? extends CharSequence> param = details ? ref.getParameterTypes() :
+                                           Collections.singletonList("[blank]");
+      signature = DexUtils.getMethodSignature(from, name, param, type);
+    }
+    return signature;
+  }
+
   @SuppressWarnings("unchecked")
   private static List<String> getParamList(MethodReference reference) {
     List<? extends CharSequence> list = reference.getParameterTypes();
@@ -132,20 +151,10 @@ public final class MethodReferenceData implements DexReferenceData {
   }
 
   /**
-   * Structure: className.methodName(param1,param2...paramN):returnType
-   * <br><br>
-   * Example: java.lang.String.indexOf(java.lang.String,int):int
+   * Equivalent to {@link #getSignature()}
    */
   @Override
   public String toString() {
-    if (signature == null) {
-      MethodReference ref = getData();
-      String name = ref.getName();
-      String from = details ? ref.getDefiningClass() : "[blank]";
-      String type = details ? ref.getReturnType() : "[blank]";
-      String para = details ? String.join(",", ref.getParameterTypes()) : "[blank]";
-      signature = DexUtils.getMethodSignature(from, name, Collections.singleton(para), type);
-    }
-    return signature;
+    return getSignature();
   }
 }

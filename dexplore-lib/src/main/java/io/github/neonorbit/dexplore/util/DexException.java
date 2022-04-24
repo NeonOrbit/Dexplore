@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.neonorbit.dexplore;
+package io.github.neonorbit.dexplore.util;
 
 public final class DexException extends RuntimeException {
   public DexException() {

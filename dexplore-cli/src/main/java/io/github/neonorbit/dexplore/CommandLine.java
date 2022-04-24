@@ -132,7 +132,7 @@ final class CommandLine extends JCommander {
                         str += '\n';
                         str += printDetails.equals("m") ?
                                  flattenReferencePool(d.getReferencePool()) :
-                                 flattenReferencePool(d.getClassResult().getReferencePool());
+                                 flattenReferencePool(d.getClassData().getReferencePool());
                         str += '\n';
                       }
                       return str;

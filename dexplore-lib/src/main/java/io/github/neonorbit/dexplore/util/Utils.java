@@ -56,6 +56,17 @@ public final class Utils {
     return Arrays.asList(a);
   }
 
+  public static <T extends Comparable<? super T>> int compare(T[] a, T[] b) {
+    if (a == b) return 0;
+    int length = Math.min(a.length, b.length);
+    for (int i = 0; i < length; i++) {
+      if (a[i] == b[i]) continue;
+      int compare = a[i].compareTo(b[i]);
+      if (compare != 0) return compare;
+    }
+    return a.length - b.length;
+  }
+
   public static boolean isValidName(List<String> names) {
     return names.stream().allMatch(Utils::isValidName);
   }

@@ -56,8 +56,4 @@ public final class DexLog {
   public static void w(String msg) {
     if (enabled) DexLog.current.warn(msg);
   }
-
-  public static void e(String msg, Throwable t) {
-    if (enabled) DexLog.current.error(msg, t);
-  }
 }

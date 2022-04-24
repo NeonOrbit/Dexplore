@@ -95,6 +95,23 @@ public final class FieldReferenceData implements DexReferenceData {
            );
   }
 
+  /**
+   * Signature: className.<b>fieldName</b>:fieldType
+   * <p>Example: java.lang.Byte.<b>SIZE</b>:int</p>
+   *
+   * @return field signature
+   */
+  public String getSignature() {
+    if (signature == null) {
+      FieldReference ref = getData();
+      String name = ref.getName();
+      String from = details ? ref.getDefiningClass() : "[blank]";
+      String type = details ? ref.getType() : "[blank]";
+      signature = DexUtils.getFieldSignature(from, name, type);
+    }
+    return signature;
+  }
+
   @Override
   public int hashCode() {
     return getData().hashCode();
@@ -107,19 +124,10 @@ public final class FieldReferenceData implements DexReferenceData {
   }
 
   /**
-   * Structure: className.fieldName:fieldType
-   * <br><br>
-   * Example: java.lang.Byte.SIZE:int
+   * Equivalent to {@link #getSignature()}
    */
   @Override
   public String toString() {
-    if (signature == null) {
-      FieldReference ref = getData();
-      String name = ref.getName();
-      String from = details ? ref.getDefiningClass() : "[blank]";
-      String type = details ? ref.getType() : "[blank]";
-      signature = DexUtils.getFieldSignature(from, name, type);
-    }
-    return signature;
+    return getSignature();
   }
 }

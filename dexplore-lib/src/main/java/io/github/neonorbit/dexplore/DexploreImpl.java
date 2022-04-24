@@ -16,19 +16,20 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.util.Utils;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.MethodData;
+import io.github.neonorbit.dexplore.result.Results;
+import io.github.neonorbit.dexplore.util.Operator;
+import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 final class DexploreImpl implements Dexplore {
   private final DexOperation dexOperation;
@@ -49,8 +50,8 @@ final class DexploreImpl implements Dexplore {
 
   @Nonnull
   public List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
-                                     @Nonnull ClassFilter classFilter, int maximum) {
-    return classQuery(dexFilter, classFilter, maximum);
+                                     @Nonnull ClassFilter classFilter, int limit) {
+    return classQuery(dexFilter, classFilter, limit);
   }
 
   @Nullable
@@ -63,45 +64,45 @@ final class DexploreImpl implements Dexplore {
   @Nonnull
   public List<MethodData> findMethods(@Nonnull DexFilter dexFilter,
                                       @Nonnull ClassFilter classFilter,
-                                      @Nonnull MethodFilter methodFilter, int maximum) {
-    return methodQuery(dexFilter, classFilter, methodFilter, maximum);
+                                      @Nonnull MethodFilter methodFilter, int limit) {
+    return methodQuery(dexFilter, classFilter, methodFilter, limit);
   }
 
-  public void onClassSearchResults(@Nonnull DexFilter dexFilter,
-                                   @Nonnull ClassFilter classFilter,
-                                   @Nonnull Enumerator<ClassData> enumerator) {
+  public void onClassResults(@Nonnull DexFilter dexFilter,
+                             @Nonnull ClassFilter classFilter,
+                             @Nonnull Operator<ClassData> operator) {
     dexOperation.onClasses(dexFilter, classFilter,
-                           dexClass -> enumerator.next(ClassData.from(dexClass)));
+                           dexClass -> operator.operate(Results.ofClass(dexClass)));
   }
 
-  public void onMethodSearchResults(@Nonnull DexFilter dexFilter,
-                                    @Nonnull ClassFilter classFilter,
-                                    @Nonnull MethodFilter methodFilter,
-                                    @Nonnull Enumerator<MethodData> enumerator) {
+  public void onMethodResults(@Nonnull DexFilter dexFilter,
+                              @Nonnull ClassFilter classFilter,
+                              @Nonnull MethodFilter methodFilter,
+                              @Nonnull Operator<MethodData> operator) {
     dexOperation.onMethods(dexFilter, classFilter, methodFilter,
-                           dexMethod -> enumerator.next(MethodData.from(dexMethod)));
+                           dexMethod -> operator.operate(Results.ofMethod(dexMethod)));
   }
 
   private List<ClassData> classQuery(DexFilter dexFilter,
-                                     ClassFilter classFilter, int maximum) {
+                                     ClassFilter classFilter, int limit) {
     List<ClassData> results = new ArrayList<>();
     dexOperation.onClasses(dexFilter, classFilter, dexClass -> {
-      results.add(ClassData.from(dexClass)); return (results.size() >= maximum);
+      results.add(Results.ofClass(dexClass));
+      return (limit > 0 && results.size() >= limit);
     });
     return results;
   }
 
   private List<MethodData> methodQuery(DexFilter dexFilter,
                                        ClassFilter classFilter,
-                                       MethodFilter methodFilter, int maximum) {
-    Map<String, ClassData> shared = new HashMap<>();
+                                       MethodFilter methodFilter, int limit) {
     List<MethodData> results = new ArrayList<>();
+    AtomicReference<ClassData> shared = new AtomicReference<>();
     dexOperation.onMethods(dexFilter, classFilter, methodFilter, dexMethod -> {
-      String clazz = dexMethod.classDef.getType();
-      MethodData result = MethodData.from(dexMethod, shared.get(clazz));
-      shared.put(clazz, result.getClassResult());
-      results.add(result);
-      return (results.size() >= maximum);
+      MethodData method = Results.ofMethod(dexMethod, shared.get());
+      shared.set(method.getClassData());
+      results.add(method);
+      return (limit > 0 && results.size() >= limit);
     });
     return results;
   }

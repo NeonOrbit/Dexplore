@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 final class PairedKeyMap<T> {
   private static class Key {
@@ -30,7 +31,7 @@ final class PairedKeyMap<T> {
 
     @Override
     public int hashCode() {
-      return 31 * first.hashCode() + second.hashCode();
+      return Objects.hash(first, second);
     }
 
     @Override

@@ -16,39 +16,70 @@
 
 package io.github.neonorbit.dexplore.result;
 
-import io.github.neonorbit.dexplore.DexDecoder;
-import io.github.neonorbit.dexplore.filter.ReferenceTypes;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.ReferencePool;
-import org.jf.dexlib2.dexbacked.DexBackedMethod;
+import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class MethodData implements Comparable<MethodData> {
-  @Nonnull public  final String clazz;
-  @Nonnull public  final String method;
-  @Nonnull public  final String[] params;
-  @Nonnull public  final String returnType;
-  @Nonnull private final ClassData classData;
-  @Nonnull private final ReferencePool referencePool;
+public final class MethodData implements Comparable<MethodData> {
+  @Nonnull public final String clazz;
+  @Nonnull public final String method;
+  @Nonnull public final String[] params;
+  @Nonnull public final String returnType;
 
-  protected MethodData(@Nonnull String clazz,
-                       @Nonnull String method,
-                       @Nonnull String[] params,
-                       @Nonnull String returnType,
-                       @Nonnull ClassData classData,
-                       @Nonnull ReferencePool referencePool) {
+  private ClassData classData;
+  private ReferencePool referencePool;
+
+  MethodData(@Nonnull String clazz,
+             @Nonnull String method,
+             @Nonnull String[] params,
+             @Nonnull String returnType) {
     this.clazz = clazz;
     this.method = method;
     this.params = params;
     this.returnType = returnType;
+  }
+
+  void setClassData(ClassData classData) {
     this.classData = classData;
+  }
+
+  void setReferencePool(ReferencePool referencePool) {
     this.referencePool = referencePool;
+  }
+
+  @Nonnull
+  public ClassData getClassData() {
+    if (classData == null) {
+      classData = ClassData.deserialize(clazz);
+    }
+    return classData;
+  }
+
+  @Nonnull
+  public ReferencePool getReferencePool() {
+    if (referencePool == null) {
+      referencePool = ReferencePool.emptyPool();
+    }
+    return referencePool;
+  }
+
+  /**
+   * Signature: class.<b>method</b>(param1,param2,...paramN):returnType
+   * <p> Example: com.util.Time.<b>setNow</b>(int,java.lang.String,int):int </p>
+   *
+   * @return method signature
+   */
+  public String getSignature() {
+    List<String> list = Arrays.asList(params);
+    return DexUtils.getMethodSignature(clazz, method, list, returnType);
   }
 
   @Nullable
@@ -65,38 +96,6 @@ public class MethodData implements Comparable<MethodData> {
   }
 
   @Nonnull
-  public static MethodData from(@Nonnull DexBackedMethod dexMethod) {
-    String signature = DexUtils.getMethodSignature(dexMethod);
-    return ClassData.from(dexMethod.classDef).getMethod(signature);
-  }
-
-  @Nonnull
-  public static MethodData from(@Nonnull DexBackedMethod dexMethod,
-                                @Nullable ClassData sharedInstance) {
-    if (sharedInstance == null) return from(dexMethod);
-    final String className = DexUtils.dexClassToJavaTypeName(dexMethod.classDef);
-    if (!sharedInstance.clazz.equals(className)) {
-      throw new IllegalArgumentException("Shared instance must be from the same class");
-    }
-    return new MethodData(className,
-                          dexMethod.getName(),
-                          DexUtils.getJavaParamList(dexMethod).toArray(new String[0]),
-                          DexUtils.dexToJavaTypeName(dexMethod.getReturnType()),
-                          sharedInstance,
-                          DexDecoder.decodeFully(dexMethod));
-  }
-
-  @Nonnull
-  public ClassData getClassResult() {
-    return classData;
-  }
-
-  @Nonnull
-  public ReferencePool getReferencePool() {
-    return referencePool;
-  }
-
-  @Nonnull
   public String serialize() {
     StringJoiner joiner = new StringJoiner(":");
     joiner.add(clazz).add(method);
@@ -107,30 +106,37 @@ public class MethodData implements Comparable<MethodData> {
     return joiner.toString();
   }
 
-  @Nullable
+  @Nonnull
   public static MethodData deserialize(@Nonnull String serialized) {
-    try {
-      final String[] raw = serialized.split(":");
-      if (raw.length >= 3) {
-        final int pIndex = Math.min(2, raw.length - 1);
-        final String[] params = Arrays.copyOfRange(raw, pIndex, raw.length - 1);
-        return new MethodData(raw[0], raw[1], params,
-                              raw[raw.length - 1],
-                              ClassData.deserialize(raw[0]),
-                              ReferencePool.emptyPool());
+    final String[] parts = serialized.split(":");
+    if (parts.length >= 3) {
+      final int pIndex = Math.min(2, parts.length - 1);
+      final String from = parts[0], name = parts[1], type = parts[parts.length - 1];
+      final String[] params = Arrays.copyOfRange(parts, pIndex, parts.length - 1);
+      if (Utils.isValidName(Arrays.asList(from, type)) &&
+          Utils.isValidName(Arrays.asList(params))) {
+        return new MethodData(from, name, params, type);
       }
-    } catch (Exception ignore) {}
-    return null;
+    }
+    throw new IllegalArgumentException();
   }
 
   @Override
-  public int compareTo(MethodData o) {
-    return this.toString().compareTo(o.toString());
+  public int compareTo(@Nonnull MethodData o) {
+    int compare;
+    if (this == o) return 0;
+    compare = this.clazz.compareTo(o.clazz);
+    if (compare != 0) return compare;
+    compare = this.method.compareTo(o.method);
+    if (compare != 0) return compare;
+    compare = this.returnType.compareTo(o.returnType);
+    if (compare != 0) return compare;
+    return Utils.compare(this.params, o.params);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(clazz, method, Arrays.hashCode(params), returnType);
+    return Objects.hash(clazz, method, returnType, Arrays.hashCode(params));
   }
 
   @Override
@@ -146,8 +152,11 @@ public class MethodData implements Comparable<MethodData> {
     return false;
   }
 
+  /**
+   * Equivalent to {@link #getSignature()}
+   */
   @Override
   public String toString() {
-    return DexUtils.getMethodSignature(clazz, method, Arrays.asList(params), returnType);
+    return getSignature();
   }
 }

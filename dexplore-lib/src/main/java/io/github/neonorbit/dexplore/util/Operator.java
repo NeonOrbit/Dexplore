@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package io.github.neonorbit.dexplore;
+package io.github.neonorbit.dexplore.util;
 
-/**
- * An enumerator that can be terminated on demand.
- * <br>
- * @see #next(Object)
- */
-public interface Enumerator<T> {
+public interface Operator<T> {
   /**
-   * @param input the input to operate on
-   * @return a boolean that indicates whether the operation should be terminated
+   * @param item the item to operate on.
+   * @return {@code true} to terminate, {@code false} to continue.
    */
-  boolean next(T input);
+  boolean operate(T item);
 }

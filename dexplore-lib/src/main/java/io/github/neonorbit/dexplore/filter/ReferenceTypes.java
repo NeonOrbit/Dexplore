@@ -43,6 +43,7 @@ public final class ReferenceTypes {
     ALL, NONE, DIRECT, VIRTUAL
   }
 
+  private int hash;
   private final int flags;
   private final Scope scope;
 
@@ -89,7 +90,13 @@ public final class ReferenceTypes {
 
   @Override
   public int hashCode() {
-    return 31 * flags + scope.hashCode();
+    if (hash == 0) {
+      int h = 1;
+      h = 31 * h + flags;
+      h = 31 * h + scope.ordinal();
+      this.hash = h;
+    }
+    return hash;
   }
 
   @Override
@@ -98,9 +105,14 @@ public final class ReferenceTypes {
     if (obj instanceof ReferenceTypes) {
       ReferenceTypes another = (ReferenceTypes) obj;
       return this.flags == another.flags &&
-             this.scope == another.scope;
+             this.scope.ordinal() == another.scope.ordinal();
     }
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return "S" + scope.ordinal() + "F" + flags;
   }
 
   public static ReferenceTypes all() {

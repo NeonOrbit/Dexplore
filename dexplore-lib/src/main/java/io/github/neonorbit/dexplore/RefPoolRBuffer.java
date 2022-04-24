@@ -30,7 +30,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-final class RefsPoolBuffer {
+final class RefPoolRBuffer {
   private boolean needsCopy;
   private List<StringReferenceData> strings;
   private List<TypeReferenceData> types;
@@ -38,7 +38,7 @@ final class RefsPoolBuffer {
   private List<MethodReferenceData> methods;
   private final boolean fieldDetails, methodDetails;
 
-  RefsPoolBuffer(ReferenceTypes types) {
+  RefPoolRBuffer(ReferenceTypes types) {
     this.strings = new ArrayList<>();
     this.types = new ArrayList<>();
     this.fields = new ArrayList<>();
@@ -68,7 +68,7 @@ final class RefsPoolBuffer {
   @Nonnull
   public ReferencePool getPool() {
     needsCopy = true;
-    return new ReferencePool(strings, types, fields, methods);
+    return ReferencePool.build(strings, types, fields, methods);
   }
 
   @Nonnull

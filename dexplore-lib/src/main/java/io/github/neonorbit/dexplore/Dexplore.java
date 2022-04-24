@@ -21,11 +21,11 @@ import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.MethodData;
+import io.github.neonorbit.dexplore.util.Operator;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Objects;
 
 public interface Dexplore {
   @Nullable
@@ -34,7 +34,7 @@ public interface Dexplore {
 
   @Nonnull
   List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
-                              @Nonnull ClassFilter classFilter, int maximum);
+                              @Nonnull ClassFilter classFilter, int limit);
 
   @Nullable
   MethodData findMethod(@Nonnull DexFilter dexFilter,
@@ -44,14 +44,14 @@ public interface Dexplore {
   @Nonnull
   List<MethodData> findMethods(@Nonnull DexFilter dexFilter,
                                @Nonnull ClassFilter classFilter,
-                               @Nonnull MethodFilter methodFilter, int maximum);
+                               @Nonnull MethodFilter methodFilter, int limit);
 
-  void onClassSearchResults(@Nonnull DexFilter dexFilter,
-                            @Nonnull ClassFilter classFilter,
-                            @Nonnull Enumerator<ClassData> enumerator);
+  void onClassResults(@Nonnull DexFilter dexFilter,
+                      @Nonnull ClassFilter classFilter,
+                      @Nonnull Operator<ClassData> operator);
 
-  void onMethodSearchResults(@Nonnull DexFilter dexFilter,
-                             @Nonnull ClassFilter classFilter,
-                             @Nonnull MethodFilter methodFilter,
-                             @Nonnull Enumerator<MethodData> enumerator);
+  void onMethodResults(@Nonnull DexFilter dexFilter,
+                       @Nonnull ClassFilter classFilter,
+                       @Nonnull MethodFilter methodFilter,
+                       @Nonnull Operator<MethodData> operator);
 }

@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 public final class DexUtils {
   @Nonnull
   public static String javaToDexTypeName(@Nonnull String javaTypeName) {
+    if (javaTypeName.isEmpty()) return javaTypeName;
     return ReflectionUtils.javaToDexName(javaTypeName);
   }
 
@@ -41,6 +42,7 @@ public final class DexUtils {
 
   @Nonnull
   public static String dexToJavaTypeName(@Nonnull String dexTypeName) {
+    if (dexTypeName.isEmpty()) return dexTypeName;
     return !(dexTypeName.charAt(0) == 'L') ? ReflectionUtils.dexToJavaName(dexTypeName) :
              dexTypeName.substring(1, dexTypeName.length() - 1).replace('/', '.');
   }
@@ -77,8 +79,8 @@ public final class DexUtils {
   }
 
   @Nonnull
-  public static List<String> getJavaParamList(@Nonnull DexBackedMethod dexMethod) {
-    return dexToJavaTypeName(dexMethod.getParameterTypes());
+  public static String[] getJavaParams(@Nonnull DexBackedMethod dexMethod) {
+    return dexToJavaTypeName(dexMethod.getParameterTypes()).toArray(new String[0]);
   }
 
   @Nonnull

@@ -16,11 +16,13 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.util.DexException;
 import io.github.neonorbit.dexplore.util.DexLog;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.Objects;
 
 public final class DexEntry implements Comparable<DexEntry> {
   private final String dexName;
@@ -60,17 +62,29 @@ public final class DexEntry implements Comparable<DexEntry> {
 
   @Override
   public int compareTo(@Nonnull DexEntry o) {
-    return this.dexName.compareTo(o.dexName);
+    int compare = this.dexName.compareTo(o.dexName);
+    if (compare != 0) return compare;
+    return this.container.getPath().compareTo(o.container.getPath());
   }
 
   @Override
   public int hashCode() {
-    return this.dexName.hashCode();
+    return Objects.hash(dexName, container.getPath());
   }
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof DexEntry) &&
-           (this.dexName.equals(((DexEntry)obj).dexName));
+    if (this == obj) return true;
+    if (obj instanceof DexEntry) {
+      DexEntry another = (DexEntry) obj;
+      return this.dexName.equals(another.dexName) &&
+             this.container.getPath().equals(another.container.getPath());
+    }
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return container.getPath() + ":" + dexName;
   }
 }
