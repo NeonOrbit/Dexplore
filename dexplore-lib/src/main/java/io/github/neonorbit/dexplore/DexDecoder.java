@@ -40,13 +40,13 @@ import java.util.Collections;
 
 public final class DexDecoder {
   private final boolean cache;
-  private final PairedKeyMap<ReferencePool> dexCache;
-  private final PairedKeyMap<ReferencePool> classCache;
+  private final RefPoolRCache<DexEntry> dexCache;
+  private final RefPoolRCache<DexBackedClassDef> classCache;
 
   DexDecoder(DexOptions options) {
     this.cache = options.enableCache;
-    this.dexCache = new PairedKeyMap<>();
-    this.classCache = new PairedKeyMap<>();
+    this.dexCache = new RefPoolRCache<>();
+    this.classCache = new RefPoolRCache<>();
   }
 
   @Nonnull
