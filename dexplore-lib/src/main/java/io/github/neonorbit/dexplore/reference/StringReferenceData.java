@@ -33,6 +33,12 @@ public final class StringReferenceData implements DexReferenceData {
     return new StringReferenceData(reference);
   }
 
+  public static StringReferenceData build(String value) {
+    StringReferenceData data = build(new ImmutableStringReference(value));
+    data.resolved = true;
+    return data;
+  }
+
   private StringReference getData() {
     if (!resolved) {
       resolved = true;

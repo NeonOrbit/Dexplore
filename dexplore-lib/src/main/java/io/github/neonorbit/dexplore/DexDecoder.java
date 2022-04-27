@@ -17,7 +17,8 @@
 package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
-import org.jf.dexlib2.AccessFlags;
+import io.github.neonorbit.dexplore.util.DexLog;
+import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
@@ -37,6 +38,7 @@ import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
+import java.util.HashSet;
 
 public final class DexDecoder {
   private final boolean cache;
@@ -98,7 +100,12 @@ public final class DexDecoder {
                                                    ReferenceTypes types,
                                                    boolean resolve) {
     final RefPoolRBuffer buffer = new RefPoolRBuffer(types);
-    if (types.hasString()) dexFile.getStringReferences().forEach(buffer::add);
+    if (types.hasString()) {
+      HashSet<String> rm = new HashSet<>(dexFile.getTypeSection());
+      for (FieldReference r: dexFile.getFieldSection()) rm.add(r.getName());
+      for (MethodReference r: dexFile.getMethodSection()) rm.add(r.getName());
+      dexFile.getStringSection().stream().filter(s -> !rm.contains(s)).forEach(buffer::add);
+    }
     if (types.hasField()) dexFile.getFieldSection().forEach(buffer::add);
     if (types.hasMethod()) dexFile.getMethodSection().forEach(buffer::add);
     if (types.hasTypeDes()) dexFile.getTypeReferences().forEach(buffer::add);
@@ -111,26 +118,26 @@ public final class DexDecoder {
     final RefPoolRBuffer buffer = new RefPoolRBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
     getMethods(dexClass, types).forEach(dexMethod -> {
-      if (!AccessFlags.SYNTHETIC.isSet(dexMethod.accessFlags)) {
-        decodeMethodReferences(dexMethod, types, buffer);
-      }
+      decodeMethodReferences(dexMethod, types, buffer);
     });
     return buffer.getPool(resolve);
   }
 
-  private static Iterable<? extends DexBackedMethod> getMethods(DexBackedClassDef dexClass,
-                                                                ReferenceTypes types) {
-    return (ReferenceTypes.Scope.ALL == types.getScope() ? dexClass.getMethods() :
-            ReferenceTypes.Scope.DIRECT == types.getScope() ? dexClass.getDirectMethods() :
-            ReferenceTypes.Scope.VIRTUAL == types.getScope() ? dexClass.getVirtualMethods() :
-                                                                    Collections.emptyList());
+  private static Iterable<DexBackedMethod> getMethods(DexBackedClassDef dexClass,
+                                                      ReferenceTypes types) {
+    switch (types.getScope()) {
+      default: return Collections.emptyList();
+      case ALL: return DexUtils.dexMethods(dexClass);
+      case DIRECT: return DexUtils.dexDirectMethods(dexClass);
+      case VIRTUAL: return DexUtils.dexVirtualMethods(dexClass);
+    }
   }
 
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
                                                  ReferenceTypes types,
                                                  RefPoolRBuffer pool) {
     if (!types.hasString()) return;
-    dexClass.getStaticFields().forEach(field -> {
+    DexUtils.dexStaticFields(dexClass).forEach(field -> {
       EncodedValue value = field.getInitialValue();
       if (value != null && value.getValueType() == ValueType.STRING) {
         pool.add(new ImmutableStringReference(((StringEncodedValue)value).getValue()));
@@ -165,6 +172,7 @@ public final class DexDecoder {
                                       ReferenceTypes types,
                                       RefPoolRBuffer pool) {
     try {
+      reference.validateReference();
       if (reference instanceof StringReference) {
         if (types.hasString()) pool.add(((StringReference) reference));
       } else if (reference instanceof FieldReference) {
@@ -174,6 +182,8 @@ public final class DexDecoder {
       } else if (reference instanceof TypeReference) {
         if (types.hasTypeDes()) pool.add(((TypeReference) reference));
       }
-    } catch (Exception ignore) { }
+    } catch (Reference.InvalidReferenceException e) {
+      DexLog.w(e.getMessage());
+    }
   }
 }

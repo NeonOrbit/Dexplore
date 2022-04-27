@@ -21,8 +21,8 @@ import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexLog;
+import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Operator;
-import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
@@ -63,9 +63,8 @@ final class DexOperation {
     LazyDecoder<DexBackedClassDef> decoder = dexDecoder::decode;
     onDexFiles(dexFilter, dexFile -> {
       try {
-        for (DexBackedClassDef dexClass : dexFile.getClasses()) {
-          if (!AccessFlags.SYNTHETIC.isSet(dexClass.getAccessFlags()) &&
-               classFilter.verify(dexClass, decoder)) {
+        for (DexBackedClassDef dexClass : DexUtils.dexClasses(dexFile)) {
+          if (classFilter.verify(dexClass, decoder)) {
             if (operator.operate(dexClass) || unique) {
               return true;
             }
@@ -86,9 +85,8 @@ final class DexOperation {
     LazyDecoder<DexBackedMethod> decoder = dexDecoder::decode;
     onClasses(dexFilter, classFilter, dexClass -> {
       try {
-        for (DexBackedMethod dexMethod : dexClass.getMethods()) {
-          if (!AccessFlags.SYNTHETIC.isSet(dexMethod.accessFlags) &&
-               methodFilter.verify(dexMethod, decoder)) {
+        for (DexBackedMethod dexMethod : DexUtils.dexMethods(dexClass)) {
+          if (methodFilter.verify(dexMethod, decoder)) {
             if (operator.operate(dexMethod)) return true;
             if (methodFilter.isUnique()) break;
           }

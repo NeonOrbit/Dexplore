@@ -2,7 +2,6 @@ package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.util.DexUtils;
-import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
@@ -39,11 +38,9 @@ public final class Results {
     String clazz = DexUtils.dexClassToJavaTypeName(dexClass);
     ClassData instance = new ClassData(clazz);
     Map<String, MethodData> map = new HashMap<>();
-    for (DexBackedMethod dexMethod : dexClass.getMethods()) {
-      if (!AccessFlags.SYNTHETIC.isSet(dexMethod.accessFlags)) {
-        MethodData method = buildMethodData(dexMethod, instance);
-        map.put(method.getSignature(), method);
-      }
+    for (DexBackedMethod dexMethod : DexUtils.dexMethods(dexClass)) {
+      MethodData method = buildMethodData(dexMethod, instance);
+      map.put(method.getSignature(), method);
     }
     instance.setMethods(Collections.unmodifiableMap(map));
     instance.setReferencePool(DexDecoder.decodeFully(dexClass));

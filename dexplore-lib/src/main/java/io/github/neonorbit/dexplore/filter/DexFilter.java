@@ -16,11 +16,13 @@
 
 package io.github.neonorbit.dexplore.filter;
 
-import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.DexEntry;
 import io.github.neonorbit.dexplore.LazyDecoder;
+import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
+import org.jf.dexlib2.dexbacked.DexBackedClassDef;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -53,11 +55,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     if (shouldTerminate(dexEntry)) {
       throw AbortException.silently();
     }
-    if (definedClassNames != null &&
-        dexEntry.getDexFile().getClasses().stream()
-                .noneMatch(c -> definedClassNames.contains(c.getType()))) {
-      return false;
-    }
+    if (!checkDefinedClasses(dexEntry)) return false;
     boolean result = super.verify(dexEntry, decoder);
     if (unique && !result) {
       throw new AbortException("Dex found but the filter didn't match");
@@ -68,6 +66,15 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   private boolean shouldTerminate(DexEntry dexEntry) {
     if (preferredDexOnly && preferredDexNames != null) {
       return !preferredDexNames.contains(dexEntry.getDexName());
+    }
+    return false;
+  }
+
+  private boolean checkDefinedClasses(DexEntry dexEntry) {
+    if (definedClassNames == null) return true;
+    DexBackedDexFile dex = dexEntry.getDexFile();
+    for (DexBackedClassDef c : DexUtils.dexClasses(dex)) {
+      if (definedClassNames.contains(c.getType())) return true;
     }
     return false;
   }

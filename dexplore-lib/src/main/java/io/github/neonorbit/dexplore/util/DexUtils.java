@@ -16,8 +16,10 @@
 
 package io.github.neonorbit.dexplore.util;
 
+import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.analysis.reflection.util.ReflectionUtils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
@@ -111,5 +113,58 @@ public final class DexUtils {
                                           @Nonnull Iterable<? extends CharSequence> params,
                                           @Nonnull String returnType) {
     return definingClass + '.' + methodName + '(' + String.join(",", params) + "):" + returnType;
+  }
+
+  public static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass) {
+    return dexMethods(dexClass, 0);
+  }
+
+  public static Iterable<DexBackedMethod> dexDirectMethods(DexBackedClassDef dexClass) {
+    return dexMethods(dexClass, 1);
+  }
+
+  public static Iterable<DexBackedMethod> dexVirtualMethods(DexBackedClassDef dexClass) {
+    return dexMethods(dexClass, 2);
+  }
+
+  public static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass) {
+    return dexFields(dexClass, 0);
+  }
+
+  public static Iterable<DexBackedField> dexStaticFields(DexBackedClassDef dexClass) {
+    return dexFields(dexClass, 1);
+  }
+  public static Iterable<DexBackedField> dexInstanceFields(DexBackedClassDef dexClass) {
+    return dexFields(dexClass, 2);
+  }
+
+  private static boolean isValid(int flag) {
+    return !AccessFlags.SYNTHETIC.isSet(flag);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Iterable<DexBackedClassDef> dexClasses(DexBackedDexFile dexFile) {
+    Iterable<DexBackedClassDef> it = (Iterable<DexBackedClassDef>) dexFile.getClasses();
+    return new FilteredIterable<>(it.iterator(), clazz -> isValid(clazz.getAccessFlags()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass, int type) {
+    Iterable<DexBackedMethod> it = (Iterable<DexBackedMethod>) (
+                                      (type == 1) ? dexClass.getDirectMethods() :
+                                      (type == 2) ? dexClass.getVirtualMethods() :
+                                                    dexClass.getMethods()
+                                   );
+    return new FilteredIterable<>(it.iterator(), method -> isValid(method.getAccessFlags()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass, int type) {
+    Iterable<DexBackedField> it = (Iterable<DexBackedField>) (
+                                      (type == 1) ? dexClass.getStaticFields() :
+                                      (type == 2) ? dexClass.getInstanceFields() :
+                                                    dexClass.getFields()
+                                  );
+    return new FilteredIterable<>(it.iterator(), field -> isValid(field.getAccessFlags()));
   }
 }

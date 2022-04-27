@@ -77,6 +77,11 @@ final class RefPoolRBuffer {
     return getPool();
   }
 
+  public void add(@Nonnull String value) {
+    update();
+    strings.add(StringReferenceData.build(value));
+  }
+
   public void add(@Nonnull StringReference value) {
     update();
     strings.add(StringReferenceData.build(value));

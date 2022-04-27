@@ -16,8 +16,8 @@
 
 package io.github.neonorbit.dexplore.filter;
 
-import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.LazyDecoder;
+import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
