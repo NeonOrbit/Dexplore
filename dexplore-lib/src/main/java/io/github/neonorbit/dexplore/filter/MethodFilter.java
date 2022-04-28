@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore.filter;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Internal;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
@@ -50,6 +51,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     this.methodNames = builder.methodNames;
   }
 
+  @Internal
   @Override
   public boolean verify(@Nonnull DexBackedMethod dexMethod,
                         @Nonnull LazyDecoder<DexBackedMethod> decoder) {

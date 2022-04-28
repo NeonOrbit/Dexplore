@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.util.Internal;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.dexbacked.ZipDexContainer;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@Internal
 final class FastContainer extends ZipDexContainer {
   private final boolean isApkFile;
   private final boolean rootDexOnly;

@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.filter;
 
 import io.github.neonorbit.dexplore.LazyDecoder;
+import io.github.neonorbit.dexplore.util.Internal;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,10 +37,12 @@ abstract class BaseFilter<T> {
     this.unique = unique;
   }
 
+  @Internal
   public boolean isUnique() {
     return unique;
   }
 
+  @Internal
   public boolean verify(@Nonnull T dexItem, @Nonnull LazyDecoder<T> decoder) {
     return pass || filter.accept(decoder.decode(dexItem, types));
   }

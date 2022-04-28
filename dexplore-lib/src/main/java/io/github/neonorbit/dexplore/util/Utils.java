@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+@Internal
 public final class Utils {
   public static boolean isSingle(@Nullable Collection<?> c) {
     return c != null && c.size() == 1;

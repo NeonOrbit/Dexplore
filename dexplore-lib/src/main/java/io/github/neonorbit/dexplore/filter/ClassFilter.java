@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore.filter;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Internal;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 
@@ -55,6 +56,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     this.interfaces = builder.interfaces;
   }
 
+  @Internal
   @Override
   public boolean verify(@Nonnull DexBackedClassDef dexClass,
                         @Nonnull LazyDecoder<DexBackedClassDef> decoder) {

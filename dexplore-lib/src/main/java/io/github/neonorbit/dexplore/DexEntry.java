@@ -18,12 +18,14 @@ package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.util.DexException;
 import io.github.neonorbit.dexplore.util.DexLog;
+import io.github.neonorbit.dexplore.util.Internal;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Objects;
 
+@Internal
 public final class DexEntry implements Comparable<DexEntry> {
   private final String dexName;
   private final DexContainer container;

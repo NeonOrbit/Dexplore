@@ -16,25 +16,19 @@
 
 package io.github.neonorbit.dexplore.util;
 
-@Internal
-public final class AbortException extends RuntimeException{
-  private final boolean silent;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  private AbortException() {
-    super(null, null, false, false);
-    silent = true;
-  }
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 
-  public AbortException(String msg) {
-    super(msg, null, false, false);
-    silent = false;
-  }
-
-  public boolean isSilent() {
-    return silent;
-  }
-
-  public static AbortException silently() {
-    return new AbortException();
-  }
-}
+/**
+ * Indicates that the annotated element is not part of the supported API.
+ */
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target({TYPE, FIELD, METHOD})
+public @interface Internal { }

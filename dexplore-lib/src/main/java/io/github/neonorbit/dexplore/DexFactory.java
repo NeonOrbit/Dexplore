@@ -16,6 +16,9 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.util.DexException;
+import org.jf.dexlib2.DexFileFactory;
+
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
@@ -23,15 +26,43 @@ import java.util.Objects;
  * A factory class for loading dex files
  */
 public final class DexFactory {
+  /**
+   * @param path file path
+   * @return Dexplore instance
+   * @throws DexException if something goes wrong
+   * @throws FileNotFoundException if the given file does not exist
+   * @throws UnsupportedFileException if the given file is not a valid dex file
+   */
   @Nonnull
   public static Dexplore load(@Nonnull String path) {
-    return new DexploreImpl(Objects.requireNonNull(path));
+    return load(path, DexOptions.getDefault());
   }
 
   @Nonnull
   public static Dexplore load(@Nonnull String path,
                               @Nonnull DexOptions options) {
-    return new DexploreImpl(Objects.requireNonNull(path),
-                            Objects.requireNonNull(options));
+    DexploreImpl dexplore;
+    Objects.requireNonNull(path);
+    Objects.requireNonNull(options);
+    try {
+      dexplore = new DexploreImpl(path, options);
+    } catch (DexFileFactory.DexFileNotFoundException e) {
+      throw new FileNotFoundException(e.getMessage());
+    } catch (DexFileFactory.UnsupportedFileTypeException e) {
+      throw new UnsupportedFileException(e.getMessage());
+    }
+    return dexplore;
+  }
+
+  public static class UnsupportedFileException extends RuntimeException {
+    private UnsupportedFileException(String msg) {
+      super(msg);
+    }
+  }
+
+  public static class FileNotFoundException extends RuntimeException {
+    private FileNotFoundException(String msg) {
+      super(msg);
+    }
   }
 }

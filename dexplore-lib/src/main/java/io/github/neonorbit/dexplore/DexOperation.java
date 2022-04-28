@@ -22,6 +22,7 @@ import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexLog;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Internal;
 import io.github.neonorbit.dexplore.util.Operator;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
@@ -29,6 +30,7 @@ import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
 import javax.annotation.Nonnull;
 
+@Internal
 final class DexOperation {
   private final DexDecoder dexDecoder;
   private final DexContainer dexContainer;

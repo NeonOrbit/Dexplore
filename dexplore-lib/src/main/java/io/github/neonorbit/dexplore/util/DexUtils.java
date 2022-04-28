@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Internal
 public final class DexUtils {
   @Nonnull
   public static String javaToDexTypeName(@Nonnull String javaTypeName) {

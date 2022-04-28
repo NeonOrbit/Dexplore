@@ -25,10 +25,6 @@ public final class DexException extends RuntimeException {
     super(message);
   }
 
-  public DexException(Throwable cause) {
-    this("", cause);
-  }
-
   public DexException(String message, Throwable cause) {
     super(getMessage(message, cause), getCause(cause));
     if (cause instanceof DexException) {
@@ -36,11 +32,11 @@ public final class DexException extends RuntimeException {
     }
   }
 
-  public static Throwable getCause(Throwable cause) {
+  private static Throwable getCause(Throwable cause) {
     return (cause instanceof DexException) ? cause.getCause() : cause;
   }
 
-  public static String getMessage(String message, Throwable cause) {
+  private static String getMessage(String message, Throwable cause) {
     return (cause instanceof DexException) ? cause.getMessage() : message;
   }
 }

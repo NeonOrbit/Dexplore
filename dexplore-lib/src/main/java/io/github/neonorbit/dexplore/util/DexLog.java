@@ -49,10 +49,12 @@ public final class DexLog {
     DexLog.enabled = false;
   }
 
+  @Internal
   public static void d(String msg) {
     if (enabled) DexLog.current.debug(msg);
   }
 
+  @Internal
   public static void w(String msg) {
     if (enabled) DexLog.current.warn(msg);
   }

@@ -20,6 +20,7 @@ import io.github.neonorbit.dexplore.DexEntry;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.util.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Internal;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
@@ -44,10 +45,12 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     this.definedClassNames = builder.definedClassNames;
   }
 
+  @Internal
   public List<String> preferredList() {
     return preferredDexNames;
   }
 
+  @Internal
   @Override
   public boolean verify(@Nonnull DexEntry dexEntry,
                         @Nonnull LazyDecoder<DexEntry> decoder) {

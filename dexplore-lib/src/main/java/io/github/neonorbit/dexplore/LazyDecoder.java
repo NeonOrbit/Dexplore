@@ -17,7 +17,9 @@
 package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
+import io.github.neonorbit.dexplore.util.Internal;
 
+@Internal
 public interface LazyDecoder<T> {
   ReferencePool decode(T dexItem, ReferenceTypes types);
 }

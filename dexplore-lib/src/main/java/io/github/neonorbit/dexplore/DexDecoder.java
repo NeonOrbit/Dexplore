@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
 import io.github.neonorbit.dexplore.util.DexLog;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Internal;
 import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
@@ -40,6 +41,7 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.HashSet;
 
+@Internal
 public final class DexDecoder {
   private final boolean cache;
   private final RefPoolRCache<DexEntry> dexCache;

@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.util.DexException;
+import io.github.neonorbit.dexplore.util.Internal;
 import org.jf.dexlib2.DexFileFactory;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.MultiDexContainer;
@@ -29,17 +30,19 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@Internal
 final class DexContainer {
   private final String path;
-  private final boolean rootDexOnly;
+  private final boolean rootDex;
   private final DexOpcodes opcodes;
-  private List<DexEntry> dexEntries;
-  private MultiDexContainer<? extends DexBackedDexFile> container;
+  private       List<DexEntry> dexEntries;
+  private final MultiDexContainer<DexBackedDexFile> internal;
 
   DexContainer(String path, DexOptions options) {
     this.path = path;
     this.opcodes = options.opcodes;
-    this.rootDexOnly = options.rootDexOnly;
+    this.rootDex = options.rootDexOnly;
+    this.internal = loadDexContainer();
   }
 
   @Nullable
@@ -74,7 +77,7 @@ final class DexContainer {
 
   DexBackedDexFile loadDexFile(String dexName) throws IOException {
     MultiDexContainer.DexEntry<? extends DexBackedDexFile> entry;
-    entry = getContainer().getEntry(dexName);
+    entry = internal.getEntry(dexName);
     if (entry == null) {
       throw new DexException("Couldn't find dex entry: " + dexName);
     }
@@ -85,10 +88,10 @@ final class DexContainer {
     if (this.dexEntries == null) {
       this.dexEntries = new ArrayList<>();
       try {
-        for (String dexName : getContainer().getDexEntryNames()) {
+        for (String dexName : internal.getDexEntryNames()) {
           this.dexEntries.add(new DexEntry(this, dexName));
         }
-        if(rootDexOnly) this.dexEntries.sort(null);
+        if (rootDex) this.dexEntries.sort(null);
       } catch (IOException e) {
         throw new DexException("Failed to load dex entries", e);
       }
@@ -96,18 +99,18 @@ final class DexContainer {
     return this.dexEntries;
   }
 
-  private MultiDexContainer<? extends DexBackedDexFile> getContainer() {
-    if (this.container == null) {
-      try {
-        File file = new File(this.path);
-        this.container = FastContainer.load(file, opcodes.get(), rootDexOnly);
-        if (this.container == null) {
-          this.container = DexFileFactory.loadDexContainer(file, opcodes.get());
-        }
-      } catch (IOException e) {
-        throw new DexException("Failed to load dex container", e);
+  @SuppressWarnings("unchecked")
+  private MultiDexContainer<DexBackedDexFile> loadDexContainer() {
+    MultiDexContainer<? extends DexBackedDexFile> container;
+    try {
+      File file = new File(this.path);
+      container = FastContainer.load(file, opcodes.get(), rootDex);
+      if (container == null) {
+        container = DexFileFactory.loadDexContainer(file, opcodes.get());
       }
+    } catch (IOException e) {
+      throw new DexException("Failed to load dex container", e);
     }
-    return this.container;
+    return (MultiDexContainer<DexBackedDexFile>) container;
   }
 }

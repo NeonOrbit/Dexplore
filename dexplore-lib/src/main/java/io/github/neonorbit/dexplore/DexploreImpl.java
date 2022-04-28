@@ -22,6 +22,7 @@ import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.MethodData;
 import io.github.neonorbit.dexplore.result.Results;
+import io.github.neonorbit.dexplore.util.Internal;
 import io.github.neonorbit.dexplore.util.Operator;
 import io.github.neonorbit.dexplore.util.Utils;
 
@@ -31,12 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Internal
 final class DexploreImpl implements Dexplore {
   private final DexOperation dexOperation;
-
-  DexploreImpl(String path) {
-    this(path, DexOptions.getDefault());
-  }
 
   DexploreImpl(String path, DexOptions options) {
     this.dexOperation = new DexOperation(path, options);
