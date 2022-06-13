@@ -16,6 +16,16 @@
 
 package io.github.neonorbit.dexplore.util;
 
+/**
+ * A callback interface to operate on search results.
+ * <p>
+ *   {@link #operate operate(item)} will be called for each result that is produced,
+ *   and should return a boolean to indicate whether the callback should be terminated.
+ * </p>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public interface Operator<T> {
   /**
    * @param item the item to operate on.

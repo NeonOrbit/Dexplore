@@ -26,7 +26,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
 /**
- * Indicates that the annotated element is not part of the supported API.
+ * Indicates that the annotated element must not be considered as a public API
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)

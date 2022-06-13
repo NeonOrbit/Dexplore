@@ -16,12 +16,21 @@
 
 package io.github.neonorbit.dexplore.reference;
 
+import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.iface.reference.TypeReference;
 import org.jf.dexlib2.immutable.reference.ImmutableTypeReference;
 
 import javax.annotation.Nonnull;
 
+/**
+ * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
+ * to a type (usually a fully qualified class name).
+ * @see ReferencePool
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class TypeReferenceData implements DexReferenceData {
   private boolean resolved;
   private TypeReference data;
@@ -44,16 +53,16 @@ public final class TypeReferenceData implements DexReferenceData {
     return data;
   }
 
+  /**
+   * @return fully qualified name
+   */
   @Nonnull
   public String getType() {
     return getData().getType();
   }
 
   /**
-   * Checks whether the value of this {@code Type} matches the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Object} contains the specified string
+   * Checks whether the value of this {@code TypeReference} matches the specified string
    */
   @Override
   public boolean contains(@Nonnull String value) {

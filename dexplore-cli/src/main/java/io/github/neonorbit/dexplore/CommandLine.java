@@ -64,7 +64,7 @@ final class CommandLine extends JCommander {
 
   private CommandLine(String[] args) {
     this.help |= args.length == 0;
-    this.setProgramName("Dexplore");
+    this.setProgramName(TITLE);
     this.addObject(this);
     this.parse(args);
   }

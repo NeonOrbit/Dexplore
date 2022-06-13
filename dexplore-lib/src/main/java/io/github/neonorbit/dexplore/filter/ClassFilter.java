@@ -25,6 +25,7 @@ import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Modifier;
 import java.security.InvalidParameterException;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,15 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * A filter used to select dex classes of interest.
+ * <p><br>
+ *   Note: The filter will match if and only if all the specified conditions are satisfied.
+ * </p>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private static final int M1 = -1;
   /** A {@code ClassFilter} instance that matches all dex classes. */
@@ -76,6 +86,18 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     return result;
   }
 
+  /**
+   * This is equivalent to:
+   * <blockquote><pre>
+   *   new ClassFilter.Builder()
+   *                  .{@link Builder#setClasses(String...)
+   *                          setClasses(clazz)}
+   *                  .build();
+   * </pre></blockquote>
+   *
+   * @param clazz class name
+   * @return a {@code ClassFilter} instance
+   */
   public static ClassFilter ofClass(@Nonnull String clazz) {
     Objects.requireNonNull(clazz);
     return builder().setClasses(clazz).build();
@@ -131,11 +153,12 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Specify a list of packages that should be excluded during the search operation
-     * @param packages list of packages to exclude
+     * Specify a list of packages that should be excluded.
+     *
+     * @param packages a list of packages to exclude
      * @param exception an exception list to allow sub packages
      *
-     * @return this builder
+     * @return {@code this} builder
      */
     public Builder skipPackages(@Nullable List<String> packages,
                                 @Nullable List<String> exception) {
@@ -150,6 +173,13 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only classes that match with any of the specified class names.
+     * This is useful if you want to search in specific classes only.
+     *
+     * @param classes class names (fully qualified)
+     * @return {@code this} builder
+     */
     public Builder setClasses(@Nonnull String... classes) {
       List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
       this.classNames = list.isEmpty() ? null : Utils.optimizedSet(list);
@@ -157,10 +187,15 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Set class modifiers. eg: public, static, final etc...
-     * @param modifiers see {@link java.lang.reflect.Modifier}
+     * Add a condition to the filter to match only classes with the specified class modifiers.
+     * <br>
+     * Examples:
+     *    <blockquote> setModifiers({@link Modifier#PUBLIC}) </blockquote>
+     * Use {@code |} operator to set multiple modifiers:
+     *    <blockquote> setModifiers({@link Modifier#PUBLIC} | {@link Modifier#FINAL}) </blockquote>
      *
-     * @return this builder
+     * @param modifiers class {@link Class#getModifiers() modifiers}
+     * @return {@code this} builder
      */
     public Builder setModifiers(int modifiers) {
       this.flag = modifiers;
@@ -168,32 +203,58 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Classes with matching modifiers will be skipped
-     * @param modifiers see {@link #setModifiers(int)}
-     * @see #setModifiers(int)
+     * Classes with the specified class modifiers will be skipped.
      *
-     * @return this builder
+     * @param modifiers class {@link Class#getModifiers() modifiers}
+     * @return {@code this} builder
+     * @see #setModifiers(int)
      */
     public Builder skipModifiers(int modifiers) {
       this.skipFlag = modifiers;
       return this;
     }
 
-    public Builder setSuperClass(@Nullable String superClass) {
-      this.superClass = superClass == null ? null : DexUtils.javaToDexTypeName(superClass);
+    /**
+     * Add a condition to the filter to match only classes with specified superclass.
+     *
+     * @param superclass superclass name (fully qualified)
+     * @return {@code this} builder
+     */
+    public Builder setSuperClass(@Nullable String superclass) {
+      this.superClass = superclass == null ? null : DexUtils.javaToDexTypeName(superclass);
       return this;
     }
 
+    /**
+     * This is equivalent to calling:
+     * <blockquote> {@code setClassNames(Object.class.getName())} </blockquote>
+     *
+     * @return {@code this} builder
+     * @see #setSuperClass(String)
+     */
     public Builder defaultSuperClass() {
       this.superClass = DexUtils.javaClassToDexTypeName(Object.class);
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only classes with the specified interfaces.
+     *
+     * @param iFaces interface names (fully qualified)
+     * @return {@code this} builder
+     * @see #noInterfaces()
+     */
     public Builder setInterfaces(@Nullable List<String> iFaces) {
       this.interfaces = iFaces == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(iFaces));
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only classes that do not have any interfaces.
+     *
+     * @return {@code this} builder
+     * @see #setInterfaces(List)
+     */
     public Builder noInterfaces() {
       return setInterfaces(Collections.emptyList());
     }

@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.reference;
 
+import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.iface.reference.MethodReference;
 import org.jf.dexlib2.immutable.reference.ImmutableMethodReference;
@@ -26,6 +27,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
+ * to a method.
+ * @see ReferencePool
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class MethodReferenceData implements DexReferenceData {
   private final boolean details;
   private boolean resolved;
@@ -55,7 +64,6 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getName()}
-   *
    * @return method name
    */
   @Nonnull
@@ -65,7 +73,6 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getReturnType()}
-   *
    * @return return type
    */
   @Nonnull
@@ -75,7 +82,6 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getParameterTypes()}
-   *
    * @return parameter types
    */
   @Nonnull
@@ -85,7 +91,6 @@ public final class MethodReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Method#getDeclaringClass()}
-   *
    * @return declaring class
    */
   @Nonnull
@@ -94,10 +99,7 @@ public final class MethodReferenceData implements DexReferenceData {
   }
 
   /**
-   * Checks whether any items of this {@code Method} match the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Object} contains the specified string
+   * Checks whether any items of this {@code MethodReference} match the specified string
    */
   @Override
   public boolean contains(@Nonnull String value) {

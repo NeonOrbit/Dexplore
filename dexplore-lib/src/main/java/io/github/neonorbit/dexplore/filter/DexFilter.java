@@ -30,6 +30,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * A filter that decides whether a dex file should be loaded for analyzing.
+ * <p><br>
+ *   Note: The filter will match if and only if all the specified conditions are satisfied.
+ * </p>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class DexFilter extends BaseFilter<DexEntry> {
   /** A {@code DexFilter} instance that matches all dex files. */
   public static final DexFilter MATCH_ALL = new DexFilter(builder());
@@ -82,6 +91,18 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     return false;
   }
 
+  /**
+   * This is equivalent to:
+   * <blockquote><pre>
+   *   new DexFilter.Builder()
+   *                .{@link DexFilter.Builder#setDefinedClasses(String...)
+   *                             setDefinedClasses(clazz)}
+   *                .build();
+   * </pre></blockquote>
+   *
+   * @param clazz class name
+   * @return a {@code DexFilter} instance
+   */
   public static DexFilter ofDefinedClass(@Nonnull String clazz) {
     Objects.requireNonNull(clazz);
     return builder().setDefinedClasses(clazz).build();
@@ -127,12 +148,25 @@ public final class DexFilter extends BaseFilter<DexEntry> {
       return isDefault() ? MATCH_ALL : new DexFilter(this);
     }
 
+    /**
+     * Specify a list of dex files that should be analyzed first.
+     *
+     * @param names dex file names
+     * @return {@code this} builder
+     */
     public Builder setPreferredDexNames(@Nonnull String... names) {
       List<String> list = Utils.nonNullList(names);
       this.preferredDexNames = list.isEmpty() ? null : Utils.optimizedList(list);
       return this;
     }
 
+    /**
+     * If true, only the {@link #setPreferredDexNames(String...) preferred} dex files will be analyzed.
+     *
+     * @param allow {@code true} to set
+     * @return {@code this} builder
+     * @throws IllegalStateException if preferred dex was not specified
+     */
     public Builder allowPreferredDexOnly(boolean allow) {
       if (preferredDexNames == null) {
         throw new IllegalStateException("Preferred dex was not specified");
@@ -141,6 +175,13 @@ public final class DexFilter extends BaseFilter<DexEntry> {
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only dex files that contain any of the specified classes.
+     * This is useful if you want to search in specific classes only.
+     *
+     * @param classes class names (fully qualified)
+     * @return {@code this} builder
+     */
     public Builder setDefinedClasses(@Nonnull String... classes) {
       List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
       this.definedClassNames = list.isEmpty() ? null : Utils.optimizedSet(list);

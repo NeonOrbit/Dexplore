@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.filter;
 
 import io.github.neonorbit.dexplore.LazyDecoder;
+import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.Internal;
 
 import javax.annotation.Nonnull;
@@ -53,7 +54,7 @@ abstract class BaseFilter<T> {
     private ReferenceFilter filter;
 
     protected Builder() {}
-    
+
     protected Builder(T instance) {
       this.types = instance.types;
       this.filter = instance.filter;
@@ -67,12 +68,31 @@ abstract class BaseFilter<T> {
 
     public abstract T build();
 
+    /**
+     * Specify which types of references to add in the {@link ReferencePool}. <br>
+     * It'll be used when building a {@code ReferencePool} to pass to the {@link ReferenceFilter}.
+     *
+     * @param types a {@code ReferenceTypes} instance
+     * @return {@code this} builder
+     * @see #setReferenceFilter(ReferenceFilter)
+     */
     public B setReferenceTypes(@Nullable ReferenceTypes types) {
       this.types = types;
       return getThis();
     }
 
+    /**
+     * Set a {@code ReferenceFilter} to apply to each dex item to determine if it should be matched.
+     *
+     * @param filter a {@code ReferenceFilter} instance
+     * @return {@code this} builder
+     * @throws IllegalStateException if {@code ReferenceTypes} was not specified
+     * @see #setReferenceTypes(ReferenceTypes)
+     */
     public B setReferenceFilter(@Nullable ReferenceFilter filter) {
+      if (this.types == null) {
+        throw new IllegalStateException("ReferenceTypes was not specified");
+      }
       this.filter = filter;
       return getThis();
     }

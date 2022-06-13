@@ -16,6 +16,28 @@
 
 package io.github.neonorbit.dexplore.util;
 
+/**
+ * The default logger used to log info during the dex analyzing process.
+ * <p>By default, the logger is disabled. Use {@link #enable()} to enable the logger.</p>
+ *
+ * <p>If you want to redirect the logs, set your own logger with {@link #setLogger(DexLogger)}.</p>
+ *
+ * Example:
+ * <pre>{@code
+ *   DexLog.enable();
+ *   DexLog.setLogger(new DexLogger() {
+ *     public void debug(String msg) {
+ *       System.out.println("Dex: " + msg);
+ *     }
+ *     public void warn(String msg) {
+ *       System.err.println("Dex: " + msg);
+ *     }
+ *   });
+ * }</pre>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class DexLog {
   private static final DexLogger DEFAULT;
 
@@ -33,8 +55,11 @@ public final class DexLog {
   }
 
   public static void setLogger(DexLogger logger) {
-    if (logger == null) resetLogger();
-    else DexLog.current = logger;
+    if (logger != null) {
+      DexLog.current = logger;
+    } else {
+      resetLogger();
+    }
   }
 
   public static void resetLogger() {

@@ -21,7 +21,25 @@ import io.github.neonorbit.dexplore.ReferencePool;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 
+/**
+ * A filter for reference {@link ReferencePool pools}.
+ * <p>
+ * Instances of this interface may be passed to the
+ * {@link BaseFilter.Builder#setReferenceFilter(ReferenceFilter)
+ *        setReferenceFilter()}
+ * method.
+ * @see #accept(ReferencePool)
+ *
+ * @author NeonOrbit
+ * @since 1.1.0
+ */
 public interface ReferenceFilter {
+  /**
+   * Tests whether the dex item containing the specified reference pool should be matched.
+   *
+   * @param pool the reference pool to be tested
+   * @return true if the item containing the pool should be matched
+   */
   boolean accept(ReferencePool pool);
 
   default ReferenceFilter and(@Nonnull ReferenceFilter other) {

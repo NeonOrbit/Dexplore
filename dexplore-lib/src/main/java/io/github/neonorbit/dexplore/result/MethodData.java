@@ -28,10 +28,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * Contains information about a method found in a dex file.
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class MethodData implements Comparable<MethodData> {
+  /** The declaring class of the method. */
   @Nonnull public final String clazz;
+  /** The name of the method. */
   @Nonnull public final String method;
+  /** The parameters of the method. */
   @Nonnull public final String[] params;
+  /** The return type of the method. */
   @Nonnull public final String returnType;
 
   private ClassData classData;
@@ -55,6 +65,9 @@ public final class MethodData implements Comparable<MethodData> {
     this.referencePool = referencePool;
   }
 
+  /**
+   * @return the ClassData instance of the declaring class of the method
+   */
   @Nonnull
   public ClassData getClassData() {
     if (classData == null) {
@@ -63,6 +76,13 @@ public final class MethodData implements Comparable<MethodData> {
     return classData;
   }
 
+  /**
+   * Returns the {@code ReferencePool} of the method.
+   * <p>It contains all the {@link io.github.neonorbit.dexplore.reference references}
+   * present in the method.</p>
+   *
+   * @return the {@code ReferencePool} of the method
+   */
   @Nonnull
   public ReferencePool getReferencePool() {
     if (referencePool == null) {
@@ -95,6 +115,14 @@ public final class MethodData implements Comparable<MethodData> {
     }
   }
 
+  /**
+   * Serializes the object into a string.
+   * <p>
+   *   Includes: {@link #clazz}, {@link #method}, {@link #params}, {@link #returnType}
+   * </p>
+   *
+   * @return the serialized string
+   */
   @Nonnull
   public String serialize() {
     StringJoiner joiner = new StringJoiner(":");
@@ -106,6 +134,13 @@ public final class MethodData implements Comparable<MethodData> {
     return joiner.toString();
   }
 
+  /**
+   * De-serializes the given string.
+   *
+   * @param serialized the string to be de-serialized
+   * @return the de-serialized object
+   * @throws IllegalArgumentException if the given string is not serializable
+   */
   @Nonnull
   public static MethodData deserialize(@Nonnull String serialized) {
     final String[] parts = serialized.split(":");

@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.reference;
 
+import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.iface.reference.FieldReference;
 import org.jf.dexlib2.immutable.reference.ImmutableFieldReference;
@@ -23,6 +24,14 @@ import org.jf.dexlib2.immutable.reference.ImmutableFieldReference;
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 
+/**
+ * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
+ * to a field.
+ * @see ReferencePool
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class FieldReferenceData implements DexReferenceData {
   private final boolean details;
   private boolean resolved;
@@ -51,7 +60,6 @@ public final class FieldReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Field#getName()}
-   *
    * @return field name
    */
   @Nonnull
@@ -61,7 +69,6 @@ public final class FieldReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Field#getType()}
-   *
    * @return field type
    */
   @Nonnull
@@ -71,7 +78,6 @@ public final class FieldReferenceData implements DexReferenceData {
 
   /**
    * Equivalent to {@link Field#getDeclaringClass()}
-   *
    * @return declaring class
    */
   @Nonnull
@@ -80,10 +86,7 @@ public final class FieldReferenceData implements DexReferenceData {
   }
 
   /**
-   * Checks whether any items of this {@code Field} match the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Object} contains the specified string
+   * Checks whether any items of this {@code FieldReference} match the specified string
    */
   @Override
   public boolean contains(@Nonnull String value) {

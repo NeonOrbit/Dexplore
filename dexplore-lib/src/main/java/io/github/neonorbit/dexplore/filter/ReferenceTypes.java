@@ -16,9 +16,27 @@
 
 package io.github.neonorbit.dexplore.filter;
 
+import io.github.neonorbit.dexplore.reference.FieldReferenceData;
+import io.github.neonorbit.dexplore.reference.MethodReferenceData;
+import io.github.neonorbit.dexplore.reference.StringReferenceData;
+import io.github.neonorbit.dexplore.reference.TypeReferenceData;
+
 import javax.annotation.Nonnull;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Objects;
 
+/**
+ * A class representing a set of reference types.
+ * <p>
+ * Instances of this class may be passed to the
+ * {@link BaseFilter.Builder#setReferenceTypes(ReferenceTypes)
+ *        setReferenceTypes()}
+ * method.
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class ReferenceTypes {
   private static final int NONE   = 0x0000;
   private static final int STRING = 0x0001;
@@ -32,11 +50,14 @@ public final class ReferenceTypes {
                                  METHOD | F_INFO | M_INFO;
 
   /**
-   * {@code ALL}: Include all methods <br>
-   * {@code NONE}: Skip all methods <br>
-   * {@code DIRECT}: Include direct methods only
+   * Used to specify the scope of the references. <br>
+   * See Also: {@link Builder#setScope(Scope) setScope(Scope)}
+   * <br><br>
+   * {@code ALL}: all methods <br>
+   * {@code NONE}: no methods <br>
+   * {@code DIRECT}: direct methods only
    * <pre>  (any of static, private, or constructor) </pre>
-   * {@code VIRTUAL}: Include virtual methods only
+   * {@code VIRTUAL}: virtual methods only
    * <pre>  (none of static, private, or constructor) </pre>
    */
   public enum Scope {
@@ -135,35 +156,70 @@ public final class ReferenceTypes {
       return new ReferenceTypes(this);
     }
 
+    /**
+     * Add all reference types.
+     * @return {@code this} builder
+     */
     public Builder addAll() {
       this.flags = ALL;
       return this;
     }
 
+    /**
+     * Add {@link StringReferenceData String} reference type.
+     * @return {@code this} builder
+     */
     public Builder addString() {
       this.flags |= STRING;
       return this;
     }
 
+    /**
+     * Add {@link TypeReferenceData Type} reference type.
+     * @return {@code this} builder
+     */
     public Builder addTypeDes() {
       this.flags |= TYPED;
       return this;
     }
 
+    /**
+     * Add {@link FieldReferenceData Field} reference type.
+     * <p>Note: This will include only the name of the field.</p>
+     *
+     * @return {@code this} builder
+     * @see #addFieldWithDetails()
+     */
     public Builder addField() {
       this.flags |= FIELD;
       return this;
     }
 
+    /**
+     * Add {@link MethodReferenceData Method} reference type.
+     * <p>Note: This will include only the name of the method.</p>
+     *
+     * @return {@code this} builder
+     * @see #addMethodWithDetails()
+     */
     public Builder addMethod() {
       this.flags |= METHOD;
       return this;
     }
 
     /**
-     * Include all details: name, class, type
+     * Add {@link FieldReferenceData Field} reference type.
+     * <p>
+     * Note: This will also include the
+     *    details ({@link Field#getName() name},
+     *             {@link Field#getType() type},
+     *             {@link Field#getDeclaringClass() class})
+     *    of the field.
+     * </p>
+     * <b>Remark:</b> This is slower than {@link #addField()}
      *
-     * @return this builder
+     * @return {@code this} builder
+     * @see #addField()
      */
     public Builder addFieldWithDetails() {
       this.flags |= FIELD | F_INFO;
@@ -171,15 +227,32 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Include full signature: name, class, params, return type
+     * Add {@link MethodReferenceData Method} reference type.
+     * <p>
+     * Note: This will also include the
+     *    details ({@link Method#getName() name},
+     *             {@link Method#getParameterTypes() params},
+     *             {@link Method#getReturnType() returnType},
+     *             {@link Method#getDeclaringClass() class})
+     *    of the method.
+     * </p>
+     * <b>Remark:</b> This is slower than {@link #addMethod()}
      *
-     * @return this builder
+     * @return {@code this} builder
+     * @see #addMethod()
      */
     public Builder addMethodWithDetails() {
       this.flags |= METHOD | M_INFO;
       return this;
     }
 
+    /**
+     * Specify the scope, from which the references should be added.
+     *
+     * @param scope the scope
+     * @return {@code this} builder
+     * @see Scope
+     */
     public Builder setScope(@Nonnull Scope scope) {
       this.scope = Objects.requireNonNull(scope);
       return this;

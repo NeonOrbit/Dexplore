@@ -26,6 +26,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
+/**
+ * An instance of this class holds the {@link io.github.neonorbit.dexplore.reference references}
+ * present in a dex file, class or method.
+ *
+ * @see StringReferenceData
+ * @see TypeReferenceData
+ * @see FieldReferenceData
+ * @see MethodReferenceData
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class ReferencePool {
   private String toString;
   private final static ReferencePool EMPTY_POOL;
@@ -101,9 +113,9 @@ public final class ReferencePool {
    */
   public boolean contains(@Nonnull String value) {
     return stringsContain(value) ||
+           typesContain(value)   ||
            fieldsContain(value)  ||
-           methodsContain(value) ||
-           typesContain(value);
+           methodsContain(value);
   }
 
   /**
@@ -147,27 +159,25 @@ public final class ReferencePool {
   }
 
   /**
-   * Checks whether any {@code Field} items of this {@code Pool} contain the specified signature
+   * Checks whether any {@code Field} items of this {@code Pool} contain
+   * the specified {@link FieldReferenceData#getSignature() signature}.
    *
    * @param signature The signature to compare against
-   * @return {@code true} if this {@code Pool} contains the given field signature
-   *
-   * @see FieldReferenceData#toString()
+   * @return {@code true} if this {@code Pool} contains the given signature
    */
   public boolean fieldSignaturesContain(@Nonnull String signature) {
-    return fields.stream().anyMatch(f -> f.toString().contains(signature));
+    return fields.stream().anyMatch(f -> f.getSignature().contains(signature));
   }
 
   /**
-   * Checks whether any {@code Method} items of this {@code Pool} contain the specified signature
+   * Checks whether any {@code Method} items of this {@code Pool} contain
+   * the specified {@link MethodReferenceData#getSignature() signature}.
    *
    * @param signature The signature to compare against
-   * @return {@code true} if this {@code Pool} contains the given method signature
-   *
-   * @see MethodReferenceData#toString()
+   * @return {@code true} if this {@code Pool} contains the given signature
    */
   public boolean methodSignaturesContain(@Nonnull String signature) {
-    return methods.stream().anyMatch(m -> m.toString().contains(signature));
+    return methods.stream().anyMatch(m -> m.getSignature().contains(signature));
   }
 
   @Override

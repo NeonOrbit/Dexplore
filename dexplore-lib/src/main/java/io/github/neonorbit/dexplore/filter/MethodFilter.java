@@ -25,9 +25,20 @@ import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A filter used to select dex methods of interest.
+ * <p><br>
+ *   Note: The filter will match if and only if all the specified conditions are satisfied.
+ * </p>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   private static final int M1 = -1;
   /** A {@code MethodFilter} instance that matches all dex methods. */
@@ -79,6 +90,21 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     return paramSize < 0 || dexMethod.getParameterTypes().size() == paramSize;
   }
 
+  /**
+   * This is equivalent to:
+   * <blockquote><pre>
+   *   new MethodFilter.Builder()
+   *                   .{@link MethodFilter.Builder#setMethodNames(String...)
+   *                           setMethodNames(method)}
+   *                   .{@link MethodFilter.Builder#setParamList(List)
+   *                           setParamList(params)}
+   *                   .build();
+   * </pre></blockquote>
+   *
+   * @param method method name
+   * @param params list of method parameters (fully qualified name)
+   * @return a {@code MethodFilter} instance
+   */
   public static MethodFilter ofMethod(@Nonnull String method,
                                       @Nonnull List<String> params) {
     return builder().setMethodNames(method).setParamList(params).build();
@@ -133,6 +159,13 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
       return isDefault() ? MATCH_ALL : new MethodFilter(this);
     }
 
+    /**
+     * Add a condition to the filter to match only methods
+     * that match with any of the specified method names.
+     *
+     * @param names method names
+     * @return {@code this} builder
+     */
     public Builder setMethodNames(@Nonnull String... names) {
       List<String> list = Utils.nonNullList(names);
       this.methodNames = list.isEmpty() ? null : Utils.optimizedSet(list);
@@ -140,10 +173,15 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Set method modifiers. eg: public, static, final etc...
-     * @param modifiers see {@link java.lang.reflect.Modifier}
+     * Add a condition to the filter to match only methods with the specified method modifiers.
+     * <br>
+     * Examples:
+     *    <blockquote> setModifiers({@link Modifier#PUBLIC}) </blockquote>
+     * Use {@code |} operator to set multiple modifiers:
+     *    <blockquote> setModifiers({@link Modifier#PUBLIC} | {@link Modifier#STATIC}) </blockquote>
      *
-     * @return this builder
+     * @param modifiers method {@link Method#getModifiers() modifiers}
+     * @return {@code this} builder
      */
     public Builder setModifiers(int modifiers) {
       this.flag = modifiers;
@@ -151,26 +189,45 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Methods with matching modifiers will be skipped
-     * @param modifiers see {@link Builder#setModifiers(int)}
+     * Methods with the specified method modifiers will be skipped.
      *
-     * @return this builder
+     * @param modifiers method {@link Method#getModifiers() modifiers}
+     * @return {@code this} builder
+     * @see #setModifiers(int)
      */
     public Builder skipModifiers(int modifiers) {
       this.skipFlag = modifiers;
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only methods with the specified method return type.
+     *
+     * @param returnType method return type (fully qualified name)
+     * @return {@code this} builder
+     */
     public Builder setReturnType(@Nullable String returnType) {
       this.returnType = returnType == null ? null : DexUtils.javaToDexTypeName(returnType);
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only methods with the specified method parameter size.
+     *
+     * @param size number of method parameters
+     * @return {@code this} builder
+     */
     public Builder setParamSize(int size) {
       this.paramSize = size;
       return this;
     }
 
+    /**
+     * Add a condition to the filter to match only methods with the specified parameter list.
+     *
+     * @param params list of method parameters (fully qualified name)
+     * @return {@code this} builder
+     */
     public Builder setParamList(@Nullable List<String> params) {
       this.parameters = params == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(params));
       return this;

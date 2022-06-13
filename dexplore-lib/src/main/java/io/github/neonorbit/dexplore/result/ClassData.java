@@ -26,7 +26,14 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Contains information about a class found in a dex file.
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class ClassData implements Comparable<ClassData> {
+  /** The fully-qualified class name. */
   @Nonnull public final String clazz;
 
   private ReferencePool referencePool;
@@ -48,6 +55,13 @@ public final class ClassData implements Comparable<ClassData> {
     return Objects.requireNonNull(methods).get(signature);
   }
 
+  /**
+   * Returns a set containing {@code MethodData} objects
+   * representing all the declared methods of the class.
+   * <p>The returned set is unmodifiable.</p>
+   *
+   * @return a set of objects representing the declared methods of the class
+   */
   @Nonnull
   public Collection<MethodData> getMethods() {
     if (methods == null) {
@@ -56,6 +70,13 @@ public final class ClassData implements Comparable<ClassData> {
     return methods.values();
   }
 
+  /**
+   * Returns the {@code ReferencePool} of the class.
+   * <p>It contains all the {@link io.github.neonorbit.dexplore.reference references}
+   * present in the class.</p>
+   *
+   * @return the {@code ReferencePool} of the class
+   */
   @Nonnull
   public ReferencePool getReferencePool() {
     if (referencePool == null) {
@@ -73,11 +94,24 @@ public final class ClassData implements Comparable<ClassData> {
     }
   }
 
+  /**
+   * Serializes the object into a string.
+   * <p> Includes: {@link #clazz} </p>
+   *
+   * @return the serialized string
+   */
   @Nonnull
   public String serialize() {
     return this.clazz;
   }
 
+  /**
+   * De-serializes the given string.
+   *
+   * @param serialized the string to be de-serialized
+   * @return the de-serialized object
+   * @throws IllegalArgumentException if the given string is not serializable
+   */
   @Nonnull
   public static ClassData deserialize(@Nonnull String serialized) {
     if (Utils.isValidName(serialized)) {

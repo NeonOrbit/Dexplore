@@ -66,17 +66,17 @@ final class DexploreImpl implements Dexplore {
     return methodQuery(dexFilter, classFilter, methodFilter, limit);
   }
 
-  public void onClassResults(@Nonnull DexFilter dexFilter,
-                             @Nonnull ClassFilter classFilter,
-                             @Nonnull Operator<ClassData> operator) {
+  public void onClassResult(@Nonnull DexFilter dexFilter,
+                            @Nonnull ClassFilter classFilter,
+                            @Nonnull Operator<ClassData> operator) {
     dexOperation.onClasses(dexFilter, classFilter,
                            dexClass -> operator.operate(Results.ofClass(dexClass)));
   }
 
-  public void onMethodResults(@Nonnull DexFilter dexFilter,
-                              @Nonnull ClassFilter classFilter,
-                              @Nonnull MethodFilter methodFilter,
-                              @Nonnull Operator<MethodData> operator) {
+  public void onMethodResult(@Nonnull DexFilter dexFilter,
+                             @Nonnull ClassFilter classFilter,
+                             @Nonnull MethodFilter methodFilter,
+                             @Nonnull Operator<MethodData> operator) {
     dexOperation.onMethods(dexFilter, classFilter, methodFilter,
                            dexMethod -> operator.operate(Results.ofMethod(dexMethod)));
   }

@@ -16,11 +16,47 @@
 
 package io.github.neonorbit.dexplore;
 
+/**
+ * Options for {@code Dexplore}.
+ * <p><br>
+ * List of available options:
+ * <ul>
+ *   <li>{@link #opcodes}</li>
+ *   <li>{@link #enableCache}</li>
+ *   <li>{@link #rootDexOnly}</li>
+ * </ul>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class DexOptions {
-  public boolean enableCache = false;
-  public boolean rootDexOnly = false;
+  /**
+   * Dalvik/ART Opcodes.
+   * <p><b>Default:</b> {@code auto}</p>
+   * @since 1.0.0
+   */
   public DexOpcodes opcodes = DexOpcodes.auto();
 
+  /**
+   * This is useful if you want to reuse a {@code Dexplore} instance.
+   * <p><b>Default:</b> {@code false}</p>
+   * @since 1.0.0
+   */
+  public boolean enableCache = false;
+
+  /**
+   * Root dex files are:
+   * <blockquote>
+   *   [Classes.dex, Classes2.dex ... ClassesN.dex]
+   * </blockquote>
+   * <p><b>Default:</b> {@code false}</p>
+   * @since 1.0.0
+   */
+  public boolean rootDexOnly = false;
+
+  /**
+   * @return a default {@code DexOptions} instance
+   */
   public static DexOptions getDefault() {
     return new DexOptions();
   }

@@ -16,11 +16,20 @@
 
 package io.github.neonorbit.dexplore.reference;
 
+import io.github.neonorbit.dexplore.ReferencePool;
 import org.jf.dexlib2.iface.reference.StringReference;
 import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 
 import javax.annotation.Nonnull;
 
+/**
+ * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
+ * to a literal string.
+ * @see ReferencePool
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public final class StringReferenceData implements DexReferenceData {
   private boolean resolved;
   private StringReference data;
@@ -47,16 +56,16 @@ public final class StringReferenceData implements DexReferenceData {
     return data;
   }
 
+  /**
+   * @return the literal string
+   */
   @Nonnull
   public String getString() {
     return getData().getString();
   }
 
   /**
-   * Checks whether the value of this {@code String} matches the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Object} contains the specified string
+   * Checks whether the value of this {@code StringReference} matches the specified string
    */
   @Override
   public boolean contains(@Nonnull String value) {

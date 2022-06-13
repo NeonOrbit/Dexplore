@@ -27,31 +27,111 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
+/**
+ * A dex explorer for finding classes and methods from dex files.
+ * <p>
+ *   Use {@link DexFactory} to load dex files.
+ * </p>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public interface Dexplore {
+  /**
+   * Find a class using the given filters.
+   * <p>
+   *   The search operation will stop as soon as it finds a match.
+   * </p>
+   *
+   * @param dexFilter a filter to select the desired dex files
+   * @param classFilter a filter to find the desired dex class
+   * @return the first matching class or null if no match is found.
+   * @see #findClasses(DexFilter, ClassFilter, int)
+   */
   @Nullable
   ClassData findClass(@Nonnull DexFilter dexFilter,
                       @Nonnull ClassFilter classFilter);
 
+  /**
+   * Find all the classes that match the specified filters.
+   * <p>
+   *   The search operation will stop once the specified limit is reached.
+   * </p>
+   *
+   * @param dexFilter a filter to select the desired dex files
+   * @param classFilter a filter to find the desired dex classes
+   * @param limit the maximum number of results to return or -1 if no limit
+   * @return a list of matching classes or an empty list if nothing matches
+   * @see #findClass(DexFilter, ClassFilter)
+   */
   @Nonnull
   List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
                               @Nonnull ClassFilter classFilter, int limit);
 
+  /**
+   * Find a method using the given filters.
+   * <p>
+   *   The search operation will stop as soon as it finds a match.
+   * </p>
+   *
+   * @param dexFilter a filter to select the desired dex files
+   * @param classFilter a filter to select the desired dex classes
+   * @param methodFilter a filter to find the desired dex method
+   * @return the first matching method or null if no match is found.
+   * @see #findMethods(DexFilter, ClassFilter, MethodFilter, int)
+   */
   @Nullable
   MethodData findMethod(@Nonnull DexFilter dexFilter,
                         @Nonnull ClassFilter classFilter,
                         @Nonnull MethodFilter methodFilter);
 
+  /**
+   * Find all the methods that match the specified filters.
+   * <p>
+   *   The search operation will stop once the specified limit is reached.
+   * </p>
+   *
+   * @param dexFilter a filter to select the desired dex files
+   * @param classFilter a filter to select the desired dex classes
+   * @param methodFilter a filter to find the desired dex methods
+   * @param limit the maximum number of results to return or -1 if no limit
+   * @return a list of matching classes or an empty list if nothing matches
+   * @see #findMethod(DexFilter, ClassFilter, MethodFilter)
+   */
   @Nonnull
   List<MethodData> findMethods(@Nonnull DexFilter dexFilter,
                                @Nonnull ClassFilter classFilter,
                                @Nonnull MethodFilter methodFilter, int limit);
 
-  void onClassResults(@Nonnull DexFilter dexFilter,
-                      @Nonnull ClassFilter classFilter,
-                      @Nonnull Operator<ClassData> operator);
+  /**
+   * Find all classes that match the specified filters.
+   * <p>
+   *   The specified {@link Operator callback} will be called for each result.
+   *   Return {@code true} when you want to stop.
+   * </p>
+   *
+   * @param dexFilter a filter to select the desired dex files
+   * @param classFilter a filter to find the desired dex classes
+   * @param operator a callback for consuming the search results
+   */
+  void onClassResult(@Nonnull DexFilter dexFilter,
+                     @Nonnull ClassFilter classFilter,
+                     @Nonnull Operator<ClassData> operator);
 
-  void onMethodResults(@Nonnull DexFilter dexFilter,
-                       @Nonnull ClassFilter classFilter,
-                       @Nonnull MethodFilter methodFilter,
-                       @Nonnull Operator<MethodData> operator);
+  /**
+   * Find all methods that match the specified filters.
+   * <p>
+   *   The specified callback {@link Operator operator} will be called for each result.
+   *   Return {@code true} when you want to stop.
+   * </p>
+   *
+   * @param dexFilter a filter to select the desired dex files
+   * @param classFilter a filter to select the desired dex classes
+   * @param methodFilter a filter to find the desired dex methods
+   * @param operator a callback for consuming the search results
+   */
+  void onMethodResult(@Nonnull DexFilter dexFilter,
+                      @Nonnull ClassFilter classFilter,
+                      @Nonnull MethodFilter methodFilter,
+                      @Nonnull Operator<MethodData> operator);
 }

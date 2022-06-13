@@ -23,12 +23,25 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 /**
- * A factory class for loading dex files
+ * A factory class for loading dex files.
+ * <p> <b>Supported types:</b> apk, zip, dex, odex, oat
+ * <p><br>
+ * Available methods:
+ * <ul>
+ *   <li>{@link #load(String)}</li>
+ *   <li>{@link #load(String, DexOptions)}</li>
+ * </ul>
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
  */
 public final class DexFactory {
   /**
-   * @param path file path
-   * @return Dexplore instance
+   * Loads a file containing one or more dex files.
+   * <p>See also: {@link #load(String, DexOptions)}</p>
+   *
+   * @param path the path of the file to open
+   * @return A {@code Dexplore} for the given file
    * @throws DexException if something goes wrong
    * @throws FileNotFoundException if the given file does not exist
    * @throws UnsupportedFileException if the given file is not a valid dex file
@@ -38,6 +51,16 @@ public final class DexFactory {
     return load(path, DexOptions.getDefault());
   }
 
+  /**
+   * Loads a file containing one or more dex files.
+   *
+   * @param path the path of the file to open
+   * @param options a set of options to apply
+   * @return A {@code Dexplore} for the given file
+   * @throws DexException if something goes wrong
+   * @throws FileNotFoundException if the given file does not exist
+   * @throws UnsupportedFileException if the given file is not a valid dex file
+   */
   @Nonnull
   public static Dexplore load(@Nonnull String path,
                               @Nonnull DexOptions options) {
