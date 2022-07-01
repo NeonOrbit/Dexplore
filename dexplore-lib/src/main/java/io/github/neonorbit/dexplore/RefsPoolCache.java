@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-final class RefPoolRCache<T> {
+final class RefsPoolCache<T> {
   private final Map<Key, Entry> internal = new HashMap<>();
   private final ReferenceQueue<ReferencePool> queue = new ReferenceQueue<>();
 

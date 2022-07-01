@@ -32,19 +32,19 @@ import java.lang.reflect.Field;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class FieldReferenceData implements DexReferenceData {
+public final class FieldRefData implements DexRefData {
   private final boolean details;
   private boolean resolved;
   private String signature;
   private FieldReference data;
 
-  private FieldReferenceData(FieldReference reference, boolean details) {
+  private FieldRefData(FieldReference reference, boolean details) {
     this.details = details;
     this.data = reference;
   }
 
-  public static FieldReferenceData build(FieldReference reference, boolean details) {
-    return new FieldReferenceData(reference, details);
+  public static FieldRefData build(FieldReference reference, boolean details) {
+    return new FieldRefData(reference, details);
   }
 
   private FieldReference getData() {
@@ -122,8 +122,8 @@ public final class FieldReferenceData implements DexReferenceData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof FieldReferenceData) &&
-           (this.getData().equals(((FieldReferenceData)obj).getData()));
+    return (this == obj) || (obj instanceof FieldRefData) &&
+           (this.getData().equals(((FieldRefData)obj).getData()));
   }
 
   /**

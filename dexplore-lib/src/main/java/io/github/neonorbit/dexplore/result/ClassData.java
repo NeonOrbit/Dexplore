@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,15 +33,20 @@ import java.util.Objects;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class ClassData implements Comparable<ClassData> {
+public final class ClassData implements DexData, Comparable<ClassData> {
   /** The fully-qualified class name. */
   @Nonnull public final String clazz;
 
-  private ReferencePool referencePool;
+  private List<FieldData> fields;
   private Map<String, MethodData> methods;
+  private ReferencePool referencePool;
 
   ClassData(@Nonnull String clazz) {
     this.clazz = clazz;
+  }
+
+  void setFields(List<FieldData> fields) {
+    this.fields = fields;
   }
 
   void setMethods(Map<String, MethodData> methods) {
@@ -55,12 +61,35 @@ public final class ClassData implements Comparable<ClassData> {
     return Objects.requireNonNull(methods).get(signature);
   }
 
+  @Nullable
+  public Class<?> loadClass(@Nonnull ClassLoader classLoader) {
+    try {
+      return classLoader.loadClass(clazz);
+    } catch (ClassNotFoundException e) {
+      return null;
+    }
+  }
+
   /**
-   * Returns a set containing {@code MethodData} objects
-   * representing all the declared methods of the class.
-   * <p>The returned set is unmodifiable.</p>
+   * Returns a list of {@code FieldData} objects
+   * representing all the fields of the class.
+   * <p>The returned list is unmodifiable.</p>
    *
-   * @return a set of objects representing the declared methods of the class
+   * @return a list containing the fields of the class
+   */
+  public List<FieldData> getFields() {
+    if (fields == null) {
+      fields = Collections.emptyList();
+    }
+    return fields;
+  }
+
+  /**
+   * Returns a collection containing {@code MethodData} objects
+   * representing all the declared methods of the class.
+   * <p>The returned collection is unmodifiable.</p>
+   *
+   * @return a collection containing the declared methods of the class
    */
   @Nonnull
   public Collection<MethodData> getMethods() {
@@ -85,13 +114,16 @@ public final class ClassData implements Comparable<ClassData> {
     return referencePool;
   }
 
-  @Nullable
-  public Class<?> loadClass(@Nonnull ClassLoader classLoader) {
-    try {
-      return classLoader.loadClass(clazz);
-    } catch (ClassNotFoundException e) {
-      return null;
-    }
+  /**
+   * Signature: fullClassName
+   * <p>Example: java.lang.Byte
+   *
+   * @return class signature
+   */
+  @Nonnull
+  @Override
+  public String getSignature() {
+    return clazz;
   }
 
   /**
@@ -101,8 +133,9 @@ public final class ClassData implements Comparable<ClassData> {
    * @return the serialized string
    */
   @Nonnull
+  @Override
   public String serialize() {
-    return this.clazz;
+    return "c:" + this.clazz;
   }
 
   /**
@@ -114,8 +147,12 @@ public final class ClassData implements Comparable<ClassData> {
    */
   @Nonnull
   public static ClassData deserialize(@Nonnull String serialized) {
-    if (Utils.isValidName(serialized)) {
-      return new ClassData(serialized);
+    final String[] parts = serialized.split(":");
+    if (parts.length == 2 && parts[0].equals("c")) {
+      final String clazz = parts[1];
+      if (Utils.isValidName(clazz)) {
+        return new ClassData(clazz);
+      }
     }
     throw new IllegalArgumentException();
   }
@@ -136,6 +173,9 @@ public final class ClassData implements Comparable<ClassData> {
            (this.clazz.equals(((ClassData) obj).clazz));
   }
 
+  /**
+   * Equivalent to {@link #getSignature()}
+   */
   @Override
   public String toString() {
     return clazz;

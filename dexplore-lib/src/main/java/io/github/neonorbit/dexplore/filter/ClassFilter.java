@@ -157,7 +157,6 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      *
      * @param packages a list of packages to exclude
      * @param exception an exception list to allow sub packages
-     *
      * @return {@code this} builder
      */
     public Builder skipPackages(@Nullable List<String> packages,
@@ -175,7 +174,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Add a condition to the filter to match only classes that match with any of the specified class names.
-     * This is useful if you want to search in specific classes only.
+     * <p>This is useful if you want to search in specific classes only.</p>
      *
      * @param classes class names (fully qualified)
      * @return {@code this} builder

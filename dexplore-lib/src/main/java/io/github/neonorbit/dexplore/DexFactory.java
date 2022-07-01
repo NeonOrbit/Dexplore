@@ -77,13 +77,13 @@ public final class DexFactory {
     return dexplore;
   }
 
-  public static class UnsupportedFileException extends RuntimeException {
+  public static class UnsupportedFileException extends DexException {
     private UnsupportedFileException(String msg) {
       super(msg);
     }
   }
 
-  public static class FileNotFoundException extends RuntimeException {
+  public static class FileNotFoundException extends DexException {
     private FileNotFoundException(String msg) {
       super(msg);
     }

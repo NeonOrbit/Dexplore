@@ -16,7 +16,7 @@
 
 package io.github.neonorbit.dexplore.reference;
 
-public interface DexReferenceData {
+public interface DexRefData {
   /**
    * Checks whether any items of this {@code Object} match the specified string.
    *

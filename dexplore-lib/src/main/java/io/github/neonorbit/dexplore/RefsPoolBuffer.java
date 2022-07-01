@@ -16,10 +16,10 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.reference.FieldReferenceData;
-import io.github.neonorbit.dexplore.reference.MethodReferenceData;
-import io.github.neonorbit.dexplore.reference.StringReferenceData;
-import io.github.neonorbit.dexplore.reference.TypeReferenceData;
+import io.github.neonorbit.dexplore.reference.FieldRefData;
+import io.github.neonorbit.dexplore.reference.MethodRefData;
+import io.github.neonorbit.dexplore.reference.StringRefData;
+import io.github.neonorbit.dexplore.reference.TypeRefData;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
 import org.jf.dexlib2.iface.reference.FieldReference;
 import org.jf.dexlib2.iface.reference.MethodReference;
@@ -30,15 +30,15 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-final class RefPoolRBuffer {
+final class RefsPoolBuffer {
   private boolean needsCopy;
-  private List<StringReferenceData> strings;
-  private List<TypeReferenceData> types;
-  private List<FieldReferenceData> fields;
-  private List<MethodReferenceData> methods;
+  private List<StringRefData> strings;
+  private List<TypeRefData> types;
+  private List<FieldRefData> fields;
+  private List<MethodRefData> methods;
   private final boolean fieldDetails, methodDetails;
 
-  RefPoolRBuffer(ReferenceTypes types) {
+  RefsPoolBuffer(ReferenceTypes types) {
     this.strings = new ArrayList<>();
     this.types = new ArrayList<>();
     this.fields = new ArrayList<>();
@@ -59,10 +59,10 @@ final class RefPoolRBuffer {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   private void resolve() {
-    strings.forEach(StringReferenceData::toString);
-    types.forEach(TypeReferenceData::toString);
-    fields.forEach(FieldReferenceData::toString);
-    methods.forEach(MethodReferenceData::toString);
+    strings.forEach(StringRefData::toString);
+    types.forEach(TypeRefData::toString);
+    fields.forEach(FieldRefData::toString);
+    methods.forEach(MethodRefData::toString);
   }
 
   @Nonnull
@@ -79,26 +79,26 @@ final class RefPoolRBuffer {
 
   public void add(@Nonnull String value) {
     update();
-    strings.add(StringReferenceData.build(value));
+    strings.add(StringRefData.build(value));
   }
 
   public void add(@Nonnull StringReference value) {
     update();
-    strings.add(StringReferenceData.build(value));
+    strings.add(StringRefData.build(value));
   }
 
   public void add(@Nonnull TypeReference value) {
     update();
-    types.add(TypeReferenceData.build(value));
+    types.add(TypeRefData.build(value));
   }
 
   public void add(@Nonnull FieldReference value) {
     update();
-    fields.add(FieldReferenceData.build(value, fieldDetails));
+    fields.add(FieldRefData.build(value, fieldDetails));
   }
 
   public void add(@Nonnull MethodReference value) {
     update();
-    methods.add(MethodReferenceData.build(value, methodDetails));
+    methods.add(MethodRefData.build(value, methodDetails));
   }
 }

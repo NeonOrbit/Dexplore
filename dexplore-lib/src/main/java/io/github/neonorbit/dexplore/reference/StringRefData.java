@@ -17,56 +17,59 @@
 package io.github.neonorbit.dexplore.reference;
 
 import io.github.neonorbit.dexplore.ReferencePool;
-import io.github.neonorbit.dexplore.util.DexUtils;
-import org.jf.dexlib2.iface.reference.TypeReference;
-import org.jf.dexlib2.immutable.reference.ImmutableTypeReference;
+import org.jf.dexlib2.iface.reference.StringReference;
+import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 
 import javax.annotation.Nonnull;
 
 /**
  * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
- * to a type (usually a fully qualified class name).
+ * to a literal string.
  * @see ReferencePool
  *
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class TypeReferenceData implements DexReferenceData {
+public final class StringRefData implements DexRefData {
   private boolean resolved;
-  private TypeReference data;
+  private StringReference data;
 
-  private TypeReferenceData(TypeReference reference) {
+  private StringRefData(StringReference reference) {
     this.data = reference;
   }
 
-  public static TypeReferenceData build(TypeReference reference) {
-    return new TypeReferenceData(reference);
+  public static StringRefData build(StringReference reference) {
+    return new StringRefData(reference);
   }
 
-  private TypeReference getData() {
+  public static StringRefData build(String value) {
+    StringRefData data = build(new ImmutableStringReference(value));
+    data.resolved = true;
+    return data;
+  }
+
+  private StringReference getData() {
     if (!resolved) {
       resolved = true;
-      data = new ImmutableTypeReference(
-                   DexUtils.dexToJavaTypeName(data.getType())
-                 );
+      data = ImmutableStringReference.of(data);
     }
     return data;
   }
 
   /**
-   * @return fully qualified name
+   * @return the literal string
    */
   @Nonnull
-  public String getType() {
-    return getData().getType();
+  public String getString() {
+    return getData().getString();
   }
 
   /**
-   * Checks whether the value of this {@code TypeReference} matches the specified string
+   * Checks whether the value of this {@code StringReference} matches the specified string
    */
   @Override
   public boolean contains(@Nonnull String value) {
-    return getData().getType().equals(value);
+    return getData().getString().equals(value);
   }
 
   @Override
@@ -76,12 +79,12 @@ public final class TypeReferenceData implements DexReferenceData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof TypeReferenceData) &&
-           (this.getData().equals(((TypeReferenceData)obj).getData()));
+    return (this == obj) || (obj instanceof StringRefData) &&
+           (this.getData().equals(((StringRefData) obj).getData()));
   }
 
   @Override
   public String toString() {
-    return getData().getType();
+    return getData().getString();
   }
 }

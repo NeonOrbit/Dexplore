@@ -24,8 +24,10 @@ import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Internal
@@ -55,12 +57,18 @@ public final class Results {
   private static ClassData buildClassData(@Nonnull DexBackedClassDef dexClass) {
     String clazz = DexUtils.dexClassToJavaTypeName(dexClass);
     ClassData instance = new ClassData(clazz);
-    Map<String, MethodData> map = new HashMap<>();
-    for (DexBackedMethod dexMethod : DexUtils.dexMethods(dexClass)) {
+    Map<String, MethodData> methods = new LinkedHashMap<>();
+    DexUtils.dexMethods(dexClass).forEach(dexMethod -> {
       MethodData method = buildMethodData(dexMethod, instance);
-      map.put(method.getSignature(), method);
-    }
-    instance.setMethods(Collections.unmodifiableMap(map));
+      methods.put(method.getSignature(), method);
+    });
+    List<FieldData> fields = new ArrayList<>();
+    DexUtils.dexFields(dexClass).forEach(dexField -> {
+      String type = DexUtils.dexToJavaTypeName(dexField.getType());
+      fields.add(new FieldData(clazz, dexField.getName(), type));
+    });
+    instance.setFields(Collections.unmodifiableList(fields));
+    instance.setMethods(Collections.unmodifiableMap(methods));
     instance.setReferencePool(DexDecoder.decodeFully(dexClass));
     return instance;
   }

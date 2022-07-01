@@ -163,7 +163,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     /**
      * If true, only the {@link #setPreferredDexNames(String...) preferred} dex files will be analyzed.
      *
-     * @param allow {@code true} to set
+     * @param allow {@code true} to set, {@code false} to unset.
      * @return {@code this} builder
      * @throws IllegalStateException if preferred dex was not specified
      */
@@ -177,7 +177,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
     /**
      * Add a condition to the filter to match only dex files that contain any of the specified classes.
-     * This is useful if you want to search in specific classes only.
+     * <p>This is useful if you want to search in specific classes only.</p>
      *
      * @param classes class names (fully qualified)
      * @return {@code this} builder

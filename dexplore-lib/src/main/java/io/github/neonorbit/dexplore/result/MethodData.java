@@ -34,7 +34,7 @@ import java.util.StringJoiner;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class MethodData implements Comparable<MethodData> {
+public final class MethodData implements DexData, Comparable<MethodData> {
   /** The declaring class of the method. */
   @Nonnull public final String clazz;
   /** The name of the method. */
@@ -63,6 +63,19 @@ public final class MethodData implements Comparable<MethodData> {
 
   void setReferencePool(ReferencePool referencePool) {
     this.referencePool = referencePool;
+  }
+
+  @Nullable
+  public Method loadMethod(@Nonnull ClassLoader classLoader) {
+    try {
+      final Class<?>[] paramTypes = new Class[params.length];
+      for (int i = 0; i < params.length; i++) {
+        paramTypes[i] = classLoader.loadClass(params[i]);
+      }
+      return classLoader.loadClass(clazz).getDeclaredMethod(method, paramTypes);
+    } catch (ClassNotFoundException | NoSuchMethodException e) {
+      return null;
+    }
   }
 
   /**
@@ -97,22 +110,11 @@ public final class MethodData implements Comparable<MethodData> {
    *
    * @return method signature
    */
+  @Nonnull
+  @Override
   public String getSignature() {
     List<String> list = Arrays.asList(params);
     return DexUtils.getMethodSignature(clazz, method, list, returnType);
-  }
-
-  @Nullable
-  public Method loadMethod(@Nonnull ClassLoader classLoader) {
-    try {
-      final Class<?>[] paramTypes = new Class[params.length];
-      for (int i = 0; i < params.length; i++) {
-        paramTypes[i] = classLoader.loadClass(params[i]);
-      }
-      return classLoader.loadClass(clazz).getDeclaredMethod(method, paramTypes);
-    } catch (ClassNotFoundException | NoSuchMethodException e) {
-      return null;
-    }
   }
 
   /**
@@ -124,9 +126,10 @@ public final class MethodData implements Comparable<MethodData> {
    * @return the serialized string
    */
   @Nonnull
+  @Override
   public String serialize() {
     StringJoiner joiner = new StringJoiner(":");
-    joiner.add(clazz).add(method);
+    joiner.add("m").add(clazz).add(method);
     for (String param : params) {
       joiner.add(param);
     }
@@ -144,10 +147,9 @@ public final class MethodData implements Comparable<MethodData> {
   @Nonnull
   public static MethodData deserialize(@Nonnull String serialized) {
     final String[] parts = serialized.split(":");
-    if (parts.length >= 3) {
-      final int pIndex = Math.min(2, parts.length - 1);
-      final String from = parts[0], name = parts[1], type = parts[parts.length - 1];
-      final String[] params = Arrays.copyOfRange(parts, pIndex, parts.length - 1);
+    if (parts.length >= 4 && parts[0].equals("m")) {
+      final String from = parts[1], name = parts[2], type = parts[parts.length - 1];
+      final String[] params = Arrays.copyOfRange(parts, 3, parts.length - 1);
       if (Utils.isValidName(Arrays.asList(from, type)) &&
           Utils.isValidName(Arrays.asList(params))) {
         return new MethodData(from, name, params, type);

@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -108,6 +109,24 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   public static MethodFilter ofMethod(@Nonnull String method,
                                       @Nonnull List<String> params) {
     return builder().setMethodNames(method).setParamList(params).build();
+  }
+
+  /**
+   * This is equivalent to:
+   * <blockquote><pre>
+   *   new MethodFilter.Builder()
+   *                   .{@link MethodFilter.Builder#setMethodNames(String...)
+   *                           setMethodNames(method)}
+   *                   .{@link MethodFilter.Builder#setParamList(List)
+   *                           setParamList(Collections.emptyList())}
+   *                   .build();
+   * </pre></blockquote>
+   *
+   * @param method method name
+   * @return a {@code MethodFilter} instance
+   */
+  public static MethodFilter ofMethod(@Nonnull String method) {
+    return ofMethod(method, Collections.emptyList());
   }
 
   public Builder toBuilder() {

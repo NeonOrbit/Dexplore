@@ -16,10 +16,10 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.reference.FieldReferenceData;
-import io.github.neonorbit.dexplore.reference.MethodReferenceData;
-import io.github.neonorbit.dexplore.reference.StringReferenceData;
-import io.github.neonorbit.dexplore.reference.TypeReferenceData;
+import io.github.neonorbit.dexplore.reference.FieldRefData;
+import io.github.neonorbit.dexplore.reference.MethodRefData;
+import io.github.neonorbit.dexplore.reference.StringRefData;
+import io.github.neonorbit.dexplore.reference.TypeRefData;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -30,10 +30,10 @@ import java.util.StringJoiner;
  * An instance of this class holds the {@link io.github.neonorbit.dexplore.reference references}
  * present in a dex file, class or method.
  *
- * @see StringReferenceData
- * @see TypeReferenceData
- * @see FieldReferenceData
- * @see MethodReferenceData
+ * @see StringRefData
+ * @see TypeRefData
+ * @see FieldRefData
+ * @see MethodRefData
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -41,10 +41,10 @@ import java.util.StringJoiner;
 public final class ReferencePool {
   private String toString;
   private final static ReferencePool EMPTY_POOL;
-  private final List<StringReferenceData> strings;
-  private final List<TypeReferenceData> types;
-  private final List<FieldReferenceData> fields;
-  private final List<MethodReferenceData> methods;
+  private final List<StringRefData> strings;
+  private final List<TypeRefData> types;
+  private final List<FieldRefData> fields;
+  private final List<MethodRefData> methods;
 
   static {
     EMPTY_POOL = new ReferencePool(
@@ -55,20 +55,20 @@ public final class ReferencePool {
     );
   }
 
-  private ReferencePool(List<StringReferenceData> strings,
-                        List<TypeReferenceData> types,
-                        List<FieldReferenceData> fields,
-                        List<MethodReferenceData> methods) {
+  private ReferencePool(List<StringRefData> strings,
+                        List<TypeRefData> types,
+                        List<FieldRefData> fields,
+                        List<MethodRefData> methods) {
     this.strings = Collections.unmodifiableList(strings);
     this.types = Collections.unmodifiableList(types);
     this.fields = Collections.unmodifiableList(fields);
     this.methods = Collections.unmodifiableList(methods);
   }
 
-  static ReferencePool build(List<StringReferenceData> strings,
-                             List<TypeReferenceData> types,
-                             List<FieldReferenceData> fields,
-                             List<MethodReferenceData> methods) {
+  static ReferencePool build(List<StringRefData> strings,
+                             List<TypeRefData> types,
+                             List<FieldRefData> fields,
+                             List<MethodRefData> methods) {
     if (strings.isEmpty() && types.isEmpty() &&
         fields.isEmpty() && methods.isEmpty()) {
       return EMPTY_POOL;
@@ -86,22 +86,22 @@ public final class ReferencePool {
   }
 
   @Nonnull
-  public List<StringReferenceData> getStringSection() {
+  public List<StringRefData> getStringSection() {
     return strings;
   }
 
   @Nonnull
-  public List<FieldReferenceData> getFieldSection() {
+  public List<FieldRefData> getFieldSection() {
     return fields;
   }
 
   @Nonnull
-  public List<MethodReferenceData> getMethodSection() {
+  public List<MethodRefData> getMethodSection() {
     return methods;
   }
 
   @Nonnull
-  public List<TypeReferenceData> getTypeSection() {
+  public List<TypeRefData> getTypeSection() {
     return types;
   }
 
@@ -160,7 +160,7 @@ public final class ReferencePool {
 
   /**
    * Checks whether any {@code Field} items of this {@code Pool} contain
-   * the specified {@link FieldReferenceData#getSignature() signature}.
+   * the specified {@link FieldRefData#getSignature() signature}.
    *
    * @param signature The signature to compare against
    * @return {@code true} if this {@code Pool} contains the given signature
@@ -171,7 +171,7 @@ public final class ReferencePool {
 
   /**
    * Checks whether any {@code Method} items of this {@code Pool} contain
-   * the specified {@link MethodReferenceData#getSignature() signature}.
+   * the specified {@link MethodRefData#getSignature() signature}.
    *
    * @param signature The signature to compare against
    * @return {@code true} if this {@code Pool} contains the given signature

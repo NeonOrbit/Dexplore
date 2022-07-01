@@ -44,13 +44,13 @@ import java.util.HashSet;
 @Internal
 public final class DexDecoder {
   private final boolean cache;
-  private final RefPoolRCache<DexEntry> dexCache;
-  private final RefPoolRCache<DexBackedClassDef> classCache;
+  private final RefsPoolCache<DexEntry> dexCache;
+  private final RefsPoolCache<DexBackedClassDef> classCache;
 
   DexDecoder(DexOptions options) {
     this.cache = options.enableCache;
-    this.dexCache = new RefPoolRCache<>();
-    this.classCache = new RefPoolRCache<>();
+    this.dexCache = new RefsPoolCache<>();
+    this.classCache = new RefsPoolCache<>();
   }
 
   @Nonnull
@@ -101,7 +101,7 @@ public final class DexDecoder {
   private static ReferencePool decodeDexReferences(DexBackedDexFile dexFile,
                                                    ReferenceTypes types,
                                                    boolean resolve) {
-    final RefPoolRBuffer buffer = new RefPoolRBuffer(types);
+    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     if (types.hasString()) {
       HashSet<String> rm = new HashSet<>(dexFile.getTypeSection());
       for (FieldReference r: dexFile.getFieldSection()) rm.add(r.getName());
@@ -117,7 +117,7 @@ public final class DexDecoder {
   private static ReferencePool decodeClassReferences(DexBackedClassDef dexClass,
                                                      ReferenceTypes types,
                                                      boolean resolve) {
-    final RefPoolRBuffer buffer = new RefPoolRBuffer(types);
+    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
     getMethods(dexClass, types).forEach(dexMethod -> {
       decodeMethodReferences(dexMethod, types, buffer);
@@ -137,7 +137,7 @@ public final class DexDecoder {
 
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
                                                  ReferenceTypes types,
-                                                 RefPoolRBuffer pool) {
+                                                 RefsPoolBuffer pool) {
     if (!types.hasString()) return;
     DexUtils.dexStaticFields(dexClass).forEach(field -> {
       EncodedValue value = field.getInitialValue();
@@ -150,14 +150,14 @@ public final class DexDecoder {
   private static ReferencePool decodeMethodReferences(DexBackedMethod dexMethod,
                                                       ReferenceTypes types,
                                                       boolean resolve) {
-    RefPoolRBuffer buffer = new RefPoolRBuffer(types);
+    RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     decodeMethodReferences(dexMethod, types, buffer);
     return buffer.getPool(resolve);
   }
 
   private static void decodeMethodReferences(DexBackedMethod dexMethod,
                                              ReferenceTypes types,
-                                             RefPoolRBuffer pool) {
+                                             RefsPoolBuffer pool) {
     MethodImplementation implementation = dexMethod.getImplementation();
     if (implementation == null || types.hasNone()) return;
     for (Instruction instruction : implementation.getInstructions()) {
@@ -172,7 +172,7 @@ public final class DexDecoder {
 
   private static void decodeReference(Reference reference,
                                       ReferenceTypes types,
-                                      RefPoolRBuffer pool) {
+                                      RefsPoolBuffer pool) {
     try {
       reference.validateReference();
       if (reference instanceof StringReference) {

@@ -35,19 +35,19 @@ import java.util.stream.Collectors;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class MethodReferenceData implements DexReferenceData {
+public final class MethodRefData implements DexRefData {
   private final boolean details;
   private boolean resolved;
   private String signature;
   private MethodReference data;
 
-  private MethodReferenceData(MethodReference reference, boolean details) {
+  private MethodRefData(MethodReference reference, boolean details) {
     this.details = details;
     this.data = reference;
   }
 
-  public static MethodReferenceData build(MethodReference reference, boolean details) {
-    return new MethodReferenceData(reference, details);
+  public static MethodRefData build(MethodReference reference, boolean details) {
+    return new MethodRefData(reference, details);
   }
 
   private MethodReference getData() {
@@ -148,8 +148,8 @@ public final class MethodReferenceData implements DexReferenceData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof MethodReferenceData) &&
-           (this.getData().equals(((MethodReferenceData) obj).getData()));
+    return (this == obj) || (obj instanceof MethodRefData) &&
+           (this.getData().equals(((MethodRefData) obj).getData()));
   }
 
   /**

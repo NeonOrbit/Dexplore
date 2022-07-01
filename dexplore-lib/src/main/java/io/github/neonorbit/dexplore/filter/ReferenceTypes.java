@@ -16,10 +16,10 @@
 
 package io.github.neonorbit.dexplore.filter;
 
-import io.github.neonorbit.dexplore.reference.FieldReferenceData;
-import io.github.neonorbit.dexplore.reference.MethodReferenceData;
-import io.github.neonorbit.dexplore.reference.StringReferenceData;
-import io.github.neonorbit.dexplore.reference.TypeReferenceData;
+import io.github.neonorbit.dexplore.reference.FieldRefData;
+import io.github.neonorbit.dexplore.reference.MethodRefData;
+import io.github.neonorbit.dexplore.reference.StringRefData;
+import io.github.neonorbit.dexplore.reference.TypeRefData;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -166,7 +166,7 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Add {@link StringReferenceData String} reference type.
+     * Add {@link StringRefData String} reference type.
      * @return {@code this} builder
      */
     public Builder addString() {
@@ -175,7 +175,7 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Add {@link TypeReferenceData Type} reference type.
+     * Add {@link TypeRefData Type} reference type.
      * @return {@code this} builder
      */
     public Builder addTypeDes() {
@@ -184,7 +184,7 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Add {@link FieldReferenceData Field} reference type.
+     * Add {@link FieldRefData Field} reference type.
      * <p>Note: This will include only the name of the field.</p>
      *
      * @return {@code this} builder
@@ -196,7 +196,7 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Add {@link MethodReferenceData Method} reference type.
+     * Add {@link MethodRefData Method} reference type.
      * <p>Note: This will include only the name of the method.</p>
      *
      * @return {@code this} builder
@@ -208,7 +208,7 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Add {@link FieldReferenceData Field} reference type.
+     * Add {@link FieldRefData Field} reference type.
      * <p>
      * Note: This will also include the
      *    details ({@link Field#getName() name},
@@ -227,7 +227,7 @@ public final class ReferenceTypes {
     }
 
     /**
-     * Add {@link MethodReferenceData Method} reference type.
+     * Add {@link MethodRefData Method} reference type.
      * <p>
      * Note: This will also include the
      *    details ({@link Method#getName() name},
