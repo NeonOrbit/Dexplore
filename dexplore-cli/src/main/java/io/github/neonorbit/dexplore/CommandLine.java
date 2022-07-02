@@ -25,6 +25,8 @@ import io.github.neonorbit.dexplore.filter.ReferenceFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.MethodData;
+import io.github.neonorbit.dexplore.util.DexLog;
+import io.github.neonorbit.dexplore.util.DexLogger;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import jadx.api.JadxArgs;
 import jadx.api.JadxDecompiler;
@@ -65,21 +67,28 @@ final class CommandLine extends JCommander {
   @Parameter(names = {"-t", "--type"}, order = 2, description = "Item to find: c: find class (default), m: find method")
   private String itemType = "c";
 
-  @Parameter(names = {"-rt", "--ref-type"}, order = 3, description = "Reference types: a: all (default), s: string, t: type, f: field, m: method")
-  private String refType = "a";
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  @Parameter(names = {"-c", "--classes"}, variableArity = true, order = 3, description = "List of classes to search in.")
+  private List<String> classes = new ArrayList<>();
+
+  @Parameter(names = {"-rt", "--ref-type"}, order = 4, description = "Reference types: a: all, s: string, t: type, f: field, m: method")
+  private String refType = "";
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  @Parameter(names = {"-ref", "--references"}, variableArity = true, order = 4, description = "References: string, type, field or method names")
+  @Parameter(names = {"-ref", "--references"}, variableArity = true, order = 5, description = "References: string, type, field or method names")
   private List<String> references = new ArrayList<>();
 
   @Parameter(names = {"-d", "--details"}, order = 6, description = "Print details: c: class details, m: method details only")
   private String printDetails = "";
 
-  @Parameter(names = {"-s", "--sources"}, order = 6, description = "Generate java source files")
+  @Parameter(names = {"-s", "--sources"}, order = 7, description = "Generate java and smali source files")
   private boolean generate = false;
 
-  @Parameter(names = {"-o", "--output"}, order = 7, description = "Output directory. Default: dexplore-out")
+  @Parameter(names = {"-o", "--output"}, order = 8, description = "Output directory. Default: dexplore-out")
   private String output = "dexplore-out";
+
+  @Parameter(names = {"-v", "--verbose"}, order = 9, description = "Verbose output")
+  private boolean verbose = false;
 
   private static final Set<String> VALID_ITEM_TYPES = Set.of("c", "m");
   private static final Set<String> VALID_REFERENCE_TYPES = Set.of("a", "s", "t", "f", "m");
@@ -108,6 +117,19 @@ final class CommandLine extends JCommander {
       usage(help);
       return;
     }
+    if (verbose) {
+      DexLog.enable();
+      DexLog.setLogger(new DexLogger() {
+        @Override
+        public void debug(String msg) {
+          System.out.println("D: " + msg);
+        }
+        @Override
+        public void warn(String msg) {
+          System.out.println("W: " + msg);
+        }
+      });
+    }
     search();
   }
 
@@ -124,7 +146,7 @@ final class CommandLine extends JCommander {
     ReferenceFilter filter = ReferenceFilter.containsAll(references.toArray(String[]::new));
 
     DexFilter dexFilter = DexFilter.MATCH_ALL;
-    ClassFilter classFilter = ClassFilter.builder().setReferenceTypes(types).setReferenceFilter(filter).build();
+    ClassFilter classFilter = ClassFilter.builder().setClasses(classes.toArray(String[]::new)).setReferenceTypes(types).setReferenceFilter(filter).build();
     MethodFilter methodFilter = isClass ? null : MethodFilter.builder().setReferenceTypes(types).setReferenceFilter(filter).build();
 
     for (String file : files) {
@@ -224,7 +246,7 @@ final class CommandLine extends JCommander {
   private String getValidName(final File dir, final String name) {
     String valid = name;
     for (int i = 1; new File(dir, valid + ".java").exists() ||
-            new File(dir, valid + ".smali").exists(); i++) {
+                    new File(dir, valid + ".smali").exists(); i++) {
       valid = name + '_' + i;
     }
     return valid;
@@ -288,12 +310,21 @@ final class CommandLine extends JCommander {
       System.err.println("\n  Please enter correct item type\n");
       return false;
     }
-    if (VALID_REFERENCE_TYPES.stream().noneMatch(refType::contains)) {
-      System.err.println("\n  Please enter correct reference type\n");
+    if (classes.isEmpty() && refType.isEmpty()) {
+      System.err.println("\n  Please provide a search query\n");
       return false;
     }
-    if (references.isEmpty()) {
-      System.err.println("\n  Please provide references\n");
+    if (!refType.isEmpty()) {
+      if (VALID_REFERENCE_TYPES.stream().noneMatch(refType::contains)) {
+        System.err.println("\n  Please enter correct reference types\n");
+        return false;
+      }
+      if (references.isEmpty()) {
+        System.err.println("\n  Please provide references\n");
+        return false;
+      }
+    } else if (!references.isEmpty()) {
+      System.err.println("\n  Please provide reference types\n");
       return false;
     }
     return true;
