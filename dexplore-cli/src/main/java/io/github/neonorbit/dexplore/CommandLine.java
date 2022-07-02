@@ -23,12 +23,31 @@ import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
+import io.github.neonorbit.dexplore.result.ClassData;
+import io.github.neonorbit.dexplore.result.MethodData;
+import io.github.neonorbit.dexplore.util.DexUtils;
+import jadx.api.JadxArgs;
+import jadx.api.JadxDecompiler;
+import jadx.api.JavaClass;
+import jadx.api.plugins.input.data.IClassData;
+import jadx.plugins.input.dex.DexFileLoader;
+import jadx.plugins.input.dex.DexInputOptions;
+import jadx.plugins.input.dex.DexLoadResult;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Console;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintStream;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
@@ -40,21 +59,27 @@ final class CommandLine extends JCommander {
   @Parameter(names = {"-h", "--help"}, order = 0, help = true, description = "Print this help message")
   private boolean help = false;
 
-  @Parameter(names = {"-m", "--maximum"}, order = 1, description = "Maximum results")
-  private int maximum = 1;
+  @Parameter(names = {"-m", "--maximum"}, order = 1, description = "Limit maximum results. Default: -1 (no limit)")
+  private int maximum = -1;
 
-  @Parameter(names = {"-d", "--print-details"}, order = 1, description = "Print details: c: class details, m: method details only, n: none (default)")
-  private String printDetails = "n";
-
-  @Parameter(names = {"-t", "--type"}, order = 2, description = "Item to find: c: to find class, m: to find method")
-  private String itemType = "";
+  @Parameter(names = {"-t", "--type"}, order = 2, description = "Item to find: c: find class (default), m: find method")
+  private String itemType = "c";
 
   @Parameter(names = {"-rt", "--ref-type"}, order = 3, description = "Reference types: a: all (default), s: string, t: type, f: field, m: method")
   private String refType = "a";
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  @Parameter(names = {"-ref", "--reference"}, variableArity = true, order = 4, description = "References: string, type, field or method names")
+  @Parameter(names = {"-ref", "--references"}, variableArity = true, order = 4, description = "References: string, type, field or method names")
   private List<String> references = new ArrayList<>();
+
+  @Parameter(names = {"-d", "--details"}, order = 6, description = "Print details: c: class details, m: method details only")
+  private String printDetails = "";
+
+  @Parameter(names = {"-s", "--sources"}, order = 6, description = "Generate java source files")
+  private boolean generate = false;
+
+  @Parameter(names = {"-o", "--output"}, order = 7, description = "Output directory. Default: dexplore-out")
+  private String output = "dexplore-out";
 
   private static final Set<String> VALID_ITEM_TYPES = Set.of("c", "m");
   private static final Set<String> VALID_REFERENCE_TYPES = Set.of("a", "s", "t", "f", "m");
@@ -73,7 +98,8 @@ final class CommandLine extends JCommander {
     try {
       new CommandLine(args).apply();
     } catch (Throwable t) {
-      System.err.println("\nError: " + t.getMessage() + "\n");
+      String name = t.getClass().getSimpleName();
+      System.err.println("\nError[" + name + "]: " + t.getMessage() + "\n");
     }
   }
 
@@ -82,8 +108,11 @@ final class CommandLine extends JCommander {
       usage(help);
       return;
     }
+    search();
+  }
 
-    boolean isMethod = itemType.equals("m");
+  private void search() {
+    boolean isClass = itemType.equals("c");
 
     ReferenceTypes.Builder tBuilder = ReferenceTypes.builder();
     if (refType.contains("a")) tBuilder.addAll();
@@ -92,80 +121,165 @@ final class CommandLine extends JCommander {
     if (refType.contains("f")) tBuilder.addFieldWithDetails();
     if (refType.contains("m")) tBuilder.addMethodWithDetails();
     ReferenceTypes types = tBuilder.build();
-
     ReferenceFilter filter = ReferenceFilter.containsAll(references.toArray(String[]::new));
 
     DexFilter dexFilter = DexFilter.MATCH_ALL;
+    ClassFilter classFilter = ClassFilter.builder().setReferenceTypes(types).setReferenceFilter(filter).build();
+    MethodFilter methodFilter = isClass ? null : MethodFilter.builder().setReferenceTypes(types).setReferenceFilter(filter).build();
 
-    ClassFilter classFilter = ClassFilter.builder()
-                                         .setReferenceTypes(types)
-                                         .setReferenceFilter(filter)
-                                         .build();
-
-
-    MethodFilter methodFilter = !isMethod ? null :
-                                 MethodFilter.builder()
-                                             .setReferenceTypes(types)
-                                             .setReferenceFilter(filter)
-                                             .build();
-
-    List<String> result;
-    if (!isMethod) {
-      result = files.stream()
-                    .flatMap(file -> DexFactory.load(file)
-                            .findClasses(dexFilter, classFilter, maximum).stream())
-                    .map(d -> {
-                      String str = ' ' + d.toString();
-                      if (printDetails.equals("c")) {
-                        str += '\n' + flattenReferencePool(d.getReferencePool()) + '\n';
-                      }
-                      return str;
-                    })
-                    .collect(Collectors.toList());
-    } else {
-      result = files.stream()
-                    .flatMap(file -> DexFactory.load(file)
-                            .findMethods(dexFilter, classFilter, methodFilter, maximum).stream())
-                    .map(d -> {
-                      String str = ' ' + d.toString();
-                      if (!printDetails.equals("n")) {
-                        str += '\n';
-                        str += printDetails.equals("m") ?
-                                 flattenReferencePool(d.getReferencePool()) :
-                                 flattenReferencePool(d.getClassData().getReferencePool());
-                        str += '\n';
-                      }
-                      return str;
-                    })
-                    .collect(Collectors.toList());
+    for (String file : files) {
+      System.out.println("File: " + file);
+      if (isClass) {
+        searchClasses(file, dexFilter, classFilter);
+      } else {
+        searchMethods(file, dexFilter, classFilter, methodFilter);
+      }
+      System.out.println();
     }
+  }
 
-    if (!result.isEmpty()) {
-      System.out.println("\nResult:");
-      result.forEach(System.out::println);
-    } else {
-      System.out.println("\n  Not Found!");
+  private void searchClasses(String file, DexFilter dexFilter, ClassFilter classFilter) {
+    System.out.println("Searching...");
+    List<ClassData> result = DexFactory.load(file).findClasses(dexFilter, classFilter, maximum);
+    System.out.println("Result:");
+    for (ClassData data : result) {
+      System.out.println("+ Class: " + data);
+      if (printDetails.equals("c")) {
+        System.out.println("- ReferencePool: " + data.clazz);
+        System.out.println(flattenReferencePool(data.getReferencePool()));
+      }
     }
+    if (result.isEmpty()) System.out.println("  [Not Found]");
+    if (generate && !result.isEmpty()) {
+      generateSources(file, result.stream().map(d -> DexUtils.javaToDexTypeName(d.clazz)).collect(Collectors.toSet()));
+    }
+  }
+
+  private void searchMethods(String file, DexFilter dexFilter, ClassFilter classFilter, MethodFilter methodFilter) {
+    System.out.println("Searching...");
+    List<MethodData> result = DexFactory.load(file).findMethods(dexFilter, classFilter, methodFilter, maximum);
+    System.out.println("Result:");
+    for (MethodData data : result) {
+      System.out.println("+ Method: " + data);
+      if (printDetails.equals("m")) {
+        System.out.println("- ReferencePool: " + data);
+        System.out.println(flattenReferencePool(data.getReferencePool()));
+      } else if (printDetails.equals("c")) {
+        System.out.println("- ReferencePool: " + data.clazz);
+        System.out.println(flattenReferencePool(data.getClassData().getReferencePool()));
+      }
+    }
+    if (result.isEmpty()) System.out.println("  [Not Found]");
+    if (generate && !result.isEmpty()) {
+      generateSources(file, result.stream().map(d -> DexUtils.javaToDexTypeName(d.clazz)).collect(Collectors.toSet()));
+    }
+  }
+
+  private void generateSources(String path, Set<String> classes) {
+    final File file = new File(path);
+    final File dir = createOutputDir(file.getName());
+    if (dir == null) {
+      System.out.println("!!--> Skipping...");
+      return;
+    }
+    PrintStream err = System.err;
+    System.out.println("Generating sources...");
+    try {
+      System.setErr(new PrintStream(new ByteArrayOutputStream(), true));
+      JadxArgs args = new JadxArgs();
+      args.setShowInconsistentCode(true);
+      JadxDecompiler decompiler = new JadxDecompiler(args);
+      decompiler.addCustomLoad(new DexLoadResult(new DexFileLoader(new DexInputOptions()).collectDexFiles(
+              Collections.singletonList(file.toPath())
+      ), null) {
+        @Override
+        public void visitClasses(Consumer<IClassData> consumer) {
+          super.visitClasses(cls -> {
+            if (classes.contains(cls.getType())) consumer.accept(cls);
+          });
+        }
+      });
+      decompiler.load();
+      for (JavaClass node : decompiler.getClasses()) {
+        System.out.print("-> [" + node.getName() + "]: ");
+        String name = getValidName(dir, node.getName());
+        try (Writer java = new FileWriter(new File(dir, name + ".java"));
+             Writer smali = new FileWriter(new File(dir, name + ".smali"))) {
+          java.write(node.getCode());
+          smali.write(node.getSmali());
+          System.out.print("done");
+        } catch (Throwable t) {
+          System.out.print("failed: " + t.getMessage());
+        } finally {
+          System.out.println();
+        }
+      }
+    } catch (Throwable t) {
+      System.out.println("Failed[" + t.getClass().getSimpleName() + "]: " + t.getMessage());
+    } finally {
+      System.setErr(err);
+    }
+  }
+
+  private String getValidName(final File dir, final String name) {
+    String valid = name;
+    for (int i = 1; new File(dir, valid + ".java").exists() ||
+            new File(dir, valid + ".smali").exists(); i++) {
+      valid = name + '_' + i;
+    }
+    return valid;
+  }
+
+  private File createOutputDir(String name) {
+    final File dir = new File(output, name + "_sources");
+    if (dir.exists()) {
+      System.out.println("! Output directory exists: " + dir.getPath());
+      Console console = System.console();
+      if (console != null) {
+        String line = console.readLine("> Overwrite[o] or Merge[m]?: ");
+        if (line.equalsIgnoreCase("o") && !deleteDir(dir)) {
+          System.out.println("! Failed to overwrite: " + dir.getPath());
+        } else if (line.equalsIgnoreCase("m")) {
+          return dir;
+        }
+      }
+    }
+    return (!dir.exists() && dir.mkdirs()) ? dir : null;
+  }
+
+  private static boolean deleteDir(File dir) {
+    File[] files = dir.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.isDirectory() && !Files.isSymbolicLink(file.toPath())) {
+          deleteDir(file);
+        } else if (!file.delete()) {
+          return false;
+        }
+      }
+    }
+    return dir.delete();
   }
 
   private String flattenReferencePool(ReferencePool pool) {
     StringJoiner joiner = new StringJoiner("\n   ");
     joiner.add("   String References: ");
-    pool.getStringSection().forEach(s -> joiner.add("  " + s.toString()));
-    if (pool.getStringSection().isEmpty()) joiner.add("  none");
+    if (pool.getStringSection().isEmpty()) joiner.add("  [EMPTY]");
+    else pool.getStringSection().forEach(s -> joiner.add("  " + s.toString()));
     joiner.add("Type References: ");
-    pool.getTypeSection().forEach(t -> joiner.add("  " + t.toString()));
-    if (pool.getTypeSection().isEmpty()) joiner.add("  none");
+    if (pool.getTypeSection().isEmpty()) joiner.add("  [EMPTY]");
+    else pool.getTypeSection().forEach(t -> joiner.add("  " + t.toString()));
     joiner.add("Field References: ");
-    pool.getFieldSection().forEach(f -> joiner.add("  " + f.toString()));
-    if (pool.getFieldSection().isEmpty()) joiner.add("  none");
+    if (pool.getFieldSection().isEmpty()) joiner.add("  [EMPTY]");
+    else pool.getFieldSection().forEach(f -> joiner.add("  " + f.toString()));
     joiner.add("Method References: ");
-    pool.getMethodSection().forEach(m -> joiner.add("  " + m.toString()));
-    if (pool.getMethodSection().isEmpty()) joiner.add("  none");
+    if (pool.getMethodSection().isEmpty()) joiner.add("  [EMPTY]");
+    else pool.getMethodSection().forEach(m -> joiner.add("  " + m.toString()));
     return joiner.toString();
   }
 
   private boolean validateArgs() {
+    if (output.isEmpty()) output = "dexplore-out";
     if (files == null || files.isEmpty()) {
       System.err.println("\n  Please provide input files\n");
       return false;

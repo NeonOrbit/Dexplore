@@ -23,6 +23,8 @@ java {
 }
 
 dependencies {
+    implementation depends.jadx_core
+    implementation depends.jadx_plugin
     implementation depends.jcommander
     implementation project(':dexplore-lib')
 }
@@ -50,12 +52,22 @@ jar { // noinspection GroovyAssignabilityCheck
         include 'LICENSE'
         into('META-INF')
     }
-    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+    exclude 'META-INF/*.MF', 'META-INF/*.txt', 'META-INF/NOTICE*', 'NOTICE*', '*.proto'
     destinationDirectory = file(jarOutputPath)
 }
 
+shadowJar {
+    from(rootProject.projectDir) {
+        include 'LICENSE'
+        into('META-INF')
+    }
+    exclude 'META-INF/*.MF', 'META-INF/*.txt', 'META-INF/NOTICE*', 'NOTICE*', '*.proto'
+}
+
 task proguard(type: ProGuardTask, dependsOn: shadowJar) {
-    injars shadowJar.getArchiveFile()
+    injars shadowJar.getArchiveFile(),
+           filter: "!android/**.txt,!android/**.xml,!export/**.tmpl," +
+                   "!google/protobuf/**,!com/google/gson/**"
     outjars jar.archiveFile.get().asFile
 
     def home = System.getProperty("java.home")
@@ -66,9 +78,13 @@ task proguard(type: ProGuardTask, dependsOn: shadowJar) {
     }
 
     dontoptimize
-    dontobfuscate
-    keep 'class io.github.neonorbit.dexplore.** { *; }'
+    dontwarn 'jadx.**'
+    dontwarn 'org.slf4j.**'
+    dontwarn 'org.jf.util.jcommander.**'
+    keepattributes '*Annotation*'
+    keep 'class jadx.plugins.** { *; }'
     keep 'class com.beust.jcommander.** { *; }'
+    keep 'class io.github.neonorbit.dexplore.** { *; }'
     keepclassmembers 'enum * {                                       \
                           public static **[] values();                \
                           public static ** valueOf(java.lang.String);  \
