@@ -23,8 +23,6 @@ import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceFilter;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
-import io.github.neonorbit.dexplore.result.ClassData;
-import io.github.neonorbit.dexplore.result.MethodData;
 import io.github.neonorbit.dexplore.util.DexLog;
 import io.github.neonorbit.dexplore.util.DexLogger;
 import io.github.neonorbit.dexplore.util.DexUtils;
@@ -46,11 +44,11 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
 final class CommandLine extends JCommander {
@@ -162,38 +160,44 @@ final class CommandLine extends JCommander {
 
   private void searchClasses(String file, DexFilter dexFilter, ClassFilter classFilter) {
     System.out.println("Searching...");
-    List<ClassData> result = DexFactory.load(file).findClasses(dexFilter, classFilter, maximum);
-    System.out.println("Result:");
-    for (ClassData data : result) {
-      System.out.println("+ Class: " + data);
+    Set<String> results = new HashSet<>();
+    DexFactory.load(file).onClassResult(dexFilter, classFilter, result -> {
+      if (results.isEmpty()) System.out.println("Result:");
+      results.add(DexUtils.javaToDexTypeName(result.clazz));
+      System.out.println("+ Class: " + result);
       if (printDetails.equals("c")) {
-        System.out.println("- ReferencePool: " + data.clazz);
-        System.out.println(flattenReferencePool(data.getReferencePool()));
+        System.out.println("- ReferencePool: " + result.clazz);
+        System.out.println(flattenReferencePool(result.getReferencePool()));
       }
-    }
-    if (result.isEmpty()) System.out.println("  [Not Found]");
-    if (generate && !result.isEmpty()) {
-      generateSources(file, result.stream().map(d -> DexUtils.javaToDexTypeName(d.clazz)).collect(Collectors.toSet()));
+      return maximum > 0 && results.size() >= maximum;
+    });
+    if (results.isEmpty()) {
+      System.out.println("Result:  [Not Found]");
+    } else if (generate) {
+      generateSources(file, results);
     }
   }
 
   private void searchMethods(String file, DexFilter dexFilter, ClassFilter classFilter, MethodFilter methodFilter) {
     System.out.println("Searching...");
-    List<MethodData> result = DexFactory.load(file).findMethods(dexFilter, classFilter, methodFilter, maximum);
-    System.out.println("Result:");
-    for (MethodData data : result) {
-      System.out.println("+ Method: " + data);
+    Set<String> results = new HashSet<>();
+    DexFactory.load(file).onMethodResult(dexFilter, classFilter, methodFilter, result -> {
+      if (results.isEmpty()) System.out.println("Result:");
+      results.add(DexUtils.javaToDexTypeName(result.clazz));
+      System.out.println("+ Method: " + result);
       if (printDetails.equals("m")) {
-        System.out.println("- ReferencePool: " + data);
-        System.out.println(flattenReferencePool(data.getReferencePool()));
+        System.out.println("- ReferencePool: " + result);
+        System.out.println(flattenReferencePool(result.getReferencePool()));
       } else if (printDetails.equals("c")) {
-        System.out.println("- ReferencePool: " + data.clazz);
-        System.out.println(flattenReferencePool(data.getClassData().getReferencePool()));
+        System.out.println("- ReferencePool: " + result.clazz);
+        System.out.println(flattenReferencePool(result.getClassData().getReferencePool()));
       }
-    }
-    if (result.isEmpty()) System.out.println("  [Not Found]");
-    if (generate && !result.isEmpty()) {
-      generateSources(file, result.stream().map(d -> DexUtils.javaToDexTypeName(d.clazz)).collect(Collectors.toSet()));
+      return maximum > 0 && results.size() >= maximum;
+    });
+    if (results.isEmpty()) {
+      System.out.println("Result:  [Not Found]");
+    } else if (generate) {
+      generateSources(file, results);
     }
   }
 
