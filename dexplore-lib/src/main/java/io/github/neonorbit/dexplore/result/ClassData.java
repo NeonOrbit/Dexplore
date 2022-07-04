@@ -33,7 +33,7 @@ import java.util.Objects;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class ClassData implements DexData, Comparable<ClassData> {
+public final class ClassData implements DexItemData, Comparable<ClassData> {
   /** The fully-qualified class name. */
   @Nonnull public final String clazz;
 

@@ -34,7 +34,7 @@ import java.util.StringJoiner;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class MethodData implements DexData, Comparable<MethodData> {
+public final class MethodData implements DexItemData, Comparable<MethodData> {
   /** The declaring class of the method. */
   @Nonnull public final String clazz;
   /** The name of the method. */

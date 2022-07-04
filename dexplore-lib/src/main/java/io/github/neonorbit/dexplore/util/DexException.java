@@ -17,10 +17,6 @@
 package io.github.neonorbit.dexplore.util;
 
 public class DexException extends RuntimeException {
-  public DexException() {
-    super();
-  }
-
   public DexException(String message) {
     super(message);
   }

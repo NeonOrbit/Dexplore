@@ -31,7 +31,7 @@ import java.util.Objects;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class FieldData implements DexData, Comparable<FieldData> {
+public final class FieldData implements DexItemData, Comparable<FieldData> {
   /** The declaring class of the field. */
   @Nonnull public final String clazz;
   /** The name of the field. */

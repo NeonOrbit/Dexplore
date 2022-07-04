@@ -41,20 +41,27 @@ public final class Utils {
   public static <T> Set<T> optimizedSet(@Nonnull Collection<T> c) {
     if (c.isEmpty()) return Collections.emptySet();
     if (c.size() == 1) return Collections.singleton(findFirst(c));
-    return Collections.unmodifiableSet(new HashSet<>(c));
+    Set<T> set = (c instanceof Set) ? (Set<T>) c : new HashSet<>(c);
+    return Collections.unmodifiableSet(set);
   }
 
   public static <T> List<T> optimizedList(@Nonnull Collection<T> c) {
     if (c.isEmpty()) return Collections.emptyList();
     if (c.size() == 1) return Collections.singletonList(findFirst(c));
-    return Collections.unmodifiableList(new ArrayList<>(c));
+    List<T> list = (c instanceof List) ? (List<T>) c : new ArrayList<>(c);
+    return Collections.unmodifiableList(list);
+  }
+
+  public static void checkNotNull(Object... o) {
+    Objects.requireNonNull(o);
+    if (Arrays.stream(o).anyMatch(Objects::isNull)) {
+      throw new NullPointerException();
+    }
   }
 
   public static <T> List<T> nonNullList(T[] a) {
-    Objects.requireNonNull(a);
-    if (Arrays.stream(a).anyMatch(Objects::isNull))
-      throw new NullPointerException();
-    return Arrays.asList(a);
+    checkNotNull((Object[]) a);
+    return Collections.unmodifiableList(Arrays.asList(a));
   }
 
   public static <T extends Comparable<? super T>> int compare(T[] a, T[] b) {

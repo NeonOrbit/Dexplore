@@ -51,6 +51,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   private final String returnType;
   private final Set<String> methodNames;
   private final List<String> parameters;
+  private final Set<String> annotations;
+  private final Set<String> annotValues;
 
   private MethodFilter(Builder builder) {
     super(builder, Utils.isSingle(builder.methodNames) &&
@@ -61,6 +63,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     this.parameters = builder.parameters;
     this.returnType = builder.returnType;
     this.methodNames = builder.methodNames;
+    this.annotations = builder.annotations;
+    this.annotValues = builder.annotValues;
   }
 
   @Internal
@@ -73,6 +77,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
             (flag == M1 || (dexMethod.accessFlags & flag) == flag) &&
             (skipFlag == M1 || (dexMethod.accessFlags & skipFlag) == 0) &&
             (returnType == null || returnType.equals(dexMethod.getReturnType())) &&
+            (annotations == null || FilterUtils.containsAnnotations(dexMethod, annotations)) &&
+            (annotValues == null || FilterUtils.containsAnnotationValues(dexMethod, annotValues)) &&
             super.verify(dexMethod, decoder)
     );
     if (unique && !result) {
@@ -144,6 +150,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     private String returnType;
     private Set<String> methodNames;
     private List<String> parameters;
+    private Set<String> annotations;
+    private Set<String> annotValues;
 
     public Builder() {}
 
@@ -155,17 +163,21 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
       this.parameters = instance.parameters;
       this.returnType = instance.returnType;
       this.methodNames = instance.methodNames;
+      this.annotations = instance.annotations;
+      this.annotValues = instance.annotValues;
     }
 
     @Override
     protected boolean isDefault() {
-      return super.isDefault()  &&
-             flag == M1         &&
-             skipFlag == M1     &&
-             paramSize == M1    &&
-             parameters == null &&
-             returnType == null &&
-             methodNames == null;
+      return super.isDefault()     &&
+             flag        ==  M1    &&
+             skipFlag    ==  M1    &&
+             paramSize   ==  M1    &&
+             parameters  ==  null  &&
+             returnType  ==  null  &&
+             methodNames ==  null  &&
+             annotations ==  null  &&
+             annotValues ==  null;
     }
 
     @Override
@@ -179,20 +191,18 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match only methods
-     * that match with any of the specified method names.
+     * Add a condition to the filter to match methods that match with any of the specified method names.
      *
      * @param names method names
      * @return {@code this} builder
      */
     public Builder setMethodNames(@Nonnull String... names) {
-      List<String> list = Utils.nonNullList(names);
-      this.methodNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      this.methodNames = names.length == 0 ? null : Utils.optimizedSet(Utils.nonNullList(names));
       return this;
     }
 
     /**
-     * Add a condition to the filter to match only methods with the specified method modifiers.
+     * Add a condition to the filter to match methods with the specified method modifiers.
      * <br>
      * Examples:
      *    <blockquote> setModifiers({@link Modifier#PUBLIC}) </blockquote>
@@ -220,7 +230,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match only methods with the specified method return type.
+     * Add a condition to the filter to match methods with the specified method return type.
      *
      * @param returnType method return type (fully qualified name)
      * @return {@code this} builder
@@ -231,7 +241,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match only methods with the specified method parameter size.
+     * Add a condition to the filter to match methods with the specified method parameter size.
      *
      * @param size number of method parameters
      * @return {@code this} builder
@@ -242,13 +252,49 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match only methods with the specified parameter list.
+     * Add a condition to the filter to match methods with the specified parameter list.
      *
      * @param params list of method parameters (fully qualified name)
      * @return {@code this} builder
      */
     public Builder setParamList(@Nullable List<String> params) {
       this.parameters = params == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(params));
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match methods that contains all the specified annotations.
+     * <p>These are fully qualified names of annotation classes.</p>
+     *
+     * @param annotations annotation class names (fully qualified)
+     * @return {@code this} builder
+     * @see #containsAnnotationValues(String...)
+     */
+    public Builder containsAnnotations(@Nonnull String... annotations) {
+      List<String> list = Utils.nonNullList(annotations);
+      this.annotations = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match methods that contains all the specified annotation values.
+     *
+     * <p>Currently supports only string and type values.</p>
+     * <pre>
+     *   STRING Values: @Annot("string"), or @Annot({"string1", "string2"})
+     *   Example: filter.containsAnnotationValues("string", "string1")
+     *
+     *   TYPE Values: @Annot(Runnable.class), @Annot(Thread.class)
+     *   Example: filter.containsAnnotationValues("java.lang.Runnable", "java.lang.Thread")
+     * </pre>
+     *
+     * @param annotationValues annotation values
+     * @return {@code this} builder
+     * @see #containsAnnotations(String...)
+     */
+    public Builder containsAnnotationValues(@Nonnull String... annotationValues) {
+      List<String> list = Utils.nonNullList(annotationValues);
+      this.annotValues = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
   }

@@ -55,6 +55,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private final Pattern pkgPattern;
   private final Set<String> classNames;
   private final List<String> interfaces;
+  private final Set<String> annotations;
+  private final Set<String> annotValues;
 
   private ClassFilter(Builder builder) {
     super(builder, Utils.isSingle(builder.classNames));
@@ -64,6 +66,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     this.superClass = builder.superClass;
     this.classNames = builder.classNames;
     this.interfaces = builder.interfaces;
+    this.annotations = builder.annotations;
+    this.annotValues = builder.annotValues;
   }
 
   @Internal
@@ -78,6 +82,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
             (superClass == null || superClass.equals(dexClass.getSuperclass())) &&
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
             (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
+            (annotations == null || FilterUtils.containsAnnotations(dexClass, annotations)) &&
+            (annotValues == null || FilterUtils.containsAnnotationValues(dexClass, annotValues)) &&
             super.verify(dexClass, decoder)
     );
     if (unique && !result) {
@@ -118,6 +124,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     private String superClass;
     private Set<String> classNames;
     private List<String> interfaces;
+    private Set<String> annotations;
+    private Set<String> annotValues;
 
     public Builder() {}
 
@@ -129,17 +137,21 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       this.superClass = instance.superClass;
       this.classNames = instance.classNames;
       this.interfaces = instance.interfaces;
+      this.annotations = instance.annotations;
+      this.annotValues = instance.annotValues;
     }
 
     @Override
     protected boolean isDefault() {
-      return super.isDefault()  &&
-             flag == M1         &&
-             skipFlag == M1     &&
-             pkgPattern == null &&
-             superClass == null &&
-             interfaces == null &&
-             classNames == null;
+      return super.isDefault()     &&
+             flag        ==  M1    &&
+             skipFlag    ==  M1    &&
+             pkgPattern  ==  null  &&
+             superClass  ==  null  &&
+             interfaces  ==  null  &&
+             classNames  ==  null  &&
+             annotations ==  null  &&
+             annotValues ==  null;
     }
 
     @Override
@@ -173,7 +185,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match only classes that match with any of the specified class names.
+     * Add a condition to the filter to match classes that match with any of the specified class names.
      * <p>This is useful if you want to search in specific classes only.</p>
      *
      * @param classes class names (fully qualified)
@@ -186,7 +198,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match only classes with the specified class modifiers.
+     * Add a condition to the filter to match classes with the specified class modifiers.
      * <br>
      * Examples:
      *    <blockquote> setModifiers({@link Modifier#PUBLIC}) </blockquote>
@@ -214,7 +226,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match only classes with specified superclass.
+     * Add a condition to the filter to match classes with the specified superclass.
      *
      * @param superclass superclass name (fully qualified)
      * @return {@code this} builder
@@ -237,7 +249,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match only classes with the specified interfaces.
+     * Add a condition to the filter to match classes with the specified interfaces.
      *
      * @param iFaces interface names (fully qualified)
      * @return {@code this} builder
@@ -249,13 +261,50 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match only classes that do not have any interfaces.
+     * Add a condition to the filter to match classes that do not have any interfaces.
      *
      * @return {@code this} builder
      * @see #setInterfaces(List)
      */
     public Builder noInterfaces() {
       return setInterfaces(Collections.emptyList());
+    }
+
+    /**
+     * Add a condition to the filter to match classes that contains all the specified annotations.
+     * <p>These are fully qualified names of annotation classes.</p>
+     *
+     * @param annotations annotation class names (fully qualified)
+     * @return {@code this} builder
+     * @see #containsAnnotationValues(String...)
+     */
+    public Builder containsAnnotations(@Nonnull String... annotations) {
+      List<String> list = Utils.nonNullList(annotations);
+      this.annotations = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match classes that contains
+     * all the specified annotation values.
+     *
+     * <p>Currently supports only string and type values.</p>
+     * <pre>
+     *   STRING Values: @Annot("string"), or @Annot({"string1", "string2"})
+     *   Example: filter.containsAnnotationValues("string", "string1")
+     *
+     *   TYPE Values: @Annot(Runnable.class), @Annot(Thread.class)
+     *   Example: filter.containsAnnotationValues("java.lang.Runnable", "java.lang.Thread")
+     * </pre>
+     *
+     * @param annotationValues annotation values
+     * @return {@code this} builder
+     * @see #containsAnnotations(String...)
+     */
+    public Builder containsAnnotationValues(@Nonnull String... annotationValues) {
+      List<String> list = Utils.nonNullList(annotationValues);
+      this.annotValues = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
     }
 
     private static Pattern getPackagePattern(List<String> packages, List<String> exception) {
