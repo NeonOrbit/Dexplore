@@ -20,9 +20,11 @@ import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.result.ClassData;
+import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.MethodData;
 import io.github.neonorbit.dexplore.result.Results;
 import io.github.neonorbit.dexplore.util.Internal;
+import io.github.neonorbit.dexplore.util.KOperator;
 import io.github.neonorbit.dexplore.util.Operator;
 import io.github.neonorbit.dexplore.util.Utils;
 
@@ -79,6 +81,20 @@ final class DexploreImpl implements Dexplore {
                              @Nonnull Operator<MethodData> operator) {
     dexOperation.onMethods(dexFilter, classFilter, methodFilter,
                            dexMethod -> operator.operate(Results.ofMethod(dexMethod)));
+  }
+
+  @Override
+  public void onQueryResult(@Nonnull QueryBatch batch,
+                            @Nonnull KOperator<DexItemData> operator) {
+    for (QueryBatch.Query query : batch.getQueries()) {
+      if (!(query instanceof QueryBatch.MethodQuery)) {
+        QueryBatch.ClassQuery q = (QueryBatch.ClassQuery) query;
+        onClassResult(q.dexFilter, q.classFilter, r -> operator.operate(q.key, r));
+      } else {
+        QueryBatch.MethodQuery q = (QueryBatch.MethodQuery) query;
+        onMethodResult(q.dexFilter, q.classFilter, q.methodFilter, r -> operator.operate(q.key, r));
+      }
+    }
   }
 
   private List<ClassData> classQuery(DexFilter dexFilter,
