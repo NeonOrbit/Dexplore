@@ -20,12 +20,12 @@ import io.github.neonorbit.dexplore.filter.ReferenceTypes;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 final class RefsPoolCache<T> {
-  private final Map<Key, Entry> internal = new HashMap<>();
+  private final Map<Key, Entry> internal = new ConcurrentHashMap<>();
   private final ReferenceQueue<ReferencePool> queue = new ReferenceQueue<>();
 
   private static Key createKey(Object item, ReferenceTypes types) {
@@ -41,15 +41,7 @@ final class RefsPoolCache<T> {
     cleanStaleEntries();
     Key key = createKey(item, types);
     Entry entry = internal.get(key);
-    if (entry != null) {
-      ReferencePool value = entry.get();
-      if (value != null) {
-        return value;
-      } else {
-        internal.remove(key);
-      }
-    }
-    return null;
+    return entry != null ? entry.get() : null;
   }
 
   private void cleanStaleEntries() {
@@ -60,7 +52,8 @@ final class RefsPoolCache<T> {
 
   private static class Entry extends SoftReference<ReferencePool> {
     private final Key key;
-    private Entry(Key key, ReferencePool value, ReferenceQueue<ReferencePool> queue) {
+    private Entry(Key key, ReferencePool value,
+                  ReferenceQueue<ReferencePool> queue) {
       super(value, queue);
       this.key = key;
     }

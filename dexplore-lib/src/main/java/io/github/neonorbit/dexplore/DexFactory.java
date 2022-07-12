@@ -16,7 +16,9 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.util.DexException;
+import io.github.neonorbit.dexplore.exception.DexException;
+import io.github.neonorbit.dexplore.exception.FileNotFoundException;
+import io.github.neonorbit.dexplore.exception.UnsupportedFileException;
 import org.jf.dexlib2.DexFileFactory;
 
 import javax.annotation.Nonnull;
@@ -24,13 +26,15 @@ import java.util.Objects;
 
 /**
  * A factory class for loading dex files.
- * <p> <b>Supported types:</b> apk, zip, dex, odex, oat
- * <p><br>
- * Available methods:
+ * <p>
+ *   <b>Supported types:</b> apk, zip, dex, odex, oat
+ * </p>
+ * <b>Available methods:</b>
  * <ul>
  *   <li>{@link #load(String)}</li>
  *   <li>{@link #load(String, DexOptions)}</li>
  * </ul>
+ * <b>Note:</b> The {@code Dexplore} instances created by this class are thread-safe.
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -38,7 +42,10 @@ import java.util.Objects;
 public final class DexFactory {
   /**
    * Loads a file containing one or more dex files.
-   * <p>See also: {@link #load(String, DexOptions)}</p>
+   * <p>
+   *   <b>Note:</b> The returned instance is thread-safe.
+   * </p><br>
+   * See also: {@link #load(String, DexOptions)}
    *
    * @param path the path of the file to open
    * @return A {@code Dexplore} for the given file
@@ -53,6 +60,10 @@ public final class DexFactory {
 
   /**
    * Loads a file containing one or more dex files.
+   * <p>
+   *   <b>Note:</b> The returned instance is thread-safe.
+   * </p><br>
+   * See also: {@link #load(String)}
    *
    * @param path the path of the file to open
    * @param options a set of options to apply
@@ -75,17 +86,5 @@ public final class DexFactory {
       throw new UnsupportedFileException(e.getMessage());
     }
     return dexplore;
-  }
-
-  public static class UnsupportedFileException extends DexException {
-    private UnsupportedFileException(String msg) {
-      super(msg);
-    }
-  }
-
-  public static class FileNotFoundException extends DexException {
-    private FileNotFoundException(String msg) {
-      super(msg);
-    }
   }
 }

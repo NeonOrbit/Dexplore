@@ -23,9 +23,9 @@ import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.MethodData;
 import io.github.neonorbit.dexplore.result.Results;
-import io.github.neonorbit.dexplore.util.Internal;
-import io.github.neonorbit.dexplore.util.KOperator;
-import io.github.neonorbit.dexplore.util.Operator;
+import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.iface.KOperator;
+import io.github.neonorbit.dexplore.iface.Operator;
 import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;

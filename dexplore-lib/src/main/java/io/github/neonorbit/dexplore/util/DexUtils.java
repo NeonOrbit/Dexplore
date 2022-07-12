@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.util;
 
+import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.analysis.reflection.util.ReflectionUtils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;

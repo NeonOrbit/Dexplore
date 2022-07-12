@@ -16,6 +16,8 @@
 
 package io.github.neonorbit.dexplore.util;
 
+import io.github.neonorbit.dexplore.iface.Internal;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;

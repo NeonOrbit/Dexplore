@@ -18,7 +18,7 @@ package io.github.neonorbit.dexplore.filter;
 
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.ReferencePool;
-import io.github.neonorbit.dexplore.util.Internal;
+import io.github.neonorbit.dexplore.iface.Internal;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

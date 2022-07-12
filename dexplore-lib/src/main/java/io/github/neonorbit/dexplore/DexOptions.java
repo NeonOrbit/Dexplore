@@ -38,7 +38,8 @@ public final class DexOptions {
   public DexOpcodes opcodes = DexOpcodes.auto();
 
   /**
-   * This is useful if you want to reuse a {@code Dexplore} instance.
+   * This is useful if you want to search for multiple items
+   * on a single dexplore instance.
    * <p><b>Default:</b> {@code false}</p>
    * @since 1.0.0
    */

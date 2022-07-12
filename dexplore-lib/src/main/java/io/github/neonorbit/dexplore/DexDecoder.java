@@ -19,7 +19,7 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
 import io.github.neonorbit.dexplore.util.DexLog;
 import io.github.neonorbit.dexplore.util.DexUtils;
-import io.github.neonorbit.dexplore.util.Internal;
+import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;

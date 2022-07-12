@@ -16,6 +16,8 @@
 
 package io.github.neonorbit.dexplore.util;
 
+import io.github.neonorbit.dexplore.iface.Internal;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;

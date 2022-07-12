@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package io.github.neonorbit.dexplore.util;
+package io.github.neonorbit.dexplore.iface;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 
 /**
- * A callback interface to operate on key-based search results.
- * <p>
- *   {@link #operate operate(key, item)} will be called for each result that is produced,
- *   and should return a boolean to indicate whether the callback should be terminated for the given key.
- * </p>
+ * Indicates that the annotated element must not be considered as a public API
  *
  * @author NeonOrbit
- * @since 1.4.0
+ * @since 1.0.0
  */
-public interface KOperator<T> {
-  /**
-   * @param key the key associated with the item.
-   * @param item the item to operate on.
-   * @return {@code true} to terminate for the given key, {@code false} to continue.
-   */
-  boolean operate(String key, T item);
-}
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target({TYPE, FIELD, METHOD})
+public @interface Internal { }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.neonorbit.dexplore.util;
+package io.github.neonorbit.dexplore.iface;
 
 /**
  * A callback interface to operate on search results.

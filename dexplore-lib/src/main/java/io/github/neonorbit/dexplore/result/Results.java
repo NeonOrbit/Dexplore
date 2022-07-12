@@ -18,7 +18,7 @@ package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.util.DexUtils;
-import io.github.neonorbit.dexplore.util.Internal;
+import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 

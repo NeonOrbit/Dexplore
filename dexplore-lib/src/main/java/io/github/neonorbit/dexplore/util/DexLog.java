@@ -16,6 +16,8 @@
 
 package io.github.neonorbit.dexplore.util;
 
+import io.github.neonorbit.dexplore.iface.Internal;
+
 /**
  * The default logger used to log info during the dex analyzing process.
  * <p>By default, the logger is disabled. Use {@link #enable()} to enable the logger.</p>

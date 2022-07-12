@@ -16,8 +16,9 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.util.DexException;
-import io.github.neonorbit.dexplore.util.Internal;
+import io.github.neonorbit.dexplore.exception.DexException;
+import io.github.neonorbit.dexplore.util.DexLog;
+import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.DexFileFactory;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.MultiDexContainer;
@@ -27,6 +28,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -35,7 +37,7 @@ final class DexContainer {
   private final String path;
   private final boolean rootDex;
   private final DexOpcodes opcodes;
-  private       List<DexEntry> dexEntries;
+  private volatile List<DexEntry> dexEntries;
   private final MultiDexContainer<DexBackedDexFile> internal;
 
   DexContainer(String path, DexOptions options) {
@@ -43,14 +45,6 @@ final class DexContainer {
     this.opcodes = options.opcodes;
     this.rootDex = options.rootDexOnly;
     this.internal = loadDexContainer();
-  }
-
-  @Nullable
-  public DexEntry getEntry(String name) {
-    if (name == null || name.isEmpty()) return null;
-    return getDexEntries().stream()
-                          .filter(e -> e.matches(name))
-                          .findFirst().orElse(null);
   }
 
   @Nonnull
@@ -71,29 +65,35 @@ final class DexContainer {
     return dexEntries;
   }
 
-  String getPath() {
-    return this.path;
-  }
-
-  DexBackedDexFile loadDexFile(String dexName) throws IOException {
+  synchronized DexBackedDexFile loadDexFile(String dexName) {
+    DexLog.d("Loading Dex: " + dexName);
     MultiDexContainer.DexEntry<? extends DexBackedDexFile> entry;
-    entry = internal.getEntry(dexName);
-    if (entry == null) {
-      throw new DexException("Couldn't find dex entry: " + dexName);
+    try {
+      entry = internal.getEntry(dexName);
+      if (entry == null) {
+        throw new DexException("Couldn't find dex entry: " + dexName);
+      }
+    } catch (IOException e) {
+      throw new DexException("Failed to load dex file: " + dexName, e);
     }
     return entry.getDexFile();
   }
 
   private List<DexEntry> getDexEntries() {
     if (this.dexEntries == null) {
-      this.dexEntries = new ArrayList<>();
-      try {
-        for (String dexName : internal.getDexEntryNames()) {
-          this.dexEntries.add(new DexEntry(this, dexName));
+      synchronized (this) {
+        if (this.dexEntries == null) {
+          ArrayList<DexEntry> entries = new ArrayList<>();
+          try {
+            for (String dexName : internal.getDexEntryNames()) {
+              entries.add(new DexEntry(this, dexName));
+            }
+            if (rootDex) entries.sort(null);
+          } catch (IOException e) {
+            throw new DexException("Failed to load dex entries", e);
+          }
+          this.dexEntries = Collections.unmodifiableList(entries);
         }
-        if (rootDex) this.dexEntries.sort(null);
-      } catch (IOException e) {
-        throw new DexException("Failed to load dex entries", e);
       }
     }
     return this.dexEntries;

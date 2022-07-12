@@ -22,8 +22,8 @@ import io.github.neonorbit.dexplore.filter.MethodFilter;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.MethodData;
-import io.github.neonorbit.dexplore.util.KOperator;
-import io.github.neonorbit.dexplore.util.Operator;
+import io.github.neonorbit.dexplore.iface.KOperator;
+import io.github.neonorbit.dexplore.iface.Operator;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

@@ -14,27 +14,10 @@
  * limitations under the License.
  */
 
-package io.github.neonorbit.dexplore.util;
+package io.github.neonorbit.dexplore.exception;
 
-@Internal
-public final class AbortException extends RuntimeException{
-  private final boolean silent;
-
-  private AbortException() {
-    super(null, null, false, false);
-    silent = true;
-  }
-
-  public AbortException(String msg) {
-    super(msg, null, false, false);
-    silent = false;
-  }
-
-  public boolean isSilent() {
-    return silent;
-  }
-
-  public static AbortException silently() {
-    return new AbortException();
+public class UnsupportedFileException extends DexException {
+  public UnsupportedFileException(String msg) {
+    super(msg);
   }
 }

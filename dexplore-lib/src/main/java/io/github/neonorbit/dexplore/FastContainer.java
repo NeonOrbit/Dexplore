@@ -16,7 +16,7 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.util.Internal;
+import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.dexbacked.ZipDexContainer;
 

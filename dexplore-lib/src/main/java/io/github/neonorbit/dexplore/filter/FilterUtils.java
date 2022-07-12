@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class FilterUtils {
+final class FilterUtils {
   public static boolean containsAnnotations(@Nonnull DexBackedClassDef dexClass,
                                             @Nonnull Set<String> annotations) {
     return containsAnnotations(dexClass.getAnnotations(), annotations);

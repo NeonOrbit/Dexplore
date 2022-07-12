@@ -14,21 +14,10 @@
  * limitations under the License.
  */
 
-package io.github.neonorbit.dexplore.util;
+package io.github.neonorbit.dexplore.exception;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-
-/**
- * Indicates that the annotated element must not be considered as a public API
- */
-@Documented
-@Retention(RetentionPolicy.CLASS)
-@Target({TYPE, FIELD, METHOD})
-public @interface Internal { }
+public class FileNotFoundException extends DexException {
+  public FileNotFoundException(String msg) {
+    super(msg);
+  }
+}
