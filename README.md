@@ -1,11 +1,8 @@
 # Dexplore
 
-A dex analyzing tool for finding java items from obfuscated code
+A dex analyzing library for finding java obfuscated classes and methods at runtime.
 
-
-## Usage
-
-### Gradle
+### Library
 Java library
 
 ```Groovy
@@ -13,20 +10,24 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'io.github.neonorbit:dexplore:1.0.0'
+    implementation 'io.github.neonorbit:dexplore:1.4.0'
 }
 ```
 
 ### CommandLine
-Command line tool
+Command line tool for static analysis
 
 ```Shell
 java -jar Dexplore.jar --help
 ```
 
+## Usage
 
-License
--------
+Check [JavaDocs](https://neonorbit.github.io/dexplore) for API overview.  
+Read [Wiki](https://github.com/NeonOrbit/Dexplore/wiki) for detailed explanation and examples.
+
+## License
+
 ```
 Copyright (C) 2022 NeonOrbit
 

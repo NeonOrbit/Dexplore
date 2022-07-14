@@ -61,7 +61,7 @@ publishing {
 
             pom {
                 name = projectName
-                description = 'A dex analyzing tool for finding java items from obfuscated code'
+                description = 'A dex analyzer for finding obfuscated codes dynamically'
                 url = 'https://neonorbit.github.io/dexplore'
                 licenses {
                     license {
