@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
+import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
@@ -33,6 +34,7 @@ import java.util.Set;
  * <p>
  *   Note: Use {@link Builder Builder} to build a batch.
  * </p>
+ * @see Builder#setParallel(boolean) setParallel()
  * @see Builder#addClassQuery(String, DexFilter, ClassFilter) addClassQuery()
  * @see Builder#addMethodQuery(String, DexFilter, ClassFilter, MethodFilter) addMethodQuery()
  *
@@ -40,14 +42,20 @@ import java.util.Set;
  * @since 1.4.0
  */
 public class QueryBatch {
+  private final boolean parallel;
   private final Map<String, Query> map;
 
   private QueryBatch(Builder builder) {
+    this.parallel = builder.parallel;
     this.map = Collections.unmodifiableMap(new HashMap<>(builder.map));
   }
 
   Collection<Query> getQueries() {
     return map.values();
+  }
+
+  public boolean isParallel() {
+    return size() > 1 && parallel;
   }
 
   public Set<String> getKeys() {
@@ -68,14 +76,26 @@ public class QueryBatch {
   /**
    * QueryBatch Builder
    *
+   * @see Builder#setParallel(boolean) setParallel()
    * @see #addClassQuery(String, DexFilter, ClassFilter) addClassQuery()
    * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter) addMethodQuery()
    */
   public static class Builder {
+    private boolean parallel;
     private final Map<String, Query> map = new HashMap<>();
 
     public QueryBatch build() {
       return new QueryBatch(this);
+    }
+
+    /**
+     * Process queries in parallel
+     * @param parallel {@code true} to set, {@code false} to unset.
+     * @return {@code this} builder
+     */
+    public Builder setParallel(boolean parallel) {
+      this.parallel = parallel;
+      return this;
     }
 
     /**
@@ -119,9 +139,10 @@ public class QueryBatch {
     }
   }
 
-  static abstract class Query {
-    final String key;
-    final DexFilter dexFilter;
+  @Internal
+  public static abstract class Query {
+    public final String key;
+    public final DexFilter dexFilter;
 
     protected Query(String key, DexFilter dexFilter) {
       this.key = key;
@@ -140,16 +161,18 @@ public class QueryBatch {
     }
   }
 
-  static class ClassQuery extends Query {
-    final ClassFilter classFilter;
+  @Internal
+  public static class ClassQuery extends Query {
+    public final ClassFilter classFilter;
     private ClassQuery(String key, DexFilter dexFilter, ClassFilter classFilter) {
       super(key, dexFilter);
       this.classFilter = classFilter;
     }
   }
 
-  static class MethodQuery extends ClassQuery {
-    final MethodFilter methodFilter;
+  @Internal
+  public static class MethodQuery extends ClassQuery {
+    public final MethodFilter methodFilter;
     private MethodQuery(String key, DexFilter dexFilter, ClassFilter classFilter,
                         MethodFilter methodFilter) {
       super(key, dexFilter, classFilter);

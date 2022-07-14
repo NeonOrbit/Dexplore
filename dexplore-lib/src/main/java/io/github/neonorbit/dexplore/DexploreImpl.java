@@ -19,13 +19,16 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
+import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.iface.KOperator;
+import io.github.neonorbit.dexplore.iface.Operator;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.MethodData;
 import io.github.neonorbit.dexplore.result.Results;
-import io.github.neonorbit.dexplore.iface.Internal;
-import io.github.neonorbit.dexplore.iface.KOperator;
-import io.github.neonorbit.dexplore.iface.Operator;
+import io.github.neonorbit.dexplore.task.QueryTask;
+import io.github.neonorbit.dexplore.task.QueryTaskFactory;
+import io.github.neonorbit.dexplore.task.TaskHandler;
 import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
@@ -86,14 +89,16 @@ final class DexploreImpl implements Dexplore {
   @Override
   public void onQueryResult(@Nonnull QueryBatch batch,
                             @Nonnull KOperator<DexItemData> operator) {
-    for (QueryBatch.Query query : batch.getQueries()) {
-      if (!(query instanceof QueryBatch.MethodQuery)) {
-        QueryBatch.ClassQuery q = (QueryBatch.ClassQuery) query;
-        onClassResult(q.dexFilter, q.classFilter, r -> operator.operate(q.key, r));
-      } else {
-        QueryBatch.MethodQuery q = (QueryBatch.MethodQuery) query;
-        onMethodResult(q.dexFilter, q.classFilter, q.methodFilter, r -> operator.operate(q.key, r));
-      }
+    QueryTaskFactory factory = new QueryTaskFactory(this, operator);
+    if (batch.isParallel()) {
+      TaskHandler<Object> handler = new TaskHandler<>();
+      batch.getQueries().forEach(q -> {
+        QueryTask task = factory.newTask(q);
+        handler.submit(task);
+      });
+      handler.awaitCompletion();
+    } else {
+      batch.getQueries().forEach(query -> factory.newTask(query).call());
     }
   }
 

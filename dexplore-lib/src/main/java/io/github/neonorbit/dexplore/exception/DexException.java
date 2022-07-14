@@ -21,6 +21,10 @@ public class DexException extends RuntimeException {
     super(message);
   }
 
+  public DexException(Throwable cause) {
+    super(cause.getMessage(), cause);
+  }
+
   public DexException(String message, Throwable cause) {
     super(getMessage(message, cause), getCause(cause));
     if (cause instanceof DexException) {

@@ -147,6 +147,10 @@ public interface Dexplore {
    *   Return {@code true} when you want to stop further search for a given key.
    * </p>
    * <pre>--------------------------------------------------</pre>
+   * <b>Note:</b> Set {@link QueryBatch.Builder#setParallel(boolean) parallel}
+   * to speed up the process. In that case, the callback will be called in a separate thread.
+   * If you are adding results to a list, make sure it is thread-safe.
+   * <br>
    * <b>Note:</b> If no result is found for a given key, it will be ignored silently.
    * <br>
    * <b>Note:</b> Result item will be in {@link DexItemData} form,
