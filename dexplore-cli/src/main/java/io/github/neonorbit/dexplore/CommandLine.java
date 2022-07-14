@@ -97,6 +97,7 @@ final class CommandLine extends JCommander {
   private CommandLine(String[] args) {
     this.help |= args.length == 0;
     this.setProgramName(TITLE);
+    this.setExpandAtSign(false);
     this.addObject(this);
     this.parse(args);
   }
@@ -209,12 +210,11 @@ final class CommandLine extends JCommander {
       return;
     }
     PrintStream err = System.err;
+    System.setErr(new PrintStream(new ByteArrayOutputStream(), true));
     System.out.println("Generating sources...");
-    try {
-      System.setErr(new PrintStream(new ByteArrayOutputStream(), true));
-      JadxArgs args = new JadxArgs();
-      args.setShowInconsistentCode(true);
-      JadxDecompiler decompiler = new JadxDecompiler(args);
+    JadxArgs args = new JadxArgs();
+    args.setShowInconsistentCode(true);
+    try (JadxDecompiler decompiler = new JadxDecompiler(args)) {
       decompiler.addCustomLoad(new DexLoadResult(new DexFileLoader(new DexInputOptions()).collectDexFiles(
               Collections.singletonList(file.toPath())
       ), null) {
