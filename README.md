@@ -23,8 +23,8 @@ java -jar Dexplore.jar --help
 
 ## Usage
 
-Check [JavaDocs](https://neonorbit.github.io/dexplore) for API overview.  
-Read [Wiki](https://github.com/NeonOrbit/Dexplore/wiki) for detailed explanation and examples.
+- Check [JavaDocs](https://neonorbit.github.io/dexplore/javadoc) for API overview.  
+- Check [WikiPage](https://github.com/NeonOrbit/Dexplore/wiki) for detailed explanation and examples.
 
 ## License
 

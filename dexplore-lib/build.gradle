@@ -5,14 +5,6 @@ plugins {
     id 'java-library'; id 'maven-publish'; id 'signing'
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-        compileJava.options.compilerArgs.addAll(['--release', '8'])
-    }
-}
-
 dependencies {
     compileOnly depends.guava
     implementation depends.dexlib2
@@ -23,7 +15,6 @@ task unitTest(type: Test) {
     dependsOn test
 }
 
-ext.validDev = 'NeonOrbit'
 def gpgKeyName, gpgPassword
 def mavenUsername, mavenPassword
 
@@ -42,7 +33,7 @@ if (isLocalRelease || isMavenRelease) {
     } else {
         (gpgKeyName, gpgPassword) = gpgKeyCredential()
         (mavenUsername, mavenPassword) = mavenCredential()
-        validateDeveloperIdentity(gpgKeyName, mavenUsername)
+        preventAccidentalDeploy(gpgKeyName, mavenUsername)
     }
     ext {
         set("signing.gnupg.keyName", gpgKeyName)
@@ -115,10 +106,10 @@ publishing {
 }
 
 @SuppressWarnings('GrMethodMayBeStatic')
-def validateDeveloperIdentity(gpg, maven) {
-    if (gpg != validDev) {
+def preventAccidentalDeploy(gpg, maven) {
+    if (gpg != primaryKey) {
         throw new IllegalArgumentException('Invalid gpg key')
-    } else if (maven != validDev) {
+    } else if (maven != primaryKey) {
         throw new IllegalArgumentException('Invalid maven id')
     }
 }

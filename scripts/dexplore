@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# Copyright (C) 2022 NeonOrbit
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+MAX_MEM="-Xmx4G"
+PROGRAM="dexplore.jar"
+
+if ! java --version 2>/dev/null 1>&2; then
+    echo "Please install JDK" && exit 1
+fi
+
+SET_PROGRAM() {
+    [ -f "$PROGRAM" ] && return
+    PROGRAM=$(ls -1 | grep -m1 -i '^Dexplore.jar$')
+    [ -f "$PROGRAM" ] && return
+    PROGRAM=$(ls -rv1 | grep -m1 -iE '^Dexplore-([0-9]+(\.)){3}jar$')
+    [ -f "$PROGRAM" ] && return
+    echo "Couldn't find dexplore jar"
+    exit 1
+}
+
+SET_PROGRAM
+
+if [ -n "$1" ] && [ "$1" != "-h" ] && [ "$1" != "--help" ]; then
+    echo "Executing: $PROGRAM"; echo
+fi
+
+exec java "$MAX_MEM" -jar "$PROGRAM" "$@"

@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath depends.shadow_gradle
+        classpath depends.shadow_plugin
         classpath (depends.proguard) {
             exclude group: 'com.android.tools.build'
         }
@@ -23,9 +23,9 @@ java {
 }
 
 dependencies {
+    implementation depends.jcommander
     implementation depends.jadx_core
     implementation depends.jadx_plugin
-    implementation depends.jcommander
     implementation project(':dexplore-lib')
 }
 

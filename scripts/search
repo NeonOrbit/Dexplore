@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Copyright (C) 2022 NeonOrbit
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ------------------#
+#   A simple demo   #
+# ------------------#
+
+# dexplore shell script
+if ! ./dexplore -h 2>/dev/null 1>&2; then
+    echo "Couldn't find dexplore script " && exit 1
+fi
+
+echo "Dexplore CLI"
+
+# list of input files
+read -p "Enter input files: " -r _in
+[[ -n $_in ]] || exit 1
+
+# search type
+read -p "Search class/method? [c/m]: " -r _type
+[[ $_type =~ ^[cm]$ ]] || exit 1
+
+# class names to find
+read -p "Enter class names: " -r _classes
+
+# reference types for reference pool
+read -p "Reference types? [astfm]: " -r _reftype
+
+# list of references
+read -p "Enter references: " -r _references
+
+# print reference pool
+read -p "Print details class/method? [cm]: " -r _details
+[[ $_type =~ ^[cm]$ ]] || exit 1
+
+# generate java and smali files
+read -p "Generate source files? [y/n]: " -r _gen
+[[ $_gen =~ ^[Yy]$ ]] && _gen="-s" || _gen=""
+
+# default is dexplore-out
+read -p "Output directory: " -r _out
+
+# pass args to dexplore cli
+./dexplore $_in -t $_type -c $_classes -rt $_reftype -ref $_references -d $_details $_gen -o $_out
