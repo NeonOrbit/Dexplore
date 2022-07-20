@@ -34,7 +34,7 @@ import java.util.Objects;
  * @since 1.0.0
  */
 public final class ClassData implements DexItemData, Comparable<ClassData> {
-  /** The fully-qualified class name. */
+  /** The {@linkplain Class#getName() full name} of the class. */
   @Nonnull public final String clazz;
 
   private List<FieldData> fields;
@@ -100,13 +100,24 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   }
 
   /**
+   * The {@linkplain Class#getName() full name} of the class
+   * @return class name
+   */
+  @Nonnull
+  @Override
+  public String getClazz() {
+    return clazz;
+  }
+
+  /**
    * Returns the {@code ReferencePool} of the class.
-   * <p>It contains all the {@link io.github.neonorbit.dexplore.reference references}
+   * <p>It contains all the {@linkplain io.github.neonorbit.dexplore.reference references}
    * present in the class.</p>
    *
    * @return the {@code ReferencePool} of the class
    */
   @Nonnull
+  @Override
   public ReferencePool getReferencePool() {
     if (referencePool == null) {
       referencePool = ReferencePool.emptyPool();

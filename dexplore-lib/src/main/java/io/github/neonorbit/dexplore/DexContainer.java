@@ -66,7 +66,7 @@ final class DexContainer {
   }
 
   synchronized DexBackedDexFile loadDexFile(String dexName) {
-    DexLog.d("Loading Dex: " + dexName);
+    DexLog.d("Loading: " + dexName);
     MultiDexContainer.DexEntry<? extends DexBackedDexFile> entry;
     try {
       entry = internal.getEntry(dexName);

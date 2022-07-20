@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.result;
 
+import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 
@@ -54,6 +55,25 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
     } catch (ClassNotFoundException | NoSuchFieldException e) {
       return null;
     }
+  }
+
+  /**
+   * The declaring class of the field.
+   * @return declaring class {@linkplain Class#getName() name}
+   */
+  @Nonnull
+  @Override
+  public String getClazz() {
+    return clazz;
+  }
+
+  /**
+   * @return an empty {@code ReferencePool}
+   */
+  @Nonnull
+  @Override
+  public ReferencePool getReferencePool() {
+    return ReferencePool.emptyPool();
   }
 
   /**

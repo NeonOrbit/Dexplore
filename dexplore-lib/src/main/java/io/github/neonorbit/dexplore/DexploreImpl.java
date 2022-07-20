@@ -40,24 +40,35 @@ import java.util.concurrent.atomic.AtomicReference;
 @Internal
 final class DexploreImpl implements Dexplore {
   private final DexOperation dexOperation;
+  private TaskHandler<Object> internalHandler;
 
   DexploreImpl(String path, DexOptions options) {
     this.dexOperation = new DexOperation(path, options);
   }
 
+  private synchronized TaskHandler<Object> getTaskHandler() {
+    if (internalHandler == null || internalHandler.isDirty()) {
+      internalHandler = new TaskHandler<>();
+    }
+    return internalHandler;
+  }
+
   @Nullable
+  @Override
   public ClassData findClass(@Nonnull DexFilter dexFilter,
                              @Nonnull ClassFilter classFilter) {
     return Utils.findFirst(classQuery(dexFilter, classFilter, 1));
   }
 
   @Nonnull
+  @Override
   public List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
                                      @Nonnull ClassFilter classFilter, int limit) {
     return classQuery(dexFilter, classFilter, limit);
   }
 
   @Nullable
+  @Override
   public MethodData findMethod(@Nonnull DexFilter dexFilter,
                                @Nonnull ClassFilter classFilter,
                                @Nonnull MethodFilter methodFilter) {
@@ -65,12 +76,14 @@ final class DexploreImpl implements Dexplore {
   }
 
   @Nonnull
+  @Override
   public List<MethodData> findMethods(@Nonnull DexFilter dexFilter,
                                       @Nonnull ClassFilter classFilter,
                                       @Nonnull MethodFilter methodFilter, int limit) {
     return methodQuery(dexFilter, classFilter, methodFilter, limit);
   }
 
+  @Override
   public void onClassResult(@Nonnull DexFilter dexFilter,
                             @Nonnull ClassFilter classFilter,
                             @Nonnull Operator<ClassData> operator) {
@@ -78,6 +91,7 @@ final class DexploreImpl implements Dexplore {
                            dexClass -> operator.operate(Results.ofClass(dexClass)));
   }
 
+  @Override
   public void onMethodResult(@Nonnull DexFilter dexFilter,
                              @Nonnull ClassFilter classFilter,
                              @Nonnull MethodFilter methodFilter,
@@ -89,17 +103,22 @@ final class DexploreImpl implements Dexplore {
   @Override
   public void onQueryResult(@Nonnull QueryBatch batch,
                             @Nonnull KOperator<DexItemData> operator) {
-    QueryTaskFactory factory = new QueryTaskFactory(this, operator);
     if (batch.isParallel()) {
-      TaskHandler<Object> handler = new TaskHandler<>();
-      batch.getQueries().forEach(q -> {
-        QueryTask task = factory.newTask(q);
-        handler.submit(task);
-      });
-      handler.awaitCompletion();
+      runInParallel(batch, new QueryTaskFactory(this, operator));
     } else {
+      QueryTaskFactory factory = new QueryTaskFactory(this, operator);
       batch.getQueries().forEach(query -> factory.newTask(query).call());
     }
+  }
+
+  private synchronized void runInParallel(QueryBatch batch,
+                                          QueryTaskFactory factory) {
+    TaskHandler<Object> taskHandler = getTaskHandler();
+    batch.getQueries().forEach(query -> {
+      QueryTask task = factory.newTask(query);
+      taskHandler.dispatch(task);
+    });
+    taskHandler.awaitCompletion();
   }
 
   private List<ClassData> classQuery(DexFilter dexFilter,

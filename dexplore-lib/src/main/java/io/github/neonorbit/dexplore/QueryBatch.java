@@ -41,7 +41,7 @@ import java.util.Set;
  * @author NeonOrbit
  * @since 1.4.0
  */
-public class QueryBatch {
+public final class QueryBatch {
   private final boolean parallel;
   private final Map<String, Query> map;
 

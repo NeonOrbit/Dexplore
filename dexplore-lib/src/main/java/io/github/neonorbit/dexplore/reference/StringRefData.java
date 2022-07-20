@@ -23,7 +23,7 @@ import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 import javax.annotation.Nonnull;
 
 /**
- * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference}
  * to a literal string.
  * @see ReferencePool
  *

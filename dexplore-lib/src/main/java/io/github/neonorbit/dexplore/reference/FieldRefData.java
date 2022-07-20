@@ -25,8 +25,7 @@ import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 
 /**
- * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
- * to a field.
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a field.
  * @see ReferencePool
  *
  * @author NeonOrbit

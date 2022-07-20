@@ -109,7 +109,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
    * </pre></blockquote>
    *
    * @param method method name
-   * @param params list of method parameters (fully qualified name)
+   * @param params {@linkplain Class#getName() full names} of method parameter types
    * @return a {@code MethodFilter} instance
    */
   public static MethodFilter ofMethod(@Nonnull String method,
@@ -232,7 +232,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Add a condition to the filter to match methods with the specified method return type.
      *
-     * @param returnType method return type (fully qualified name)
+     * @param returnType {@linkplain Class#getName() full name} of method return type
      * @return {@code this} builder
      */
     public Builder setReturnType(@Nullable String returnType) {
@@ -254,7 +254,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Add a condition to the filter to match methods with the specified parameter list.
      *
-     * @param params list of method parameters (fully qualified name)
+     * @param params {@linkplain Class#getName() full names} of method parameter types
      * @return {@code this} builder
      */
     public Builder setParamList(@Nullable List<String> params) {
@@ -264,9 +264,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
 
     /**
      * Add a condition to the filter to match methods that contains all the specified annotations.
-     * <p>These are fully qualified names of annotation classes.</p>
      *
-     * @param annotations annotation class names (fully qualified)
+     * @param annotations {@linkplain Class#getName() full names} of annotation classes
      * @return {@code this} builder
      * @see #containsAnnotationValues(String...)
      */

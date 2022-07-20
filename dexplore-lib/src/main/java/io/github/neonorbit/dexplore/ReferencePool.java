@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 /**
- * An instance of this class holds the {@link io.github.neonorbit.dexplore.reference references}
+ * An instance of this class holds the {@linkplain io.github.neonorbit.dexplore.reference references}
  * present in a dex file, class or method.
  *
  * @see StringRefData
@@ -48,10 +48,10 @@ public final class ReferencePool {
 
   static {
     EMPTY_POOL = new ReferencePool(
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyList()
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList()
     );
   }
 
@@ -180,6 +180,10 @@ public final class ReferencePool {
     return methods.stream().anyMatch(m -> m.getSignature().contains(signature));
   }
 
+  /**
+   * Returns a string containing all the reference signatures (separated by newline).
+   * @return a string representing all the reference signatures
+   */
   @Override
   public String toString() {
     if (toString == null) {

@@ -185,10 +185,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that match with any of the specified class names.
+     * Add a condition to the filter to match classes that match with any of the specified classes.
      * <p>This is useful if you want to search in specific classes only.</p>
      *
-     * @param classes class names (fully qualified)
+     * @param classes {@linkplain Class#getName() full names} of classes
      * @return {@code this} builder
      */
     public Builder setClasses(@Nonnull String... classes) {
@@ -228,7 +228,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     /**
      * Add a condition to the filter to match classes with the specified superclass.
      *
-     * @param superclass superclass name (fully qualified)
+     * @param superclass {@linkplain Class#getName() full name} of a superclass
      * @return {@code this} builder
      */
     public Builder setSuperClass(@Nullable String superclass) {
@@ -251,7 +251,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     /**
      * Add a condition to the filter to match classes with the specified interfaces.
      *
-     * @param iFaces interface names (fully qualified)
+     * @param iFaces {@linkplain Class#getName() full names} of interfaces
      * @return {@code this} builder
      * @see #noInterfaces()
      */
@@ -272,9 +272,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Add a condition to the filter to match classes that contains all the specified annotations.
-     * <p>These are fully qualified names of annotation classes.</p>
      *
-     * @param annotations annotation class names (fully qualified)
+     * @param annotations {@linkplain Class#getName() full names} of annotation classes
      * @return {@code this} builder
      * @see #containsAnnotationValues(String...)
      */

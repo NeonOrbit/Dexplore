@@ -27,55 +27,70 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
+/**
+ * An instance of this class should not be used from multiple threads.
+ * Only {@link #pause()} and {@link #resume()} are thread safe.
+ *
+ * <p>Note: This is an internal API.</p>
+ *
+ * @author NeonOrbit
+ */
 @Internal
 public final class TaskHandler<V> {
-  private final ExecutorService           boundedThreads;
-  private final CompletionService<V>      executorService;
-  private final ArrayList<Future<V>>      submittedTasks;
-  private final BlockingQueue<Future<V>>  completedTasks;
+  private int   total, completed;
+  private final TaskGuard taskGuard;
+  private final ThreadPoolExecutor boundedThreads;
+  private final CompletionService<V> taskDispatcher;
+  private final ArrayList<Future<V>> submittedTasks;
+  private final BlockingQueue<Future<V>> completedTasks;
 
-  @Internal
   public TaskHandler() {
-    this.submittedTasks  = new ArrayList<>();
-    this.completedTasks  = new LinkedBlockingQueue<>();
-    this.boundedThreads  = Executors.newFixedThreadPool(poolSize(), new DaemonThreadFactory());
-    ((ThreadPoolExecutor)  boundedThreads).setKeepAliveTime(5, TimeUnit.SECONDS);
-    ((ThreadPoolExecutor)  boundedThreads).allowCoreThreadTimeOut(true);
-    this.executorService = new ExecutorCompletionService<>(boundedThreads, completedTasks);
+    this(getIdealThreadPoolSize(), false);
   }
 
-  public void submit(@Nonnull Callable<V> task) {
-    submittedTasks.add(executorService.submit(task));
+  public TaskHandler(int poolSize, boolean pauseSupport) {
+    this.taskGuard = TaskGuard.newGuard(pauseSupport);
+    this.submittedTasks = new ArrayList<>();
+    this.completedTasks = new LinkedBlockingQueue<>();
+    this.boundedThreads = new FixedThreadPoolExecutor(poolSize, taskGuard);
+    this.taskDispatcher = new ExecutorCompletionService<>(boundedThreads, completedTasks);
   }
 
-  public V next() throws InterruptedException, ExecutionException {
-    Future<V> next = executorService.take();
-    submittedTasks.remove(next);
+  public void pause() { taskGuard.lock(); }
+
+  public void resume() { taskGuard.unlock(); }
+
+  /**
+   * @param task submit a task for execution.
+   */
+  public void dispatch(@Nonnull Callable<V> task) {
+    dispatchAndUpdate(task);
+  }
+
+  public V retrieve() throws InterruptedException, ExecutionException {
     try {
-      return next.get();
+      return retrieveAndUpdate().get();
     } catch (CancellationException ignore) {
       return null;
     }
   }
 
-  public void forEachResult(@Nonnull Result<V> result) {
+  public void forEachResult(@Nonnull Receiver<V> receiver) {
     try {
       while (hasTask()) {
-        try {
-          if (result.accept(next())) break;
-        } catch (InterruptedException | ExecutionException e) {
-          throw new DexException(e);
-        }
+        V res = retrieve();
+        taskGuard.hold();
+        try { if (receiver.accept(res)) {
+            terminate(false); break;
+          }
+        } finally { taskGuard.release(); }
       }
-    } finally {
-      terminate();
+    } catch (Exception e) {
+      handleException(e);
     }
   }
 
@@ -83,31 +98,83 @@ public final class TaskHandler<V> {
     forEachResult((r) -> false);
   }
 
-  public boolean hasTask() {
-    return !submittedTasks.isEmpty();
+  public void awaitCompletion(long interval, Listener listener) {
+    try {
+      synchronized (this) {
+        while (hasTask()) {
+          this.wait(interval);
+          updateInternally();
+          taskGuard.hold();
+          listener.progress(completed, total);
+          taskGuard.release();
+        }
+      }
+    } catch (Exception e) {
+      handleException(e);
+    }
   }
 
-  public void terminate() {
+  public boolean hasTask() { return completed < total; }
+
+  private void dispatchAndUpdate(Callable<V> task) {
+    submittedTasks.add(taskDispatcher.submit(task));
+    total++;
+  }
+
+  private Future<V> retrieveAndUpdate() throws InterruptedException {
+    Future<V> next = taskDispatcher.take();
+    submittedTasks.remove(next);
+    completed++;
+    return next;
+  }
+
+  private void updateInternally() throws ExecutionException, InterruptedException {
+    for (Future<V> next; (next = taskDispatcher.poll()) != null;) {
+      completed++;
+      submittedTasks.remove(next);
+      if (next.isDone()) next.get();
+    }
+  }
+
+  private void handleException(Exception exception) {
+    terminate(true);
+    if (exception instanceof RuntimeException) {
+      throw (RuntimeException) exception;
+    } else {
+      throw new DexException(exception);
+    }
+  }
+
+  private void terminate(boolean failed) {
     submittedTasks.forEach(task -> task.cancel(true));
-    clear();
-  }
-
-  public void shutdown() {
-    boundedThreads.shutdownNow();
-    clear();
-  }
-
-  private void clear() {
+    if (failed) {
+      boundedThreads.shutdownNow();
+    }
+    while (hasTask()) {
+      try {
+        updateInternally();
+      } catch (Exception ignore) {}
+    }
+    total = completed = 0;
     submittedTasks.clear();
     completedTasks.clear();
   }
 
-  private int poolSize() {
+  public boolean isDirty() {
+    return boundedThreads.isShutdown() || hasTask();
+  }
+
+  private static int getIdealThreadPoolSize() {
     return Math.max((Runtime.getRuntime().availableProcessors() - 1), 2);
   }
 
   @Internal
-  public interface Result<V> {
+  public interface Receiver<V> {
     boolean accept(V result);
+  }
+
+  @Internal
+  public interface Listener {
+    void progress(int completed, int total);
   }
 }

@@ -90,13 +90,24 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
   }
 
   /**
+   * The declaring class of the method.
+   * @return declaring class {@linkplain Class#getName() name}
+   */
+  @Nonnull
+  @Override
+  public String getClazz() {
+    return clazz;
+  }
+
+  /**
    * Returns the {@code ReferencePool} of the method.
-   * <p>It contains all the {@link io.github.neonorbit.dexplore.reference references}
+   * <p>It contains all the {@linkplain io.github.neonorbit.dexplore.reference references}
    * present in the method.</p>
    *
    * @return the {@code ReferencePool} of the method
    */
   @Nonnull
+  @Override
   public ReferencePool getReferencePool() {
     if (referencePool == null) {
       referencePool = ReferencePool.emptyPool();

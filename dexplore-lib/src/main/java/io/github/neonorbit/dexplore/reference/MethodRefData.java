@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
- * to a method.
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a method.
  * @see ReferencePool
  *
  * @author NeonOrbit

@@ -24,8 +24,8 @@ import org.jf.dexlib2.immutable.reference.ImmutableTypeReference;
 import javax.annotation.Nonnull;
 
 /**
- * This class represents a {@link io.github.neonorbit.dexplore.reference reference}
- * to a type (usually a fully qualified class name).
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference}
+ * to a type (eg: the {@linkplain Class#getName() full name} of a class).
  * @see ReferencePool
  *
  * @author NeonOrbit
@@ -54,7 +54,7 @@ public final class TypeRefData implements DexRefData {
   }
 
   /**
-   * @return fully qualified name
+   * @return {@linkplain Class#getName() full name} of the type
    */
   @Nonnull
   public String getType() {

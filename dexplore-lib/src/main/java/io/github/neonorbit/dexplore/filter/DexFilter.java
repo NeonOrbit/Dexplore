@@ -179,7 +179,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
      * Add a condition to the filter to match dex files that contain any of the specified classes.
      * <p>This is useful if you want to search in specific classes only.</p>
      *
-     * @param classes class names (fully qualified)
+     * @param classes {@linkplain Class#getName() full names} of classes
      * @return {@code this} builder
      */
     public Builder setDefinedClasses(@Nonnull String... classes) {

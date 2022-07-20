@@ -29,10 +29,10 @@ import io.github.neonorbit.dexplore.iface.Internal;
  *   DexLog.enable();
  *   DexLog.setLogger(new DexLogger() {
  *     public void debug(String msg) {
- *       System.out.println("Dex: " + msg);
+ *       Log.d("Dex: " + msg);
  *     }
  *     public void warn(String msg) {
- *       System.err.println("Dex: " + msg);
+ *       Log.w("Dex: " + msg);
  *     }
  *   });
  * }</pre>

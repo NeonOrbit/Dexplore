@@ -47,7 +47,7 @@ final class DexOperation {
       for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredList())) {
         if (dexFilter.verify(entry, decoder)) {
           DexBackedDexFile dexFile = entry.getDexFile();
-          DexLog.d("Processing Dex: " + entry.getDexName());
+          DexLog.d("Processing: " + entry.getDexName());
           if (operator.operate(dexFile) || dexFilter.isUnique()) {
             return;
           }

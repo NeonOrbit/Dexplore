@@ -6,7 +6,7 @@
  * Reference Types:
  * <ul>
  *   <li><b>StringReference:</b> reference to a string literal</li>
- *   <li><b>TypeReference:</b> reference to a fully qualified class name</li>
+ *   <li><b>TypeReference:</b> reference to a constant containing full name of a class</li>
  *   <li><b>FieldReference:</b> reference to a constant containing a field details</li>
  *   <li><b>MethodReference:</b> reference to a constant containing a method details</li>
  * </ul>
