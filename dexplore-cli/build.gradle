@@ -9,17 +9,20 @@ buildscript {
         classpath (depends.proguard) {
             exclude group: 'com.android.tools.build'
         }
+        classpath depends.kotlin_plugin
     }
 }
 
 plugins {
     id 'java'
 }
+apply plugin: 'kotlin'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
@@ -36,6 +39,8 @@ task unitTest(type: Test) {
 jar { // noinspection GroovyAssignabilityCheck
     manifest {
         attributes 'Main-Class': "${projectGroup}.dexplore.CommandLine"
+        attributes 'Specification-Title': projectName
+        attributes 'Specification-Version': projectVersion
         attributes 'Implementation-Title': projectName
         attributes 'Implementation-Version': projectVersion
         attributes 'Build-Time': new Date().format("dd-MM-yyyy hh:mm:ss aa")
@@ -52,7 +57,8 @@ jar { // noinspection GroovyAssignabilityCheck
         include 'LICENSE'
         into('META-INF')
     }
-    exclude 'META-INF/*.MF', 'META-INF/*.txt', 'META-INF/NOTICE*', 'NOTICE*', '*.proto'
+    exclude 'META-INF/*.MF', 'META-INF/*.txt', 'META-INF/NOTICE*',
+            'META-INF/**/*.class', 'META-INF/*.kotlin*', 'NOTICE*'
     destinationDirectory = file(jarOutputPath)
 }
 
@@ -61,13 +67,15 @@ shadowJar {
         include 'LICENSE'
         into('META-INF')
     }
-    exclude 'META-INF/*.MF', 'META-INF/*.txt', 'META-INF/NOTICE*', 'NOTICE*', '*.proto'
+    exclude 'META-INF/*.MF', 'META-INF/*.txt', 'META-INF/NOTICE*',
+            'META-INF/**/*.class', 'META-INF/*.kotlin*', 'NOTICE*'
 }
 
 task proguard(type: ProGuardTask, dependsOn: shadowJar) {
     injars shadowJar.getArchiveFile(),
-           filter: "!android/**.txt,!android/**.xml,!export/**.tmpl," +
-                   "!google/protobuf/**,!com/google/gson/**"
+           filter: "!com/google/gson/**,!export/**.tmpl," +
+                   "!com/android/aapt/**,!android/aapt/**," +
+                   "!com/google/protobuf/**,!google/protobuf/**,!**.proto"
     outjars jar.archiveFile.get().asFile
 
     def home = System.getProperty("java.home")
@@ -78,10 +86,14 @@ task proguard(type: ProGuardTask, dependsOn: shadowJar) {
     }
 
     dontoptimize
-    dontwarn 'jadx.**'
     dontwarn 'org.slf4j.**'
+    dontwarn 'com.android.aapt.**'
+    dontwarn 'com.google.gson.**'
+    dontwarn 'com.google.protobuf.**'
     dontwarn 'org.jf.util.jcommander.**'
+    dontwarn 'org.jetbrains.annotations.ApiStatus*'
     keepattributes '*Annotation*'
+    keep 'class jadx.api.JadxDecompiler'
     keep 'class jadx.plugins.** { *; }'
     keep 'class com.beust.jcommander.** { *; }'
     keep 'class io.github.neonorbit.dexplore.** { *; }'
