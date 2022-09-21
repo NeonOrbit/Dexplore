@@ -85,7 +85,7 @@ internal class DecodeCommand : Command {
         names = ["-dmem", "--disable-cache"],
         description = "Disable In-Memory cache. Default: enabled"
     )
-    private var inMemoryCache = false
+    private var disableMemCache = false
 
     @Parameter(
         order = 8,
@@ -105,7 +105,7 @@ internal class DecodeCommand : Command {
         DexFileDecoder(output, threadCount, pauseSupport).apply {
             srcFilter = buildSrcFilter()
             resFilter = buildResFilter()
-            disableCache = inMemoryCache
+            disableCache = disableMemCache
             renameClass = !disableRename
             decodeRes = 'r' in decodeMode
             decodeJava = 'j' in decodeMode
