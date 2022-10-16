@@ -64,7 +64,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   @Nullable
   public Class<?> loadClass(@Nonnull ClassLoader classLoader) {
     try {
-      return classLoader.loadClass(clazz);
+      return Utils.loadClass(classLoader, clazz);
     } catch (ClassNotFoundException e) {
       return null;
     }

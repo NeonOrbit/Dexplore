@@ -71,9 +71,9 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
     try {
       final Class<?>[] paramTypes = new Class[params.length];
       for (int i = 0; i < params.length; i++) {
-        paramTypes[i] = classLoader.loadClass(params[i]);
+        paramTypes[i] = Utils.loadClass(classLoader, params[i]);
       }
-      return classLoader.loadClass(clazz).getDeclaredMethod(method, paramTypes);
+      return Utils.loadClass(classLoader, clazz).getDeclaredMethod(method, paramTypes);
     } catch (ClassNotFoundException | NoSuchMethodException e) {
       return null;
     }

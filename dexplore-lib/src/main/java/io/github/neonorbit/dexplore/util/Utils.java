@@ -24,13 +24,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 @Internal
 public final class Utils {
+  private static final Map<String, Class<?>> PRIMITIVE = new HashMap<>();
+
+  static {
+    PRIMITIVE.put("void", Void.TYPE);
+    PRIMITIVE.put("byte", Byte.TYPE);
+    PRIMITIVE.put("char", Character.TYPE);
+    PRIMITIVE.put("short", Short.TYPE);
+    PRIMITIVE.put("int", Integer.TYPE);
+    PRIMITIVE.put("long", Long.TYPE);
+    PRIMITIVE.put("float", Float.TYPE);
+    PRIMITIVE.put("double", Double.TYPE);
+    PRIMITIVE.put("boolean", Boolean.TYPE);
+  }
+
+  @Nonnull
+  public static Class<?> loadClass(@Nonnull ClassLoader classLoader,
+                                   @Nonnull String name) throws ClassNotFoundException {
+    if (PRIMITIVE.containsKey(name)) return PRIMITIVE.get(name);
+    else return Class.forName(name, true, classLoader);
+  }
+
   public static boolean isSingle(@Nullable Collection<?> c) {
     return c != null && c.size() == 1;
   }

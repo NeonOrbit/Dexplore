@@ -18,6 +18,7 @@ package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,7 +51,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   @Nullable
   public Field loadField(@Nonnull ClassLoader classLoader) {
     try {
-      return classLoader.loadClass(clazz).getDeclaredField(field);
+      return Utils.loadClass(classLoader, clazz).getDeclaredField(field);
     } catch (ClassNotFoundException | NoSuchFieldException e) {
       return null;
     }
