@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Contains information about a class found in a dex file.
@@ -97,6 +98,19 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
       methods = Collections.emptyMap();
     }
     return methods.values();
+  }
+
+  /**
+   * Returns a list of {@code MethodData} objects
+   * representing all the declared constructors of the class.
+   *
+   * @return a list containing the declared constructors of the class
+   */
+  @Nonnull
+  public List<MethodData> getConstructors() {
+    return methods.values().stream()
+                  .filter(MethodData::isConstructor)
+                  .collect(Collectors.toList());
   }
 
   /**

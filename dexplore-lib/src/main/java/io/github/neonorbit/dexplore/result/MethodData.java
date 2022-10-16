@@ -80,6 +80,13 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
   }
 
   /**
+   * @return whether the method is a constructor
+   */
+  public boolean isConstructor() {
+    return method.equals("<init>");
+  }
+
+  /**
    * @return the ClassData instance of the declaring class of the method
    */
   @Nonnull
