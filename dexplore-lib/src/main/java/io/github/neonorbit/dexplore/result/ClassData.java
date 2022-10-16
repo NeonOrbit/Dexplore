@@ -161,7 +161,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
     final String[] parts = serialized.split(":");
     if (parts.length == 2 && parts[0].equals("c")) {
       final String clazz = parts[1];
-      if (Utils.isValidName(clazz)) {
+      if (!clazz.isEmpty()) {
         return new ClassData(clazz);
       }
     }

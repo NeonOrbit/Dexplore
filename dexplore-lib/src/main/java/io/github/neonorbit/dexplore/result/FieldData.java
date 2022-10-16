@@ -18,7 +18,6 @@ package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
-import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -113,7 +112,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   public static FieldData deserialize(@Nonnull String serialized) {
     final String[] parts = serialized.split(":");
     if (parts.length == 4 && parts[0].equals("f") &&
-        Utils.isValidName(Arrays.asList(parts))) {
+        Arrays.stream(parts).noneMatch(String::isEmpty)) {
       return new FieldData(parts[1], parts[2], parts[3]);
     }
     throw new IllegalArgumentException();

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 /**
  * Contains information about a method found in a dex file.
@@ -161,8 +162,8 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
     if (parts.length >= 4 && parts[0].equals("m")) {
       final String from = parts[1], name = parts[2], type = parts[parts.length - 1];
       final String[] params = Arrays.copyOfRange(parts, 3, parts.length - 1);
-      if (Utils.isValidName(Arrays.asList(from, type)) &&
-          Utils.isValidName(Arrays.asList(params))) {
+      if (Stream.of(name, from, type).noneMatch(String::isEmpty) &&
+          Arrays.stream(params).noneMatch(String::isEmpty)) {
         return new MethodData(from, name, params, type);
       }
     }
