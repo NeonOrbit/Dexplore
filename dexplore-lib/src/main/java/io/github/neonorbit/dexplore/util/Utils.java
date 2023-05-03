@@ -54,6 +54,10 @@ public final class Utils {
     else return Class.forName(name, true, classLoader);
   }
 
+  public static String getString(@Nullable String source) {
+    return source == null ? "" : source;
+  }
+
   public static boolean isSingle(@Nullable Collection<?> c) {
     return c != null && c.size() == 1;
   }

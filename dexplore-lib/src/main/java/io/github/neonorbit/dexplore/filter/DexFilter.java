@@ -19,11 +19,10 @@ package io.github.neonorbit.dexplore.filter;
 import io.github.neonorbit.dexplore.DexEntry;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.exception.AbortException;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -44,6 +43,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   public static final DexFilter MATCH_ALL = new DexFilter(builder());
 
   private final boolean preferredDexOnly;
+  private final Set<String> storedSourceNames;
   private final Set<String> definedClassNames;
   private final List<String> preferredDexNames;
 
@@ -51,6 +51,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     super(builder, Utils.isSingle(builder.definedClassNames));
     this.preferredDexOnly = builder.preferredDexOnly;
     this.preferredDexNames = builder.preferredDexNames;
+    this.storedSourceNames = builder.storedSourceNames;
     this.definedClassNames = builder.definedClassNames;
   }
 
@@ -68,7 +69,10 @@ public final class DexFilter extends BaseFilter<DexEntry> {
       throw AbortException.silently();
     }
     if (!checkDefinedClasses(dexEntry)) return false;
-    boolean result = super.verify(dexEntry, decoder);
+    boolean result = (
+            checkStoredSources(dexEntry) &&
+            super.verify(dexEntry, decoder)
+    );
     if (unique && !result) {
       throw new AbortException("Dex found but the filter didn't match");
     }
@@ -82,10 +86,20 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     return false;
   }
 
+  private boolean checkStoredSources(DexEntry dexEntry) {
+    if (storedSourceNames == null) return true;
+    for (DexBackedClassDef c : DexUtils.dexClasses(dexEntry.getDexFile())) {
+      String source = c.getSourceFile();
+      if (source != null && storedSourceNames.contains(source)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private boolean checkDefinedClasses(DexEntry dexEntry) {
     if (definedClassNames == null) return true;
-    DexBackedDexFile dex = dexEntry.getDexFile();
-    for (DexBackedClassDef c : DexUtils.dexClasses(dex)) {
+    for (DexBackedClassDef c : DexUtils.dexClasses(dexEntry.getDexFile())) {
       if (definedClassNames.contains(c.getType())) return true;
     }
     return false;
@@ -118,6 +132,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
   public static class Builder extends BaseFilter.Builder<Builder, DexFilter> {
     private boolean preferredDexOnly;
+    private Set<String> storedSourceNames;
     private Set<String> definedClassNames;
     private List<String> preferredDexNames;
 
@@ -127,15 +142,17 @@ public final class DexFilter extends BaseFilter<DexEntry> {
       super(instance);
       this.preferredDexOnly = instance.preferredDexOnly;
       this.preferredDexNames = instance.preferredDexNames;
+      this.storedSourceNames = instance.storedSourceNames;
       this.definedClassNames = instance.definedClassNames;
     }
 
     @Override
     protected boolean isDefault() {
-      return super.isDefault() &&
-             !preferredDexOnly &&
-             definedClassNames == null &&
-             preferredDexNames == null;
+      return super.isDefault()  &&
+              !preferredDexOnly &&
+              preferredDexNames == null &&
+              storedSourceNames == null &&
+              definedClassNames == null;
     }
 
     @Override
@@ -172,6 +189,19 @@ public final class DexFilter extends BaseFilter<DexEntry> {
         throw new IllegalStateException("Preferred dex was not specified");
       }
       this.preferredDexOnly = allow;
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match dex files that contain any of the specified source files.
+     * <p>Examples: "Application.java", "AnyFileName.java" etc.</p>
+     *
+     * @param sources source file names
+     * @return {@code this} builder
+     */
+    public Builder setStoredSources(@Nonnull String... sources) {
+      List<String> list = Utils.nonNullList(sources);
+      this.storedSourceNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
 

@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
  */
 public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private static final int M1 = -1;
+
   /** A {@code ClassFilter} instance that matches all dex classes. */
   public static final ClassFilter MATCH_ALL = new ClassFilter(builder());
 
@@ -55,6 +56,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private final Pattern pkgPattern;
   private final Set<String> classNames;
   private final List<String> interfaces;
+  private final Set<String> sourceNames;
   private final Set<String> annotations;
   private final Set<String> annotValues;
 
@@ -66,6 +68,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     this.superClass = builder.superClass;
     this.classNames = builder.classNames;
     this.interfaces = builder.interfaces;
+    this.sourceNames = builder.sourceNames;
     this.annotations = builder.annotations;
     this.annotValues = builder.annotValues;
   }
@@ -82,6 +85,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
             (superClass == null || superClass.equals(dexClass.getSuperclass())) &&
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
             (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
+            (sourceNames == null || sourceNames.contains(Utils.getString(dexClass.getSourceFile()))) &&
             (annotations == null || FilterUtils.containsAnnotations(dexClass, annotations)) &&
             (annotValues == null || FilterUtils.containsAnnotationValues(dexClass, annotValues)) &&
             super.verify(dexClass, decoder)
@@ -124,6 +128,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     private String superClass;
     private Set<String> classNames;
     private List<String> interfaces;
+    private Set<String> sourceNames;
     private Set<String> annotations;
     private Set<String> annotValues;
 
@@ -137,6 +142,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       this.superClass = instance.superClass;
       this.classNames = instance.classNames;
       this.interfaces = instance.interfaces;
+      this.sourceNames = instance.sourceNames;
       this.annotations = instance.annotations;
       this.annotValues = instance.annotValues;
     }
@@ -144,14 +150,15 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     @Override
     protected boolean isDefault() {
       return super.isDefault()     &&
-             flag        ==  M1    &&
-             skipFlag    ==  M1    &&
-             pkgPattern  ==  null  &&
-             superClass  ==  null  &&
-             interfaces  ==  null  &&
-             classNames  ==  null  &&
-             annotations ==  null  &&
-             annotValues ==  null;
+              flag        == M1    &&
+              skipFlag    == M1    &&
+              pkgPattern  == null  &&
+              superClass  == null  &&
+              classNames  == null  &&
+              interfaces  == null  &&
+              sourceNames == null  &&
+              annotations == null  &&
+              annotValues == null;
     }
 
     @Override
@@ -238,7 +245,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * This is equivalent to calling:
-     * <blockquote> {@code setClassNames(Object.class.getName())} </blockquote>
+     * <blockquote> {@code setSuperClass(Object.class.getName())} </blockquote>
      *
      * @return {@code this} builder
      * @see #setSuperClass(String)
@@ -268,6 +275,19 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      */
     public Builder noInterfaces() {
       return setInterfaces(Collections.emptyList());
+    }
+
+    /**
+     * Add a condition to the filter to match classes from the specified source files.
+     * <p>Examples: "Application.java", "AnyFileName.java" etc.</p>
+     *
+     * @param sources source file names
+     * @return {@code this} builder
+     */
+    public Builder setSourceNames(@Nonnull String... sources) {
+      List<String> list = Utils.nonNullList(sources);
+      this.sourceNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
     }
 
     /**
