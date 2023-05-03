@@ -1,3 +1,5 @@
+//file:noinspection DependencyNotationArgument
+
 apply from: "gradle/functions.gradle"
 
 allprojects {
@@ -5,15 +7,15 @@ allprojects {
     version = '1.4.4' //-SNAPSHOT
 }
 
-task produceJar() {
+tasks.register('produceJar') {
     dependsOn ':dexplore-cli:build'
 }
 
-task localRelease() {
+tasks.register('localRelease') {
     dependsOn ':dexplore-lib:publish'
 }
 
-task mavenRelease() {
+tasks.register('mavenRelease') {
     dependsOn ':dexplore-lib:clean'
     dependsOn ':dexplore-lib:publish'
 }
@@ -35,13 +37,13 @@ ext {
         jadx_core     : 'io.github.skylot:jadx-core:1.4.3',
         jadx_plugin   : 'io.github.skylot:jadx-dex-input:1.4.3',
         findbugs      : 'com.google.code.findbugs:jsr305:3.0.2',
-        guava         : 'com.google.guava:guava:27.1-android',
-        proguard      : 'com.guardsquare:proguard-gradle:7.2.1',
-        junit_api     : 'org.junit.jupiter:junit-jupiter-api:5.8.2',
-        junit_params  : 'org.junit.jupiter:junit-jupiter-params:5.8.2',
-        junit_engine  : 'org.junit.jupiter:junit-jupiter-engine:5.8.2',
-        shadow_plugin : 'gradle.plugin.com.github.johnrengelman:shadow:7.1.2',
-        kotlin_plugin : 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10'
+        guava         : 'com.google.guava:guava:30.0-android',
+        proguard      : 'com.guardsquare:proguard-gradle:7.3.2',
+        junit_api     : 'org.junit.jupiter:junit-jupiter-api:5.9.3',
+        junit_params  : 'org.junit.jupiter:junit-jupiter-params:5.9.3',
+        junit_engine  : 'org.junit.jupiter:junit-jupiter-engine:5.9.3',
+        shadow_plugin : 'com.github.johnrengelman:shadow:8.1.1',
+        kotlin_plugin : 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21'
     ]
 }
 

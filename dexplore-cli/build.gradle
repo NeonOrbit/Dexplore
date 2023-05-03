@@ -1,15 +1,19 @@
+//file:noinspection GroovyAssignabilityCheck
+//file:noinspection DependencyNotationArgument
+
 import proguard.gradle.ProGuardTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
+        classpath depends.kotlin_plugin
         classpath depends.shadow_plugin
         classpath (depends.proguard) {
             exclude group: 'com.android.tools.build'
         }
-        classpath depends.kotlin_plugin
     }
 }
 
@@ -20,9 +24,7 @@ apply plugin: 'kotlin'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 compileKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    compilerOptions.jvmTarget = JvmTarget.JVM_1_8
 }
 
 dependencies {
@@ -32,11 +34,11 @@ dependencies {
     implementation project(':dexplore-lib')
 }
 
-task unitTest(type: Test) {
+tasks.register('unitTest', Test) {
     dependsOn test
 }
 
-jar { // noinspection GroovyAssignabilityCheck
+jar {
     manifest {
         attributes 'Main-Class': "${projectGroup}.dexplore.CommandLine"
         attributes 'Specification-Title': projectName
@@ -71,11 +73,12 @@ shadowJar {
             'META-INF/**/*.class', 'META-INF/*.kotlin*', 'NOTICE*'
 }
 
-task proguard(type: ProGuardTask, dependsOn: shadowJar) {
+tasks.register('proguard', ProGuardTask) {
+    dependsOn shadowJar
     injars shadowJar.getArchiveFile(),
-           filter: "!com/google/gson/**,!export/**.tmpl," +
-                   "!com/android/aapt/**,!android/aapt/**," +
-                   "!com/google/protobuf/**,!google/protobuf/**,!**.proto"
+            filter: "!com/google/gson/**,!export/**.tmpl," +
+                    "!com/android/aapt/**,!android/aapt/**," +
+                    "!com/google/protobuf/**,!google/protobuf/**,!**.proto"
     outjars jar.archiveFile.get().asFile
 
     def home = System.getProperty("java.home")
