@@ -23,6 +23,7 @@ import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
+import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import org.jf.dexlib2.iface.MethodImplementation;
 import org.jf.dexlib2.iface.instruction.DualReferenceInstruction;
@@ -94,6 +95,14 @@ public final class DexDecoder {
   }
 
   @Nonnull
+  public static ReferencePool decodeFully(@Nonnull DexBackedField dexField) {
+    if (dexField.getInitialValue() == null) return ReferencePool.emptyPool();
+    RefsPoolBuffer buffer = new RefsPoolBuffer(ReferenceTypes.all());
+    decodeFieldReferences(dexField, buffer);
+    return buffer.getPool(true);
+  }
+
+  @Nonnull
   public static ReferencePool decodeFully(@Nonnull DexBackedMethod dexMethod) {
     return decodeMethodReferences(dexMethod, ReferenceTypes.all(), true);
   }
@@ -138,13 +147,17 @@ public final class DexDecoder {
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
                                                  ReferenceTypes types,
                                                  RefsPoolBuffer pool) {
-    if (!types.hasString()) return;
-    DexUtils.dexStaticFields(dexClass).forEach(field -> {
-      EncodedValue value = field.getInitialValue();
-      if (value != null && value.getValueType() == ValueType.STRING) {
-        pool.add(new ImmutableStringReference(((StringEncodedValue)value).getValue()));
-      }
-    });
+    if (types.hasString()) {
+      DexUtils.dexStaticFields(dexClass).forEach(field -> decodeFieldReferences(field, pool));
+    }
+  }
+
+  private static void decodeFieldReferences(DexBackedField dexField,
+                                            RefsPoolBuffer pool) {
+    EncodedValue value = dexField.getInitialValue();
+    if (value != null && value.getValueType() == ValueType.STRING) {
+      pool.add(new ImmutableStringReference(((StringEncodedValue)value).getValue()));
+    }
   }
 
   private static ReferencePool decodeMethodReferences(DexBackedMethod dexMethod,

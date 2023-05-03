@@ -20,6 +20,7 @@ import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
+import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
 import javax.annotation.Nonnull;
@@ -64,8 +65,8 @@ public final class Results {
     });
     List<FieldData> fields = new ArrayList<>();
     DexUtils.dexFields(dexClass).forEach(dexField -> {
-      String type = DexUtils.dexToJavaTypeName(dexField.getType());
-      fields.add(new FieldData(clazz, dexField.getName(), type));
+      FieldData fieldData = buildFieldData(dexField, instance);
+      fields.add(fieldData);
     });
     instance.setFields(Collections.unmodifiableList(fields));
     instance.setMethods(Collections.unmodifiableMap(methods));
@@ -76,13 +77,24 @@ public final class Results {
   private static MethodData buildMethodData(@Nonnull DexBackedMethod dexMethod,
                                             @Nonnull ClassData sharedInstance) {
     MethodData instance = new MethodData(
-                            sharedInstance.clazz,
-                            dexMethod.getName(),
-                            DexUtils.getJavaParams(dexMethod),
-                            DexUtils.dexToJavaTypeName(dexMethod.getReturnType())
-                          );
+            sharedInstance.clazz,
+            dexMethod.getName(),
+            DexUtils.getJavaParams(dexMethod),
+            DexUtils.dexToJavaTypeName(dexMethod.getReturnType())
+    );
     instance.setClassData(sharedInstance);
     instance.setReferencePool(DexDecoder.decodeFully(dexMethod));
+    return instance;
+  }
+
+  private static FieldData buildFieldData(@Nonnull DexBackedField dexField,
+                                          @Nonnull ClassData sharedInstance) {
+    FieldData instance = new FieldData(
+            sharedInstance.clazz,
+            dexField.getName(),
+            DexUtils.dexToJavaTypeName(dexField.getType())
+    );
+    instance.setReferencePool(DexDecoder.decodeFully(dexField));
     return instance;
   }
 }

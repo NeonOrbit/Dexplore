@@ -40,12 +40,18 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   /** The type of the field. */
   @Nonnull public final String type;
 
+  private ReferencePool referencePool;
+
   FieldData(@Nonnull String clazz,
             @Nonnull String field,
             @Nonnull String type) {
     this.clazz = clazz;
     this.field = field;
     this.type = type;
+  }
+
+  void setReferencePool(ReferencePool referencePool) {
+    this.referencePool = referencePool;
   }
 
   @Nullable
@@ -68,12 +74,20 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   }
 
   /**
-   * @return an empty {@code ReferencePool}
+   * Returns the {@code ReferencePool} of the field.
+   * <p>Note: If the field has a compile-time constant value,
+   * the returned pool will have a single item containing the value.
+   * Otherwise an empty pool is returned.</p>
+   *
+   * @return the {@code ReferencePool} of the field
    */
   @Nonnull
   @Override
   public ReferencePool getReferencePool() {
-    return ReferencePool.emptyPool();
+    if (referencePool == null) {
+      referencePool = ReferencePool.emptyPool();
+    }
+    return referencePool;
   }
 
   /**
