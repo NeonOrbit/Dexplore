@@ -25,6 +25,7 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 /**
  * An instance of this class holds the {@linkplain io.github.neonorbit.dexplore.reference references}
@@ -103,6 +104,11 @@ public final class ReferencePool {
   @Nonnull
   public List<TypeRefData> getTypeSection() {
     return types;
+  }
+
+  @Nonnull
+  public List<MethodRefData> getConstructorSection() {
+    return methods.stream().filter(MethodRefData::isConstructor).collect(Collectors.toList());
   }
 
   /**

@@ -98,6 +98,13 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
+   * @return whether the method is a constructor
+   */
+  public boolean isConstructor() {
+    return getName().equals("<init>");
+  }
+
+  /**
    * Checks whether any items of this {@code MethodReference} match the specified string
    */
   @Override

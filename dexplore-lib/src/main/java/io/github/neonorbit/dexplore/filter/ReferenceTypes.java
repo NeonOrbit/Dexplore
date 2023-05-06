@@ -46,8 +46,19 @@ public final class ReferenceTypes {
   private static final int F_INFO = 0x0010;
   private static final int M_INFO = 0x0020;
 
-  private static final int ALL = STRING | TYPED  | FIELD |
-                                 METHOD | F_INFO | M_INFO;
+  private static final int ALL = STRING | TYPED  | FIELD | METHOD | F_INFO | M_INFO;
+
+  /**
+   * An instance that includes all reference types.
+   * <p>Note: Use {@link Builder Builder} for finer control.</p>
+   */
+  public static final ReferenceTypes ALL_TYPES = builder().addAll().build();
+
+  /**
+   * An instance that includes {@link StringRefData String} references only.
+   * <p>Note: Use {@link Builder Builder} for finer control.</p>
+   */
+  public static final ReferenceTypes STRINGS_ONLY = builder().addString().build();
 
   /**
    * Used to specify the scope of the references. <br>
@@ -148,6 +159,14 @@ public final class ReferenceTypes {
     return new Builder();
   }
 
+  /**
+   * Build a {@code ReferenceTypes} instance.
+   * <p>Example:
+   * <pre>
+   *   new ReferenceTypes.Builder().addString().addMethod().build()
+   * </pre>
+   * </p>
+   */
   public static class Builder {
     private int flags = NONE;
     private Scope scope = Scope.ALL;
@@ -185,7 +204,7 @@ public final class ReferenceTypes {
 
     /**
      * Add {@link FieldRefData Field} reference type.
-     * <p>Note: This will include only the name of the field.</p>
+     * <p>Note: This will include only the name of the fields.</p>
      *
      * @return {@code this} builder
      * @see #addFieldWithDetails()
@@ -197,7 +216,7 @@ public final class ReferenceTypes {
 
     /**
      * Add {@link MethodRefData Method} reference type.
-     * <p>Note: This will include only the name of the method.</p>
+     * <p>Note: This will include only the name of the methods.</p>
      *
      * @return {@code this} builder
      * @see #addMethodWithDetails()
@@ -214,7 +233,7 @@ public final class ReferenceTypes {
      *    details ({@link Field#getName() name},
      *             {@link Field#getType() type},
      *             {@link Field#getDeclaringClass() class})
-     *    of the field.
+     *    of the fields.
      * </p>
      * <b>Remark:</b> This is slower than {@link #addField()}
      *
@@ -234,7 +253,7 @@ public final class ReferenceTypes {
      *             {@link Method#getParameterTypes() params},
      *             {@link Method#getReturnType() returnType},
      *             {@link Method#getDeclaringClass() class})
-     *    of the method.
+     *    of the methods.
      * </p>
      * <b>Remark:</b> This is slower than {@link #addMethod()}
      *
