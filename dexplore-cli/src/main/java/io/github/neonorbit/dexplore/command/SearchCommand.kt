@@ -48,7 +48,7 @@ internal class SearchCommand : Command {
             order = 2,
             variableArity = true,
             names = ["-cls", "--classes"],
-            description = "Search a list of classes (full name)"
+            description = "Search a list of classes only (fully qualified name)"
     )
     var classes = ArrayList<String>()
 
@@ -107,7 +107,7 @@ internal class SearchCommand : Command {
         order = 10,
         hidden = true,
         names = ["-advance", "--advanced"],
-        description = "\"m:public,final+a:annotation+s:superclass+i:interface1,interface2\""
+        description = "eg: \"m:public+final,a:annotation,s:superclass,i:interface1+interface2\""
     )
     private var advanced = ""
 

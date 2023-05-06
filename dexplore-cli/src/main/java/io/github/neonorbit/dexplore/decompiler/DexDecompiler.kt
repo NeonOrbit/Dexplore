@@ -70,7 +70,7 @@ internal class DexDecompiler(private val loader: DexInputLoader,
                     args.inputFiles.clear()
                 }
             } else if (includeResource) {
-                root.loadClasses(rLoader())
+                root.loadClasses(resLoader())
                 root.initClassPath()
             }
             if (includeResource) {
@@ -101,7 +101,7 @@ internal class DexDecompiler(private val loader: DexInputLoader,
         } catch (_: Throwable) {}
     }
 
-    private fun rLoader(): List<ILoadResult> {
+    private fun resLoader(): List<ILoadResult> {
         return DexInputLoader(
             loader.file, { entry ->
                 val i = entry.lastIndexOf('/', entry.length - 3)

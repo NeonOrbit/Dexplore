@@ -46,7 +46,7 @@ internal class DecodeCommand : Command {
             order = 2,
             variableArity = true,
             names = ["-cls", "--classes"],
-            description = "Decompile a list of classes. Default: all"
+            description = "Decompile a list of classes only (fully qualified name)"
     )
     var classes = ArrayList<String>()
 
