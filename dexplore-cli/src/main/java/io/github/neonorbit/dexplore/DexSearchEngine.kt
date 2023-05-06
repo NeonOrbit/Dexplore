@@ -51,13 +51,11 @@ internal class DexSearchEngine(mode: String) {
         detailsType = buildRefTypes(details)
     }
 
-    fun init(classes: List<String>,
-             sources: List<String>,
-             refTypes: String,
-             references: List<String>,
-             signatures: List<String>) {
+    fun init(packages: List<String>, classes: List<String>,
+             type: String, references: List<String>, signatures: List<String>,
+             sources: List<String>) {
         checkEngineState(false)
-        val types = buildRefTypes(refTypes)
+        val types = buildRefTypes(type)
         val filter = if (types.hasNone()) null else ReferenceFilter { pool ->
             val result = references.stream().allMatch { pool.contains(it) }
             result and signatures.stream().allMatch { pool.toString().contains(it) }
@@ -65,10 +63,11 @@ internal class DexSearchEngine(mode: String) {
         dexFilter = DexFilter.MATCH_ALL
         classFilter = ClassFilter
                 .builder()
+                .setPackages(*packages.toTypedArray())
                 .setClasses(*classes.toTypedArray())
-                .setSourceNames(*sources.toTypedArray())
                 .setReferenceTypes(types)
                 .setReferenceFilter(filter)
+                .setSourceNames(*sources.toTypedArray())
                 .build()
         methodFilter = if (isClassMode) MethodFilter.MATCH_ALL else MethodFilter
                 .builder()

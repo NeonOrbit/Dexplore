@@ -45,20 +45,20 @@ internal class SearchCommand : Command {
     var searchMode = "c"
 
     @Parameter(
-            order = 2,
-            variableArity = true,
-            names = ["-cls", "--classes"],
-            description = "Search a list of classes only (fully qualified name)"
+        order = 2,
+        variableArity = true,
+        names = ["-pkg", "--packages"],
+        description = "Search from a list of packages only. Default: all"
     )
-    var classes = ArrayList<String>()
+    var packages = ArrayList<String>()
 
     @Parameter(
         order = 3,
         variableArity = true,
-        names = ["-src", "--sources"],
-        description = "Search a list of source files only (eg: 'Application.java')"
+        names = ["-cls", "--classes"],
+        description = "Search a list of classes only (fully qualified name)"
     )
-    var sources = ArrayList<String>()
+    var classes = ArrayList<String>()
 
     @Parameter(
             order = 4,
@@ -84,35 +84,43 @@ internal class SearchCommand : Command {
     var signatures: List<String> = ArrayList()
 
     @Parameter(
-            order = 7,
+        order = 7,
+        variableArity = true,
+        names = ["-src", "--sources"],
+        description = "Provide a list of source names to match against (eg: 'Cache.java')"
+    )
+    var sources = ArrayList<String>()
+
+    @Parameter(
+            order = 8,
             names = ["-l", "--limit"],
             description = "Limit maximum results. Default: -1 (no limit)"
     )
     private var maximum = -1
 
     @Parameter(
-            order = 8,
+            order = 9,
             names = ["-pool", "--print-pool"],
             description = "Print ReferencePool: a: all, s: string, t: type, f: field, m: method"
     )
     var printPool = ""
 
     @Parameter(
-            order = 9,
+            order = 10,
             names = ["-gen", "--gen-sources"],
             description = "Generate java and smali source files from search results"
     )
     private var generate = false
 
     @Parameter(
-            order = 10,
+            order = 11,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
     private var output = "dexplore-out"
 
     @Parameter(
-        order = 11,
+        order = 12,
         hidden = true,
         names = ["-advance", "--advanced"],
         description = "eg: \"m:public+final,a:annotation,s:superclass,i:interface1+interface2\""
@@ -128,7 +136,7 @@ internal class SearchCommand : Command {
         val engine = DexSearchEngine(searchMode).apply {
             setMaximum(maximum)
             setDetails(printPool)
-            init(classes, sources, type, references, signatures)
+            init(packages, classes, type, references, signatures, sources)
         }
         files.map { File(it) }.also {
             CommandUtils.checkFiles(it)
