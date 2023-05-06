@@ -88,7 +88,13 @@ final class DexContainer {
             for (String dexName : internal.getDexEntryNames()) {
               entries.add(new DexEntry(this, dexName));
             }
-            if (rootDex) entries.sort(null);
+            if (rootDex) entries.sort(Comparator.comparingInt(o -> {
+              try {
+                return Integer.parseInt(o.getDexName().replaceAll("\\D", ""));
+              } catch (NumberFormatException ignore) {
+                return -1;
+              }
+            }));
           } catch (IOException e) {
             throw new DexException("Failed to load dex entries", e);
           }
