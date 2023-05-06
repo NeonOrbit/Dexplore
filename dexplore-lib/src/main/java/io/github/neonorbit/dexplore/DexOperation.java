@@ -40,6 +40,11 @@ final class DexOperation {
     this.dexContainer = new DexContainer(path, options);
   }
 
+  DexOperation(byte[] buffer, DexOptions options) {
+    this.dexDecoder = new DexDecoder(options);
+    this.dexContainer = new DexContainer(buffer, options);
+  }
+
   public void onDexFiles(@Nonnull DexFilter dexFilter,
                          @Nonnull Operator<DexBackedDexFile> operator) {
     LazyDecoder<DexEntry> decoder = dexDecoder::decode;

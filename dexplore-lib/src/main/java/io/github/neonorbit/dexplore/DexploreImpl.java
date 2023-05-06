@@ -46,6 +46,10 @@ final class DexploreImpl implements Dexplore {
     this.dexOperation = new DexOperation(path, options);
   }
 
+  DexploreImpl(byte[] buffer, DexOptions options) {
+    this.dexOperation = new DexOperation(buffer, options);
+  }
+
   private synchronized TaskHandler<Object> getTaskHandler() {
     if (internalHandler == null || internalHandler.isDirty()) {
       internalHandler = new TaskHandler<>();

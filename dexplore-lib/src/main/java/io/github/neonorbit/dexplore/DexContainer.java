@@ -17,8 +17,8 @@
 package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.exception.DexException;
-import io.github.neonorbit.dexplore.util.DexLog;
 import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.util.DexLog;
 import org.jf.dexlib2.DexFileFactory;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.MultiDexContainer;
@@ -34,17 +34,21 @@ import java.util.List;
 
 @Internal
 final class DexContainer {
-  private final String path;
-  private final boolean rootDex;
-  private final DexOpcodes opcodes;
+  private final boolean rootDexOnly;
   private volatile List<DexEntry> dexEntries;
   private final MultiDexContainer<DexBackedDexFile> internal;
 
   DexContainer(String path, DexOptions options) {
-    this.path = path;
-    this.opcodes = options.opcodes;
-    this.rootDex = options.rootDexOnly;
-    this.internal = loadDexContainer();
+    this(loadDexContainer(path, options), options);
+  }
+
+  DexContainer(byte[] buffer, DexOptions options) {
+    this(InMemoryDex.load(buffer, options.opcodes), options);
+  }
+
+  DexContainer(MultiDexContainer<DexBackedDexFile> container, DexOptions options) {
+    this.internal = container;
+    this.rootDexOnly = options.rootDexOnly;
   }
 
   @Nonnull
@@ -88,13 +92,7 @@ final class DexContainer {
             for (String dexName : internal.getDexEntryNames()) {
               entries.add(new DexEntry(this, dexName));
             }
-            if (rootDex) entries.sort(Comparator.comparingInt(o -> {
-              try {
-                return Integer.parseInt(o.getDexName().replaceAll("\\D", ""));
-              } catch (NumberFormatException ignore) {
-                return -1;
-              }
-            }));
+            sortDexEntries(entries);
           } catch (IOException e) {
             throw new DexException("Failed to load dex entries", e);
           }
@@ -105,14 +103,25 @@ final class DexContainer {
     return this.dexEntries;
   }
 
+  private void sortDexEntries(ArrayList<DexEntry> entries) {
+    if (!rootDexOnly) return;
+    entries.sort(Comparator.comparingInt(o -> {
+      try {
+        return Integer.parseInt(o.getDexName().replaceAll("\\D", ""));
+      } catch (NumberFormatException ignore) {
+        return -1;
+      }
+    }));
+  }
+
   @SuppressWarnings("unchecked")
-  private MultiDexContainer<DexBackedDexFile> loadDexContainer() {
+  private static MultiDexContainer<DexBackedDexFile> loadDexContainer(String path, DexOptions opt) {
     MultiDexContainer<? extends DexBackedDexFile> container;
     try {
-      File file = new File(this.path);
-      container = FastContainer.load(file, opcodes.get(), rootDex);
+      File file = new File(path);
+      container = FastContainer.load(file, opt.opcodes.get(), opt.rootDexOnly);
       if (container == null) {
-        container = DexFileFactory.loadDexContainer(file, opcodes.get());
+        container = DexFileFactory.loadDexContainer(file, opt.opcodes.get());
       }
     } catch (IOException e) {
       throw new DexException("Failed to load dex container", e);

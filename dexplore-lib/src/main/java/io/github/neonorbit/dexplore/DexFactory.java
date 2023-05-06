@@ -75,16 +75,50 @@ public final class DexFactory {
   @Nonnull
   public static Dexplore load(@Nonnull String path,
                               @Nonnull DexOptions options) {
-    DexploreImpl dexplore;
-    Objects.requireNonNull(path);
-    Objects.requireNonNull(options);
     try {
-      dexplore = new DexploreImpl(path, options);
+      return new DexploreImpl(
+              Objects.requireNonNull(path), Objects.requireNonNull(options)
+      );
     } catch (DexFileFactory.DexFileNotFoundException e) {
       throw new FileNotFoundException(e.getMessage());
     } catch (DexFileFactory.UnsupportedFileTypeException e) {
       throw new UnsupportedFileException(e.getMessage());
     }
-    return dexplore;
+  }
+
+  /**
+   * Loads a dex or odex file from memory.
+   * <p>
+   *   <b>Note:</b> The returned instance is thread-safe.
+   * </p><br>
+   * See also: {@link #load(byte[], DexOptions)}
+   *
+   * @param buffer a byte array containing the dex file
+   * @return A {@code Dexplore} instance for the given file
+   * @throws UnsupportedFileException if the given file is not a valid dex file
+   */
+  @Nonnull
+  public static Dexplore load(@Nonnull byte[] buffer) {
+    return load(buffer, DexOptions.getDefault());
+  }
+
+  /**
+   * Loads a dex or odex file from memory.
+   * <p>
+   *   <b>Note:</b> The returned instance is thread-safe.
+   * </p><br>
+   * See also: {@link #load(byte[])}
+   *
+   * @param buffer a byte array containing the dex file
+   * @param options a set of dex options to apply
+   * @return A {@code Dexplore} instance for the given file
+   * @throws UnsupportedFileException if the given file is not a valid dex file
+   */
+  @Nonnull
+  public static Dexplore load(@Nonnull byte[] buffer,
+                              @Nonnull DexOptions options) {
+    return new DexploreImpl(
+            Objects.requireNonNull(buffer), Objects.requireNonNull(options)
+    );
   }
 }
