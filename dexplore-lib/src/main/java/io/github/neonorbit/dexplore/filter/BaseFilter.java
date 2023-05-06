@@ -82,7 +82,7 @@ abstract class BaseFilter<T> {
     }
 
     /**
-     * Set a {@code ReferenceFilter} to apply to each dex item to determine if it should be matched.
+     * Set a {@code ReferenceFilter} to apply to each item to determine whether it should be matched.
      *
      * @param filter a {@code ReferenceFilter} instance
      * @return {@code this} builder

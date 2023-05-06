@@ -35,7 +35,7 @@ import java.util.Arrays;
  */
 public interface ReferenceFilter {
   /**
-   * Tests whether the dex item containing the given reference pool should be matched.
+   * Tests whether the item containing the given reference pool should be matched.
    *
    * @param pool the reference pool to be tested
    * @return true if the item containing the pool should be matched

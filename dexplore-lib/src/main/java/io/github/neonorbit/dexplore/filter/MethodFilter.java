@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.filter;
 
+import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.exception.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
@@ -30,6 +31,7 @@ import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A filter used to select dex methods of interest.
@@ -42,6 +44,7 @@ import java.util.Set;
  */
 public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   private static final int M1 = -1;
+
   /** A {@code MethodFilter} instance that matches all dex methods. */
   public static final MethodFilter MATCH_ALL = new MethodFilter(builder());
 
@@ -53,6 +56,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   private final List<String> parameters;
   private final Set<String> annotations;
   private final Set<String> annotValues;
+  private final Set<Long> numLiterals;
 
   private MethodFilter(Builder builder) {
     super(builder, Utils.isSingle(builder.methodNames) &&
@@ -65,6 +69,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     this.methodNames = builder.methodNames;
     this.annotations = builder.annotations;
     this.annotValues = builder.annotValues;
+    this.numLiterals = builder.numLiterals;
   }
 
   @Internal
@@ -79,6 +84,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
             (returnType == null || returnType.equals(dexMethod.getReturnType())) &&
             (annotations == null || FilterUtils.containsAnnotations(dexMethod, annotations)) &&
             (annotValues == null || FilterUtils.containsAnnotationValues(dexMethod, annotValues)) &&
+            (numLiterals == null || DexDecoder.decodeNumberLiterals(dexMethod).containsAll(numLiterals)) &&
             super.verify(dexMethod, decoder)
     );
     if (unique && !result) {
@@ -152,6 +158,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     private List<String> parameters;
     private Set<String> annotations;
     private Set<String> annotValues;
+    private Set<Long> numLiterals;
 
     public Builder() {}
 
@@ -165,19 +172,21 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
       this.methodNames = instance.methodNames;
       this.annotations = instance.annotations;
       this.annotValues = instance.annotValues;
+      this.numLiterals = instance.numLiterals;
     }
 
     @Override
     protected boolean isDefault() {
       return super.isDefault()     &&
-             flag        ==  M1    &&
-             skipFlag    ==  M1    &&
-             paramSize   ==  M1    &&
-             parameters  ==  null  &&
-             returnType  ==  null  &&
-             methodNames ==  null  &&
-             annotations ==  null  &&
-             annotValues ==  null;
+              flag        == M1    &&
+              skipFlag    == M1    &&
+              paramSize   == M1    &&
+              parameters  == null  &&
+              returnType  == null  &&
+              methodNames == null  &&
+              annotations == null  &&
+              annotValues == null  &&
+              numLiterals == null;
     }
 
     @Override
@@ -263,7 +272,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods that contains all the specified annotations.
+     * Add a condition to the filter to match methods that contain all the specified annotations.
      *
      * @param annotations {@linkplain Class#getName() full names} of annotation classes
      * @return {@code this} builder
@@ -276,7 +285,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods that contains all the specified annotation values.
+     * Add a condition to the filter to match methods that contain all the specified annotation values.
      *
      * <p>Currently supports only string and type values.</p>
      * <pre>
@@ -294,6 +303,23 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     public Builder containsAnnotationValues(@Nonnull String... annotationValues) {
       List<String> list = Utils.nonNullList(annotationValues);
       this.annotValues = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match methods that contain all the specified numbers.
+     * <p>Note: Each float value must end with an 'f' character.</p>
+     *
+     * @param numbers list of numbers to match
+     * @return {@code this} builder
+     */
+    public Builder setNumbers(@Nonnull Number... numbers) {
+      Set<Long> literals = Utils.nonNullList(numbers).stream().map(number ->
+              number instanceof Float ? Float.floatToIntBits((Float) number) :
+                      number instanceof Double ? Double.doubleToLongBits((Double) number) :
+                              number.longValue()
+      ).collect(Collectors.toSet());
+      this.numLiterals = literals.isEmpty() ? null : Utils.optimizedSet(literals);
       return this;
     }
   }

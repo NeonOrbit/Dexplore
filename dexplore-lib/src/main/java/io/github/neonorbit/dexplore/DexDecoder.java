@@ -17,9 +17,9 @@
 package io.github.neonorbit.dexplore;
 
 import io.github.neonorbit.dexplore.filter.ReferenceTypes;
+import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.util.DexLog;
 import io.github.neonorbit.dexplore.util.DexUtils;
-import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
@@ -29,18 +29,25 @@ import org.jf.dexlib2.iface.MethodImplementation;
 import org.jf.dexlib2.iface.instruction.DualReferenceInstruction;
 import org.jf.dexlib2.iface.instruction.Instruction;
 import org.jf.dexlib2.iface.instruction.ReferenceInstruction;
+import org.jf.dexlib2.iface.instruction.WideLiteralInstruction;
 import org.jf.dexlib2.iface.reference.FieldReference;
 import org.jf.dexlib2.iface.reference.MethodReference;
 import org.jf.dexlib2.iface.reference.Reference;
 import org.jf.dexlib2.iface.reference.StringReference;
 import org.jf.dexlib2.iface.reference.TypeReference;
+import org.jf.dexlib2.iface.value.DoubleEncodedValue;
 import org.jf.dexlib2.iface.value.EncodedValue;
+import org.jf.dexlib2.iface.value.FloatEncodedValue;
+import org.jf.dexlib2.iface.value.IntEncodedValue;
+import org.jf.dexlib2.iface.value.LongEncodedValue;
+import org.jf.dexlib2.iface.value.ShortEncodedValue;
 import org.jf.dexlib2.iface.value.StringEncodedValue;
 import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 @Internal
 public final class DexDecoder {
@@ -107,6 +114,19 @@ public final class DexDecoder {
     return decodeMethodReferences(dexMethod, ReferenceTypes.all(), true);
   }
 
+  public static Set<Long> decodeNumberLiterals(DexBackedClassDef dexClass) {
+    Set<Long> pool = new HashSet<>();
+    DexUtils.dexStaticFields(dexClass).forEach(f -> decodeNumberLiterals(f, pool));
+    DexUtils.dexMethods(dexClass).forEach(m -> decodeNumberLiterals(m, pool));
+    return pool;
+  }
+
+  public static Set<Long> decodeNumberLiterals(DexBackedMethod dexMethod) {
+    Set<Long> pool = new HashSet<>();
+    decodeNumberLiterals(dexMethod, pool);
+    return pool;
+  }
+
   private static ReferencePool decodeDexReferences(DexBackedDexFile dexFile,
                                                    ReferenceTypes types,
                                                    boolean resolve) {
@@ -128,9 +148,7 @@ public final class DexDecoder {
                                                      boolean resolve) {
     final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
-    getMethods(dexClass, types).forEach(dexMethod -> {
-      decodeMethodReferences(dexMethod, types, buffer);
-    });
+    getMethods(dexClass, types).forEach(m -> decodeMethodReferences(m, types, buffer));
     return buffer.getPool(resolve);
   }
 
@@ -199,6 +217,38 @@ public final class DexDecoder {
       }
     } catch (Reference.InvalidReferenceException e) {
       DexLog.w(e.getMessage());
+    }
+  }
+
+  private static void decodeNumberLiterals(DexBackedMethod dexMethod, Set<Long> pool) {
+    MethodImplementation implementation = dexMethod.getImplementation();
+    if (implementation == null) return;
+    for (Instruction instruction : implementation.getInstructions()) {
+      if (instruction instanceof WideLiteralInstruction) {
+        pool.add(((WideLiteralInstruction) instruction).getWideLiteral());
+      }
+    }
+  }
+
+  private static void decodeNumberLiterals(DexBackedField dexField, Set<Long> pool) {
+    EncodedValue value = dexField.getInitialValue();
+    if (value == null) return;
+    switch (value.getValueType()) {
+      case ValueType.SHORT:
+        pool.add((long) ((ShortEncodedValue) value).getValue());
+        break;
+      case ValueType.INT:
+        pool.add((long) ((IntEncodedValue) value).getValue());
+        break;
+      case ValueType.LONG:
+        pool.add(((LongEncodedValue) value).getValue());
+        break;
+      case ValueType.FLOAT:
+        pool.add((long) Float.floatToIntBits(((FloatEncodedValue) value).getValue()));
+        break;
+      case ValueType.DOUBLE:
+        pool.add(Double.doubleToLongBits(((DoubleEncodedValue) value).getValue()));
+        break;
     }
   }
 }

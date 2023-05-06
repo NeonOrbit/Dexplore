@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.filter;
 
+import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.exception.AbortException;
 import io.github.neonorbit.dexplore.util.DexUtils;
@@ -59,6 +60,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private final Set<String> sourceNames;
   private final Set<String> annotations;
   private final Set<String> annotValues;
+  private final Set<Long> numLiterals;
 
   private ClassFilter(Builder builder) {
     super(builder, Utils.isSingle(builder.classNames));
@@ -71,6 +73,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     this.sourceNames = builder.sourceNames;
     this.annotations = builder.annotations;
     this.annotValues = builder.annotValues;
+    this.numLiterals = builder.numLiterals;
   }
 
   @Internal
@@ -88,6 +91,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
             (sourceNames == null || sourceNames.contains(Utils.getString(dexClass.getSourceFile()))) &&
             (annotations == null || FilterUtils.containsAnnotations(dexClass, annotations)) &&
             (annotValues == null || FilterUtils.containsAnnotationValues(dexClass, annotValues)) &&
+            (numLiterals == null || DexDecoder.decodeNumberLiterals(dexClass).containsAll(numLiterals)) &&
             super.verify(dexClass, decoder)
     );
     if (unique && !result) {
@@ -131,6 +135,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     private Set<String> sourceNames;
     private Set<String> annotations;
     private Set<String> annotValues;
+    private Set<Long> numLiterals;
 
     public Builder() {}
 
@@ -145,6 +150,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       this.sourceNames = instance.sourceNames;
       this.annotations = instance.annotations;
       this.annotValues = instance.annotValues;
+      this.numLiterals = instance.numLiterals;
     }
 
     @Override
@@ -158,7 +164,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
               interfaces  == null  &&
               sourceNames == null  &&
               annotations == null  &&
-              annotValues == null;
+              annotValues == null  &&
+              numLiterals == null;
     }
 
     @Override
@@ -291,7 +298,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that contains all the specified annotations.
+     * Add a condition to the filter to match classes that contain all the specified annotations.
      *
      * @param annotations {@linkplain Class#getName() full names} of annotation classes
      * @return {@code this} builder
@@ -304,8 +311,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that contains
-     * all the specified annotation values.
+     * Add a condition to the filter to match classes that contain all the specified annotation values.
      *
      * <p>Currently supports only string and type values.</p>
      * <pre>
@@ -323,6 +329,23 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     public Builder containsAnnotationValues(@Nonnull String... annotationValues) {
       List<String> list = Utils.nonNullList(annotationValues);
       this.annotValues = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match methods that contain all the specified numbers.
+     * <p>Note: Each float value must end with an 'f' character.</p>
+     *
+     * @param numbers list of numbers to match
+     * @return {@code this} builder
+     */
+    public Builder setNumbers(@Nonnull Number... numbers) {
+      Set<Long> literals = Utils.nonNullList(numbers).stream().map(number ->
+              number instanceof Float ? Float.floatToIntBits((Float) number) :
+                      number instanceof Double ? Double.doubleToLongBits((Double) number) :
+                              number.longValue()
+      ).collect(Collectors.toSet());
+      this.numLiterals = literals.isEmpty() ? null : Utils.optimizedSet(literals);
       return this;
     }
 
