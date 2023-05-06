@@ -53,7 +53,7 @@ internal class DexSearchEngine(mode: String) {
 
     fun init(packages: List<String>, classes: List<String>,
              type: String, references: List<String>, signatures: List<String>,
-             sources: List<String>) {
+             sources: List<String>, numbers: List<Long>) {
         checkEngineState(false)
         val types = buildRefTypes(type)
         val filter = if (types.hasNone()) null else ReferenceFilter { pool ->
@@ -68,11 +68,13 @@ internal class DexSearchEngine(mode: String) {
                 .setReferenceTypes(types)
                 .setReferenceFilter(filter)
                 .setSourceNames(*sources.toTypedArray())
+                .setNumbers(*numbers.toTypedArray())
                 .build()
         methodFilter = if (isClassMode) MethodFilter.MATCH_ALL else MethodFilter
                 .builder()
                 .setReferenceTypes(types)
                 .setReferenceFilter(filter)
+                .setNumbers(*numbers.toTypedArray())
                 .build()
         initialized = true
     }

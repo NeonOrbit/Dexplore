@@ -92,35 +92,43 @@ internal class SearchCommand : Command {
     var sources = ArrayList<String>()
 
     @Parameter(
-            order = 8,
+        order = 8,
+        variableArity = true,
+        names = ["-num", "--numbers"],
+        description = "Provide a list of numbers to match against (-num 123 124.1f 121.3d)"
+    )
+    var numbers = ArrayList<String>()
+
+    @Parameter(
+            order = 9,
             names = ["-l", "--limit"],
             description = "Limit maximum results. Default: -1 (no limit)"
     )
     private var maximum = -1
 
     @Parameter(
-            order = 9,
+            order = 10,
             names = ["-pool", "--print-pool"],
             description = "Print ReferencePool: a: all, s: string, t: type, f: field, m: method"
     )
     var printPool = ""
 
     @Parameter(
-            order = 10,
+            order = 11,
             names = ["-gen", "--gen-sources"],
             description = "Generate java and smali source files from search results"
     )
     private var generate = false
 
     @Parameter(
-            order = 11,
+            order = 12,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
     private var output = "dexplore-out"
 
     @Parameter(
-        order = 12,
+        order = 13,
         hidden = true,
         names = ["-advance", "--advanced"],
         description = "eg: \"m:public+final,a:annotation,s:superclass,i:interface1+interface2\""
@@ -136,7 +144,7 @@ internal class SearchCommand : Command {
         val engine = DexSearchEngine(searchMode).apply {
             setMaximum(maximum)
             setDetails(printPool)
-            init(packages, classes, type, references, signatures, sources)
+            init(packages, classes, type, references, signatures, sources, toLong(numbers))
         }
         files.map { File(it) }.also {
             CommandUtils.checkFiles(it)
@@ -152,6 +160,16 @@ internal class SearchCommand : Command {
             }
             CommandUtils.print()
         }
+    }
+
+    private fun toLong(numbers: List<String>): List<Long> {
+        return numbers.map { n ->
+            when (n.last()) {
+                'd' -> n.toDouble().toBits()
+                'f' -> n.toFloat().toBits().toLong()
+                else -> if ('.' in n) n.toDouble().toBits() else n.toLong()
+            }
+        }.toList()
     }
 
     override fun validate(): Boolean {
@@ -170,7 +188,7 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
-        if (classes.isEmpty() && sources.isEmpty() && type.isEmpty()) {
+        if (classes.isEmpty() && sources.isEmpty() && numbers.isEmpty() && type.isEmpty()) {
             CommandUtils.error("\n  Please provide a search query\n")
             return false
         }
