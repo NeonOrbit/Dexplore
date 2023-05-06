@@ -183,16 +183,17 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      *    This will silently overwrite {@link #skipPackages(List, List) skipPackages()}.
      * </p>
      *
-     * @param packages a list of package names
+     * @param packages package names
      * @return {@code this} builder
      */
-    public Builder setPackages(@Nullable List<String> packages) {
-      if (!Utils.hasItem(packages)) {
+    public Builder setPackages(@Nonnull String... packages) {
+      List<String> pkg = Utils.nonNullList(packages);
+      if (!Utils.hasItem(pkg)) {
         this.pkgPattern = null;
-      } else if (!Utils.isValidName(packages)) {
+      } else if (!Utils.isValidName(pkg)) {
         throw new IllegalArgumentException("Invalid Package Name");
       } else {
-        this.pkgPattern = getPackagePattern(packages, null);
+        this.pkgPattern = getPackagePattern(pkg, null);
       }
       return this;
     }
@@ -200,7 +201,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     /**
      * Specify a list of packages that should be excluded.
      * <p><b>Note:</b>
-     *    This will silently overwrite {@link #setPackages(List) setPackages()}.
+     *    This will silently overwrite {@link #setPackages(String...) setPackages()}.
      * </p>
      *
      * @param packages a list of packages to exclude
