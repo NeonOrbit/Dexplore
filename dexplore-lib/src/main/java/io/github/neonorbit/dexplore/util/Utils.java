@@ -58,6 +58,10 @@ public final class Utils {
     return source == null ? "" : source;
   }
 
+  public static boolean hasItem(@Nullable Collection<?> c) {
+    return c != null && !c.isEmpty();
+  }
+
   public static boolean isSingle(@Nullable Collection<?> c) {
     return c != null && c.size() == 1;
   }

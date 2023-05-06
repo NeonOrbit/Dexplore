@@ -19,15 +19,14 @@ package io.github.neonorbit.dexplore.filter;
 import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.exception.AbortException;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Modifier;
-import java.security.InvalidParameterException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -179,21 +178,44 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
+     * Add a condition to the filter to match classes from the specified packages only.
+     * <p><b>Note:</b>
+     *    This will silently overwrite {@link #skipPackages(List, List) skipPackages()}.
+     * </p>
+     *
+     * @param packages a list of package names
+     * @return {@code this} builder
+     */
+    public Builder setPackages(@Nullable List<String> packages) {
+      if (!Utils.hasItem(packages)) {
+        this.pkgPattern = null;
+      } else if (!Utils.isValidName(packages)) {
+        throw new IllegalArgumentException("Invalid Package Name");
+      } else {
+        this.pkgPattern = getPackagePattern(packages, null);
+      }
+      return this;
+    }
+
+    /**
      * Specify a list of packages that should be excluded.
+     * <p><b>Note:</b>
+     *    This will silently overwrite {@link #setPackages(List) setPackages()}.
+     * </p>
      *
      * @param packages a list of packages to exclude
-     * @param exception an exception list to allow sub packages
+     * @param exception an exception list to allow sub packages (can be null)
      * @return {@code this} builder
      */
     public Builder skipPackages(@Nullable List<String> packages,
                                 @Nullable List<String> exception) {
-      if (packages == null || packages.isEmpty()) {
+      if (!Utils.hasItem(packages)) {
         this.pkgPattern = null;
       } else if (!Utils.isValidName(packages) ||
-                 !(exception == null || Utils.isValidName(exception))) {
-        throw new InvalidParameterException("Invalid Package Name");
+                !(!Utils.hasItem(exception) || Utils.isValidName(exception))) {
+        throw new IllegalArgumentException("Invalid Package Name");
       } else {
-        this.pkgPattern = getPackagePattern(packages, exception);
+        this.pkgPattern = getPackagePattern(exception, packages);
       }
       return this;
     }
@@ -349,15 +371,19 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       return this;
     }
 
-    private static Pattern getPackagePattern(List<String> packages, List<String> exception) {
+    private static Pattern getPackagePattern(List<String> includes, List<String> excludes) {
       Function<String, String> mapper = s -> 'L' + s.replaceAll("\\.", "/")
                                                     .replaceAll("\\$", "\\\\\\$")
                                            + '/';
-      String regex = "^((?!";
-      regex += packages.stream().map(mapper).collect(Collectors.joining("|"));
-      regex += ")";
-      if (exception != null && !exception.isEmpty()) {
-        regex += '|' + exception.stream().map(mapper).collect(Collectors.joining("|"));
+      String regex = "^(";
+      if (Utils.hasItem(includes)) {
+        regex += includes.stream().map(mapper).collect(Collectors.joining("|"));
+      }
+      if (Utils.hasItem(excludes)) {
+        boolean multiple = regex.length() > 2;
+        if (multiple) regex += "|(";
+        regex += "?!" + excludes.stream().map(mapper).collect(Collectors.joining("|"));
+        if (multiple) regex += ")";
       }
       regex += ").*$";
       return Pattern.compile(regex);
