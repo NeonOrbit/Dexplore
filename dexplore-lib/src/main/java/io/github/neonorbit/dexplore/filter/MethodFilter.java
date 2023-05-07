@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public final class MethodFilter extends BaseFilter<DexBackedMethod> {
-  private static final int M1 = -1;
+  private static final int NEG = -1;
 
   /** A {@code MethodFilter} instance that matches all dex methods. */
   public static final MethodFilter MATCH_ALL = new MethodFilter(builder());
@@ -80,8 +80,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     if (this == MATCH_ALL) return true;
     if (!checkMethodSignature(dexMethod)) return false;
     boolean result = (
-            (flag == M1 || (dexMethod.accessFlags & flag) == flag) &&
-            (skipFlag == M1 || (dexMethod.accessFlags & skipFlag) == 0) &&
+            (flag == NEG || (dexMethod.accessFlags & flag) == flag) &&
+            (skipFlag == NEG || (dexMethod.accessFlags & skipFlag) == 0) &&
             (returnType == null || returnType.equals(dexMethod.getReturnType())) &&
             (annotations == null || FilterUtils.containsAllAnnotations(dexMethod, annotations)) &&
             (annotValues == null || FilterUtils.containsAllAnnotationValues(dexMethod, annotValues)) &&
@@ -151,9 +151,9 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   }
 
   public static class Builder extends BaseFilter.Builder<Builder, MethodFilter> {
-    private int flag = M1;
-    private int skipFlag = M1;
-    private int paramSize = M1;
+    private int flag = NEG;
+    private int skipFlag = NEG;
+    private int paramSize = NEG;
     private String returnType;
     private Set<String> methodNames;
     private List<String> parameters;
@@ -178,15 +178,15 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
 
     @Override
     protected boolean isDefault() {
-      return super.isDefault()     &&
-              flag        == M1    &&
-              skipFlag    == M1    &&
-              paramSize   == M1    &&
-              parameters  == null  &&
-              returnType  == null  &&
-              methodNames == null  &&
-              annotations == null  &&
-              annotValues == null  &&
+      return super.isDefault()    &&
+              flag        == NEG  &&
+              skipFlag    == NEG  &&
+              paramSize   == NEG  &&
+              parameters  == null &&
+              returnType  == null &&
+              methodNames == null &&
+              annotations == null &&
+              annotValues == null &&
               numLiterals == null;
     }
 

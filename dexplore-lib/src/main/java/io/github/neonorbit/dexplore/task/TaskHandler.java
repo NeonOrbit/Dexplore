@@ -32,10 +32,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * An instance of this class should not be used from multiple threads.
+ * <b>This is an internal API.</b>
+ * <p>
+ * A single instance of this class should not be used from multiple threads.
  * Only {@link #pause()} and {@link #resume()} are thread safe.
- *
- * <p>Note: This is an internal API.</p>
  *
  * @author NeonOrbit
  */
@@ -84,10 +84,14 @@ public final class TaskHandler<V> {
       while (hasTask()) {
         V res = retrieve();
         taskGuard.hold();
-        try { if (receiver.accept(res)) {
-            terminate(false); break;
+        try {
+          if (receiver.accept(res)) {
+            terminate(false);
+            break;
           }
-        } finally { taskGuard.release(); }
+        } finally {
+          taskGuard.release();
+        }
       }
     } catch (Exception e) {
       handleException(e);

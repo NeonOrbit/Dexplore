@@ -39,7 +39,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> javaToDexTypeName(@Nonnull Collection<String> javaTypeNames) {
-    return javaTypeNames.stream().sequential()
+    return javaTypeNames.stream()
                         .map(DexUtils::javaToDexTypeName)
                         .collect(Collectors.toList());
   }
@@ -53,7 +53,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> dexToJavaTypeName(@Nonnull Collection<String> dexTypeNames) {
-    return dexTypeNames.stream().sequential()
+    return dexTypeNames.stream()
                        .map(DexUtils::dexToJavaTypeName)
                        .collect(Collectors.toList());
   }
@@ -65,7 +65,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> javaClassToDexTypeName(@Nonnull Collection<Class<?>> javaClasses) {
-    return javaClasses.stream().sequential()
+    return javaClasses.stream()
                       .map(DexUtils::javaClassToDexTypeName)
                       .collect(Collectors.toList());
   }
@@ -77,7 +77,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> dexClassToJavaTypeNames(@Nonnull Collection<DexBackedClassDef> dexClass) {
-    return dexClass.stream().sequential()
+    return dexClass.stream()
                    .map(DexUtils::dexClassToJavaTypeName)
                    .collect(Collectors.toList());
   }

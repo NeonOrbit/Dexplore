@@ -32,16 +32,18 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 final class FilterUtils {
   public static boolean containsAllAnnotations(@Nonnull DexBackedClassDef dexClass,
                                                @Nonnull Set<String> annotations) {
-    return containsAllAnnotations(dexClass.getAnnotations(), annotations);
+    return containsAllAnnotations(getAllAnnotations(dexClass), annotations);
   }
 
   public static boolean containsAllAnnotationValues(@Nonnull DexBackedClassDef dexClass,
                                                     @Nonnull Set<String> annotationValues) {
-    return containsAllAnnotationValues(dexClass.getAnnotations(), annotationValues);
+    return containsAllAnnotationValues(getAllAnnotations(dexClass), annotationValues);
   }
 
   public static boolean containsAllAnnotations(@Nonnull DexBackedMethod dexMethod,
@@ -94,5 +96,14 @@ final class FilterUtils {
       default:
         break;
     }
+  }
+
+  private static Set<? extends Annotation> getAllAnnotations(DexBackedClassDef dexClass) {
+    return Stream.concat(
+            dexClass.getAnnotations().stream(),
+            StreamSupport.stream(
+                    DexUtils.dexMethods(dexClass).spliterator(), false
+            ).flatMap(m -> m.getAnnotations().stream())
+    ).collect(Collectors.toSet());
   }
 }

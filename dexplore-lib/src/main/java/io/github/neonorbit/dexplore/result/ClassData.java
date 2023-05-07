@@ -114,7 +114,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   }
 
   /**
-   * The {@linkplain Class#getName() full name} of the class
+   * The {@linkplain Class#getName() full name} of the class.
    * @return class name
    */
   @Nonnull

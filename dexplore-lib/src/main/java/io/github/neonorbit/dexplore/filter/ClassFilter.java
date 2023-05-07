@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
-  private static final int M1 = -1;
+  private static final int NEG = -1;
 
   /** A {@code ClassFilter} instance that matches all dex classes. */
   public static final ClassFilter MATCH_ALL = new ClassFilter(builder());
@@ -84,12 +84,12 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     if (this == MATCH_ALL) return true;
     if (!checkClassNames(dexClass.getType())) return false;
     boolean result = (
-            (flag == M1 || (dexClass.getAccessFlags() & flag) == flag) &&
-            (skipFlag == M1 || (dexClass.getAccessFlags() & skipFlag) == 0) &&
+            (flag == NEG || (dexClass.getAccessFlags() & flag) == flag) &&
+            (skipFlag == NEG || (dexClass.getAccessFlags() & skipFlag) == 0) &&
             (superClass == null || superClass.equals(dexClass.getSuperclass())) &&
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
             (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
-            (sourceNames == null || sourceNames.contains(Utils.getString(dexClass.getSourceFile()))) &&
+            (sourceNames == null || containsSourceFileName(dexClass.getSourceFile())) &&
             (annotations == null || FilterUtils.containsAllAnnotations(dexClass, annotations)) &&
             (annotValues == null || FilterUtils.containsAllAnnotationValues(dexClass, annotValues)) &&
             (numLiterals == null || DexDecoder.decodeNumberLiterals(dexClass).containsAll(numLiterals)) &&
@@ -99,6 +99,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       throw new AbortException("Class found but the filter didn't match");
     }
     return result;
+  }
+
+  private boolean containsSourceFileName(String source) {
+    return source != null && sourceNames.contains(source);
   }
 
   private boolean checkClassNames(String name) {
@@ -134,8 +138,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   }
 
   public static class Builder extends BaseFilter.Builder<Builder, ClassFilter> {
-    private int flag = M1;
-    private int skipFlag = M1;
+    private int flag = NEG;
+    private int skipFlag = NEG;
     private Pattern pkgPattern;
     private String superClass;
     private Set<String> classNames;
@@ -165,17 +169,17 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     @Override
     protected boolean isDefault() {
-      return super.isDefault()     &&
-              flag        == M1    &&
-              skipFlag    == M1    &&
-              pkgPattern  == null  &&
-              superClass  == null  &&
-              classNames  == null  &&
-              interfaces  == null  &&
-              sourceNames == null  &&
-              annotations == null  &&
-              annotValues == null  &&
-              numLiterals == null  &&
+      return super.isDefault()    &&
+              flag        == NEG  &&
+              skipFlag    == NEG  &&
+              pkgPattern  == null &&
+              superClass  == null &&
+              classNames  == null &&
+              interfaces  == null &&
+              sourceNames == null &&
+              annotations == null &&
+              annotValues == null &&
+              numLiterals == null &&
               clsShortNames == null;
     }
 

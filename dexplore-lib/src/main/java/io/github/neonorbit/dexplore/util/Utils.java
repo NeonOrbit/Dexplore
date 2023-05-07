@@ -73,14 +73,14 @@ public final class Utils {
 
   public static <T> Set<T> optimizedSet(@Nonnull Collection<T> c) {
     if (c.isEmpty()) return Collections.emptySet();
-    if (c.size() == 1) return Collections.singleton(findFirst(c));
+    if (c.size() == 1) return Collections.singleton(c.iterator().next());
     Set<T> set = (c instanceof Set) ? (Set<T>) c : new HashSet<>(c);
     return Collections.unmodifiableSet(set);
   }
 
   public static <T> List<T> optimizedList(@Nonnull Collection<T> c) {
     if (c.isEmpty()) return Collections.emptyList();
-    if (c.size() == 1) return Collections.singletonList(findFirst(c));
+    if (c.size() == 1) return Collections.singletonList(c.iterator().next());
     List<T> list = (c instanceof List) ? (List<T>) c : new ArrayList<>(c);
     return Collections.unmodifiableList(list);
   }

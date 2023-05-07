@@ -20,6 +20,7 @@ import io.github.neonorbit.dexplore.reference.FieldRefData;
 import io.github.neonorbit.dexplore.reference.MethodRefData;
 import io.github.neonorbit.dexplore.reference.StringRefData;
 import io.github.neonorbit.dexplore.reference.TypeRefData;
+import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -60,10 +61,10 @@ public final class ReferencePool {
                         List<TypeRefData> types,
                         List<FieldRefData> fields,
                         List<MethodRefData> methods) {
-    this.strings = Collections.unmodifiableList(strings);
-    this.types = Collections.unmodifiableList(types);
-    this.fields = Collections.unmodifiableList(fields);
-    this.methods = Collections.unmodifiableList(methods);
+    this.strings = strings;
+    this.types = types;
+    this.fields = fields;
+    this.methods = methods;
   }
 
   static ReferencePool build(List<StringRefData> strings,
@@ -74,7 +75,12 @@ public final class ReferencePool {
         fields.isEmpty() && methods.isEmpty()) {
       return EMPTY_POOL;
     } else {
-      return new ReferencePool(strings, types, fields, methods);
+      return new ReferencePool(
+              Utils.optimizedList(strings),
+              Utils.optimizedList(types),
+              Utils.optimizedList(fields),
+              Utils.optimizedList(methods)
+      );
     }
   }
 

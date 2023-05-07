@@ -185,7 +185,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
      * @throws IllegalStateException if preferred dex was not specified
      */
     public Builder allowPreferredDexOnly(boolean allow) {
-      if (preferredDexNames == null) {
+      if (allow && preferredDexNames == null) {
         throw new IllegalStateException("Preferred dex was not specified");
       }
       this.preferredDexOnly = allow;
