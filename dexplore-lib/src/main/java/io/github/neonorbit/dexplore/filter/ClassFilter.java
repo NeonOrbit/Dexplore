@@ -60,6 +60,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private final Set<String> annotations;
   private final Set<String> annotValues;
   private final Set<Long> numLiterals;
+  private final Set<String> clsShortNames;
 
   private ClassFilter(Builder builder) {
     super(builder, Utils.isSingle(builder.classNames));
@@ -73,6 +74,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     this.annotations = builder.annotations;
     this.annotValues = builder.annotValues;
     this.numLiterals = builder.numLiterals;
+    this.clsShortNames = builder.clsShortNames;
   }
 
   @Internal
@@ -80,7 +82,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   public boolean verify(@Nonnull DexBackedClassDef dexClass,
                         @Nonnull LazyDecoder<DexBackedClassDef> decoder) {
     if (this == MATCH_ALL) return true;
-    if (classNames != null && !classNames.contains(dexClass.getType())) return false;
+    if (!checkClassNames(dexClass.getType())) return false;
     boolean result = (
             (flag == M1 || (dexClass.getAccessFlags() & flag) == flag) &&
             (skipFlag == M1 || (dexClass.getAccessFlags() & skipFlag) == 0) &&
@@ -88,8 +90,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
             (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
             (sourceNames == null || sourceNames.contains(Utils.getString(dexClass.getSourceFile()))) &&
-            (annotations == null || FilterUtils.containsAnnotations(dexClass, annotations)) &&
-            (annotValues == null || FilterUtils.containsAnnotationValues(dexClass, annotValues)) &&
+            (annotations == null || FilterUtils.containsAllAnnotations(dexClass, annotations)) &&
+            (annotValues == null || FilterUtils.containsAllAnnotationValues(dexClass, annotValues)) &&
             (numLiterals == null || DexDecoder.decodeNumberLiterals(dexClass).containsAll(numLiterals)) &&
             super.verify(dexClass, decoder)
     );
@@ -97,6 +99,13 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       throw new AbortException("Class found but the filter didn't match");
     }
     return result;
+  }
+
+  private boolean checkClassNames(String name) {
+    if (classNames != null) {
+      return classNames.contains(name);
+    }
+    return clsShortNames == null || clsShortNames.stream().anyMatch(name::endsWith);
   }
 
   /**
@@ -135,6 +144,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     private Set<String> annotations;
     private Set<String> annotValues;
     private Set<Long> numLiterals;
+    private Set<String> clsShortNames;
 
     public Builder() {}
 
@@ -150,6 +160,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       this.annotations = instance.annotations;
       this.annotValues = instance.annotValues;
       this.numLiterals = instance.numLiterals;
+      this.clsShortNames = instance.clsShortNames;
     }
 
     @Override
@@ -164,7 +175,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
               sourceNames == null  &&
               annotations == null  &&
               annotValues == null  &&
-              numLiterals == null;
+              numLiterals == null  &&
+              clsShortNames == null;
     }
 
     @Override
@@ -223,14 +235,44 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Add a condition to the filter to match classes that match with any of the specified classes.
-     * <p>This is useful if you want to search in specific classes only.</p>
+     * <p>
+     *   <b>Note:</b> This method takes the {@linkplain Class#getName() full names} of classes
+     *   <i>(eg: java.io.FileReader)</i>.
+     *   If you want to search with simple class names (eg: FileReader),
+     *   use {@link #setClassSimpleNames(String...) setClassSimpleNames()} instead.
+     * </p>
      *
      * @param classes {@linkplain Class#getName() full names} of classes
      * @return {@code this} builder
+     * @see #setClassSimpleNames(String...) setClassSimpleNames(names)
      */
     public Builder setClasses(@Nonnull String... classes) {
+      if (this.clsShortNames != null) throw new IllegalStateException(
+              "ClassFilter: setClasses() cannot be used together with setClassSimpleNames()"
+      );
       List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
       this.classNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match classes that match with any of the specified class names.
+     * <p>
+     *   <b>Note:</b> This method takes the {@link Class#getSimpleName() Simple Names} of classes.
+     *   This is different from {@link #setClasses(String...) setClasses()},
+     *   which takes the full names instead.
+     * </p>
+     *
+     * @param names simple names of classes
+     * @return {@code this} builder
+     * @see #setClasses(String...) setClasses(classes)
+     */
+    public Builder setClassSimpleNames(@Nonnull String... names) {
+      if (this.classNames != null) throw new IllegalStateException(
+              "ClassFilter: setClassSimpleNames() cannot be used together with setClasses()"
+      );
+      List<String> list = Utils.nonNullList(names).stream().map(n-> n+';').collect(Collectors.toList());
+      this.clsShortNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
 
@@ -242,8 +284,9 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      * Use {@code |} operator to set multiple modifiers:
      *    <blockquote> setModifiers({@link Modifier#PUBLIC} | {@link Modifier#FINAL}) </blockquote>
      *
-     * @param modifiers class {@link Class#getModifiers() modifiers}
+     * @param modifiers class {@link Class#getModifiers() modifiers}, or -1 to reset
      * @return {@code this} builder
+     * @see #skipModifiers(int)
      */
     public Builder setModifiers(int modifiers) {
       this.flag = modifiers;
@@ -253,7 +296,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     /**
      * Classes with the specified class modifiers will be skipped.
      *
-     * @param modifiers class {@link Class#getModifiers() modifiers}
+     * @param modifiers class {@link Class#getModifiers() modifiers}, or -1 to reset
      * @return {@code this} builder
      * @see #setModifiers(int)
      */
@@ -287,6 +330,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Add a condition to the filter to match classes with the specified interfaces.
+     * <p>Note: Interface list must match exactly.</p>
      *
      * @param iFaces {@linkplain Class#getName() full names} of interfaces
      * @return {@code this} builder
@@ -338,7 +382,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      *
      * <p>Currently supports only string and type values.</p>
      * <pre>
-     *   STRING Values: @Annot("string"), or @Annot({"string1", "string2"})
+     *   STRING Values: @SomeAnnot("string") @AnotherAnnot({"string1", "string2"})
      *   Example: filter.containsAnnotationValues("string", "string1")
      *
      *   TYPE Values: @Annot(Runnable.class), @Annot(Thread.class)

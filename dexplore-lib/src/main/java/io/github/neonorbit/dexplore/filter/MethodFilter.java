@@ -60,7 +60,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
 
   private MethodFilter(Builder builder) {
     super(builder, Utils.isSingle(builder.methodNames) &&
-         (builder.parameters != null || builder.paramSize == 0));
+         (builder.parameters != null || builder.paramSize == 0)
+    );
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
     this.paramSize = builder.paramSize;
@@ -82,8 +83,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
             (flag == M1 || (dexMethod.accessFlags & flag) == flag) &&
             (skipFlag == M1 || (dexMethod.accessFlags & skipFlag) == 0) &&
             (returnType == null || returnType.equals(dexMethod.getReturnType())) &&
-            (annotations == null || FilterUtils.containsAnnotations(dexMethod, annotations)) &&
-            (annotValues == null || FilterUtils.containsAnnotationValues(dexMethod, annotValues)) &&
+            (annotations == null || FilterUtils.containsAllAnnotations(dexMethod, annotations)) &&
+            (annotValues == null || FilterUtils.containsAllAnnotationValues(dexMethod, annotValues)) &&
             (numLiterals == null || DexDecoder.decodeNumberLiterals(dexMethod).containsAll(numLiterals)) &&
             super.verify(dexMethod, decoder)
     );
@@ -206,7 +207,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
      * @return {@code this} builder
      */
     public Builder setMethodNames(@Nonnull String... names) {
-      this.methodNames = names.length == 0 ? null : Utils.optimizedSet(Utils.nonNullList(names));
+      List<String> list = Utils.nonNullList(names);
+      this.methodNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
 
@@ -218,8 +220,9 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
      * Use {@code |} operator to set multiple modifiers:
      *    <blockquote> setModifiers({@link Modifier#PUBLIC} | {@link Modifier#STATIC}) </blockquote>
      *
-     * @param modifiers method {@link Method#getModifiers() modifiers}
+     * @param modifiers method {@link Method#getModifiers() modifiers}, or -1 to reset
      * @return {@code this} builder
+     * @see #skipModifiers(int)
      */
     public Builder setModifiers(int modifiers) {
       this.flag = modifiers;
@@ -229,7 +232,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Methods with the specified method modifiers will be skipped.
      *
-     * @param modifiers method {@link Method#getModifiers() modifiers}
+     * @param modifiers method {@link Method#getModifiers() modifiers}, or -1 to reset
      * @return {@code this} builder
      * @see #setModifiers(int)
      */
@@ -252,7 +255,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Add a condition to the filter to match methods with the specified method parameter size.
      *
-     * @param size number of method parameters
+     * @param size number of method parameters, or -1 to reset
      * @return {@code this} builder
      */
     public Builder setParamSize(int size) {
@@ -262,6 +265,10 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
 
     /**
      * Add a condition to the filter to match methods with the specified parameter list.
+     * <p>
+     *   Note: Parameter list must match exactly. <br/>
+     *   Note: Pass an empty list to match methods that have no parameters.
+     * </p>
      *
      * @param params {@linkplain Class#getName() full names} of method parameter types
      * @return {@code this} builder
@@ -289,7 +296,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
      *
      * <p>Currently supports only string and type values.</p>
      * <pre>
-     *   STRING Values: @Annot("string"), or @Annot({"string1", "string2"})
+     *   STRING Values: @SomeAnnot("string") @AnotherAnnot({"string1", "string2"})
      *   Example: filter.containsAnnotationValues("string", "string1")
      *
      *   TYPE Values: @Annot(Runnable.class), @Annot(Thread.class)

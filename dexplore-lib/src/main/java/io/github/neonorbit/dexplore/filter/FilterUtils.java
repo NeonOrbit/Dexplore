@@ -34,35 +34,35 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 final class FilterUtils {
-  public static boolean containsAnnotations(@Nonnull DexBackedClassDef dexClass,
-                                            @Nonnull Set<String> annotations) {
-    return containsAnnotations(dexClass.getAnnotations(), annotations);
+  public static boolean containsAllAnnotations(@Nonnull DexBackedClassDef dexClass,
+                                               @Nonnull Set<String> annotations) {
+    return containsAllAnnotations(dexClass.getAnnotations(), annotations);
   }
 
-  public static boolean containsAnnotationValues(@Nonnull DexBackedClassDef dexClass,
-                                                 @Nonnull Set<String> annotationValues) {
-    return containsAnnotationValues(dexClass.getAnnotations(), annotationValues);
+  public static boolean containsAllAnnotationValues(@Nonnull DexBackedClassDef dexClass,
+                                                    @Nonnull Set<String> annotationValues) {
+    return containsAllAnnotationValues(dexClass.getAnnotations(), annotationValues);
   }
 
-  public static boolean containsAnnotations(@Nonnull DexBackedMethod dexMethod,
-                                            @Nonnull Set<String> annotations) {
-    return containsAnnotations(dexMethod.getAnnotations(), annotations);
+  public static boolean containsAllAnnotations(@Nonnull DexBackedMethod dexMethod,
+                                               @Nonnull Set<String> annotations) {
+    return containsAllAnnotations(dexMethod.getAnnotations(), annotations);
   }
 
-  public static boolean containsAnnotationValues(@Nonnull DexBackedMethod dexMethod,
-                                                 @Nonnull Set<String> annotationValues) {
-    return containsAnnotationValues(dexMethod.getAnnotations(), annotationValues);
+  public static boolean containsAllAnnotationValues(@Nonnull DexBackedMethod dexMethod,
+                                                    @Nonnull Set<String> annotationValues) {
+    return containsAllAnnotationValues(dexMethod.getAnnotations(), annotationValues);
   }
 
-  public static boolean containsAnnotations(@Nonnull Set<? extends Annotation> reader,
-                                            @Nonnull Set<String> annotations) {
+  public static boolean containsAllAnnotations(@Nonnull Set<? extends Annotation> reader,
+                                               @Nonnull Set<String> annotations) {
     if (reader.size() < annotations.size()) return false;
     return reader.stream().map(Annotation::getType)
                  .collect(Collectors.toSet()).containsAll(annotations);
   }
 
-  public static boolean containsAnnotationValues(@Nonnull Set<? extends Annotation> reader,
-                                                 @Nonnull Set<String> annotationValues) {
+  public static boolean containsAllAnnotationValues(@Nonnull Set<? extends Annotation> reader,
+                                                    @Nonnull Set<String> annotationValues) {
     Set<String> values = new HashSet<>();
     for (Annotation annot : reader) {
       if (annot.getType().startsWith("Ldalvik/annotation/")) continue;
