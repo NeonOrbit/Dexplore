@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore.cliutil
 class CmdQuery(
     val packages: List<String>,
     val classes: List<String>,
+    val classNames: List<String>,
     val refTypes: String,
     val references: List<String>,
     val signatures: List<String>,

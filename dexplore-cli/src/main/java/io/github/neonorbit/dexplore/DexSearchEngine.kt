@@ -69,6 +69,7 @@ internal class DexSearchEngine(mode: String) {
             .builder()
             .setPackages(*cmdQuery.packages.toTypedArray())
             .setClasses(*cmdQuery.classes.toTypedArray())
+            .setClassSimpleNames(*cmdQuery.classNames.toTypedArray())
             .setReferenceTypes(types)
             .setReferenceFilter(filter)
             .setSourceNames(*cmdQuery.sources.toTypedArray())

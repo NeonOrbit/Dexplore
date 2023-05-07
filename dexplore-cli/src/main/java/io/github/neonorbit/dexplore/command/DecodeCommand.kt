@@ -51,7 +51,15 @@ internal class DecodeCommand : Command {
     var classes = ArrayList<String>()
 
     @Parameter(
-            order = 3,
+        order = 3,
+        variableArity = true,
+        names = ["-cnm", "--cls-names"],
+        description = "Decompile a list of classes by names (simple short name)"
+    )
+    var classNames = ArrayList<String>()
+
+    @Parameter(
+            order = 4,
             variableArity = true,
             names = ["-pkg", "--packages"],
             description = "Decompile a list of packages. Default: all"
@@ -59,7 +67,7 @@ internal class DecodeCommand : Command {
     var packages = ArrayList<String>()
 
     @Parameter(
-        order = 4,
+        order = 5,
         variableArity = true,
         names = ["-res", "--resources"],
         description = "Resource types: color, values, drawable etc. Default: all"
@@ -67,35 +75,35 @@ internal class DecodeCommand : Command {
     var resources = ArrayList<String>()
 
     @Parameter(
-            order = 5,
+            order = 6,
             names = ["-job", "--jobs"],
             description = "The number of threads to use. Default: [core-size]"
     )
     private var threadCount = CommandUtils.cores()
 
     @Parameter(
-        order = 6,
+        order = 7,
         names = ["-dren", "--disable-rename"],
         description = "Disable class names renaming. Default: enabled"
     )
     private var disableRename = false
 
     @Parameter(
-        order = 7,
+        order = 8,
         names = ["-dmem", "--disable-cache"],
         description = "Disable In-Memory cache. Default: enabled"
     )
     private var disableMemCache = false
 
     @Parameter(
-        order = 8,
+        order = 9,
         names = ["-eps", "--enable-pause"],
         description = "Pause capability (with ENTER key). Default: disabled"
     )
     private var pauseSupport = false
 
     @Parameter(
-            order = 9,
+            order = 10,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
@@ -139,19 +147,20 @@ internal class DecodeCommand : Command {
         val lClasses = classes.takeIf { it.isNotEmpty() }?.let { list ->
             DexUtils.javaToDexTypeName(list).map { it.dropLast(1) }
         }
-        return when {
-            lClasses != null && lPackages != null -> Predicate { entry ->
-                lPackages.stream().anyMatch { entry.startsWith(it) } ||
-                        matchClassesIncludingInner(lClasses, entry)
-            }
-            lPackages != null -> Predicate { entry ->
-                lPackages.stream().anyMatch { entry.startsWith(it) }
-            }
-            lClasses != null -> Predicate { entry ->
-                matchClassesIncludingInner(lClasses, entry)
-            }
-            else -> null
+        val lClassNames = classNames.takeIf { it.isNotEmpty() }?.map {
+            it.substringAfterLast('.')
+        }?.filter { it.isNotEmpty() }
+        return if (lPackages == null && lClasses == null && lClassNames == null) {
+            return null
+        } else Predicate<String> { entry ->
+            (lPackages != null && lPackages.stream().anyMatch { entry.startsWith(it) }) ||
+            (lClasses != null && matchClassesIncludingInner(lClasses, entry)) ||
+            (lClassNames != null && matchSimpleClassNames(lClassNames, entry))
         }
+    }
+
+    private fun matchSimpleClassNames(names: List<String>, entry: String): Boolean {
+        return matchClassesIncludingInner(names, entry.substringAfterLast('/'))
     }
 
     private fun matchClassesIncludingInner(classes: List<String>, entry: String): Boolean {
