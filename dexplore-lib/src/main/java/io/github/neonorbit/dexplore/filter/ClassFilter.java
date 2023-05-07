@@ -247,11 +247,11 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      * @see #setClassSimpleNames(String...) setClassSimpleNames(names)
      */
     public Builder setClasses(@Nonnull String... classes) {
-      if (this.clsShortNames != null) throw new IllegalStateException(
-              "ClassFilter: setClasses() cannot be used together with setClassSimpleNames()"
-      );
       List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
       this.classNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      if (this.classNames != null && this.clsShortNames != null) throw new IllegalStateException(
+              "ClassFilter: setClasses() cannot be used together with setClassSimpleNames()"
+      );
       return this;
     }
 
@@ -268,11 +268,11 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      * @see #setClasses(String...) setClasses(classes)
      */
     public Builder setClassSimpleNames(@Nonnull String... names) {
-      if (this.classNames != null) throw new IllegalStateException(
-              "ClassFilter: setClassSimpleNames() cannot be used together with setClasses()"
-      );
       List<String> list = Utils.nonNullList(names).stream().map(n-> n+';').collect(Collectors.toList());
       this.clsShortNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      if (this.clsShortNames != null && this.classNames != null) throw new IllegalStateException(
+              "ClassFilter: setClassSimpleNames() cannot be used together with setClasses()"
+      );
       return this;
     }
 
