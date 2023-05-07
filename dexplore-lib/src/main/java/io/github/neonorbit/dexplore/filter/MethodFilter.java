@@ -286,7 +286,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
      * @see #containsAnnotationValues(String...)
      */
     public Builder containsAnnotations(@Nonnull String... annotations) {
-      List<String> list = Utils.nonNullList(annotations);
+      List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(annotations));
       this.annotations = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
