@@ -21,10 +21,10 @@ Set MAX_MEM=-Xmx4G
 Set VERSION=0.0.0
 Set PROGRAM=Dexplore
 
-Set Executable=%PROGRAM%.jar
+Set Executable=%~dp0%PROGRAM%.jar
 If Not Exist %Executable% (
     Call :SetLatestVersion 2>nul
-    Set Executable=%PROGRAM%-!VERSION!.jar
+    Set Executable=%~dp0%PROGRAM%-!VERSION!.jar
     If Not Exist !Executable! Call :Error "Couldn't find %PROGRAM% jar"
 )
 
@@ -36,7 +36,7 @@ Goto Finish
 
 :SetLatestVersion
     For /f "tokens=2 delims=-" %%V In (
-        'Dir /b /a-d %PROGRAM%-*.jar'
+        'Dir /b /a-d %~dp0%PROGRAM%-*.jar'
     ) Do Set "X=%%~V" & If !X:~-3!==jar If %%~V gtr !VERSION! (
         Set VERSION=%%~nV
     )

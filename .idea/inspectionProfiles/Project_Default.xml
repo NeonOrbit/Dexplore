@@ -8,7 +8,7 @@
         </list>
       </option>
     </inspection_tool>
-    <inspection_tool class="unused" enabled="true" level="WARNING" enabled_by_default="true" method="protected" checkParameterExcludingHierarchy="false">
+    <inspection_tool class="unused" enabled="true" level="WARNING" enabled_by_default="true" field="protected" method="protected" checkParameterExcludingHierarchy="false">
       <option name="LOCAL_VARIABLE" value="true" />
       <option name="FIELD" value="true" />
       <option name="METHOD" value="true" />

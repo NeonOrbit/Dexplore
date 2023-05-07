@@ -27,6 +27,10 @@ compileKotlin {
     compilerOptions.jvmTarget = JvmTarget.JVM_1_8
 }
 
+compileTestKotlin {
+    compilerOptions.jvmTarget = JvmTarget.JVM_1_8
+}
+
 dependencies {
     implementation depends.jcommander
     implementation depends.jadx_core

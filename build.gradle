@@ -42,6 +42,8 @@ ext {
         junit_api     : 'org.junit.jupiter:junit-jupiter-api:5.9.3',
         junit_params  : 'org.junit.jupiter:junit-jupiter-params:5.9.3',
         junit_engine  : 'org.junit.jupiter:junit-jupiter-engine:5.9.3',
+        mockito_core  : 'org.mockito:mockito-core:5.3.1',
+        mockito_junit : 'org.mockito:mockito-junit-jupiter:5.3.1',
         shadow_plugin : 'com.github.johnrengelman:shadow:8.1.1',
         kotlin_plugin : 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21'
     ]
@@ -63,9 +65,12 @@ subprojects {
         mavenCentral()
     }
     dependencies {
+        testImplementation depends.guava
         testRuntimeOnly depends.junit_engine
         testImplementation depends.junit_api
         testImplementation depends.junit_params
+        testImplementation depends.mockito_core
+        testImplementation depends.mockito_junit
     }
     test {
         useJUnitPlatform()

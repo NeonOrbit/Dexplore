@@ -16,17 +16,18 @@
 
 MAX_MEM="-Xmx4G"
 PROGRAM="dexplore.jar"
+DIR="$(dirname -- "$(readlink -f -- "$0")")"
 
 if ! java --version 2>/dev/null 1>&2; then
     echo "Please install JDK" && exit 1
 fi
 
 SET_PROGRAM() {
-    [ -f "$PROGRAM" ] && return
-    PROGRAM=$(ls -1 | grep -m1 -i '^Dexplore.jar$')
-    [ -f "$PROGRAM" ] && return
-    PROGRAM=$(ls -rv1 | grep -m1 -iE '^Dexplore-([0-9]+(\.)){3}jar$')
-    [ -f "$PROGRAM" ] && return
+    [ -f "$DIR/$PROGRAM" ] && return
+    PROGRAM=$(/usr/bin/ls -1 "$DIR" | grep -m1 -i '^Dexplore.jar$')
+    [ -f "$DIR/$PROGRAM" ] && return
+    PROGRAM=$(/usr/bin/ls -rv1 "$DIR" | grep -m1 -iE '^Dexplore-([0-9]+(\.)){3}jar$')
+    [ -f "$DIR/$PROGRAM" ] && return
     echo "Couldn't find dexplore jar"
     exit 1
 }
@@ -37,4 +38,4 @@ if [ -n "$1" ] && [ "$1" != "-h" ] && [ "$1" != "--help" ]; then
     echo "Executing: $PROGRAM"; echo
 fi
 
-exec java "$MAX_MEM" -jar "$PROGRAM" "$@"
+exec java "$MAX_MEM" -jar "$(cygpath -w "$DIR/$PROGRAM")" "$@"
