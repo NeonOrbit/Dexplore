@@ -16,6 +16,8 @@
 
 package io.github.neonorbit.dexplore
 
+import io.github.neonorbit.dexplore.cliutil.CmdAdvancedQuery
+import io.github.neonorbit.dexplore.cliutil.CmdQuery
 import io.github.neonorbit.dexplore.exception.DexException
 import io.github.neonorbit.dexplore.filter.ClassFilter
 import io.github.neonorbit.dexplore.filter.DexFilter
@@ -51,31 +53,43 @@ internal class DexSearchEngine(mode: String) {
         detailsType = buildRefTypes(details)
     }
 
-    fun init(packages: List<String>, classes: List<String>,
-             type: String, references: List<String>, signatures: List<String>,
-             sources: List<String>, numbers: List<Long>) {
+    fun init(
+        cmdQuery: CmdQuery,
+        classAdvanced: CmdAdvancedQuery,
+        methodAdvanced: CmdAdvancedQuery
+    ) {
         checkEngineState(false)
-        val types = buildRefTypes(type)
+        val types = buildRefTypes(cmdQuery.refTypes)
         val filter = if (types.hasNone()) null else ReferenceFilter { pool ->
-            val result = references.stream().allMatch { pool.contains(it) }
-            result and signatures.stream().allMatch { pool.toString().contains(it) }
+            val result = cmdQuery.references.stream().allMatch { pool.contains(it) }
+            result and cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
         }
         dexFilter = DexFilter.MATCH_ALL
         classFilter = ClassFilter
-                .builder()
-                .setPackages(*packages.toTypedArray())
-                .setClasses(*classes.toTypedArray())
-                .setReferenceTypes(types)
-                .setReferenceFilter(filter)
-                .setSourceNames(*sources.toTypedArray())
-                .setNumbers(*numbers.toTypedArray())
-                .build()
+            .builder()
+            .setPackages(*cmdQuery.packages.toTypedArray())
+            .setClasses(*cmdQuery.classes.toTypedArray())
+            .setReferenceTypes(types)
+            .setReferenceFilter(filter)
+            .setSourceNames(*cmdQuery.sources.toTypedArray())
+            .setNumbers(*cmdQuery.numbers.toTypedArray())
+            .setModifiers(classAdvanced.modifiers)
+            .setSuperClass(classAdvanced.superClass)
+            .setInterfaces(classAdvanced.interfaces)
+            .containsAnnotations(*classAdvanced.annotations.toTypedArray())
+            .build()
         methodFilter = if (isClassMode) MethodFilter.MATCH_ALL else MethodFilter
-                .builder()
-                .setReferenceTypes(types)
-                .setReferenceFilter(filter)
-                .setNumbers(*numbers.toTypedArray())
-                .build()
+            .builder()
+            .setReferenceTypes(types)
+            .setReferenceFilter(filter)
+            .setNumbers(*cmdQuery.numbers.toTypedArray())
+            .setModifiers(methodAdvanced.modifiers)
+            .setMethodNames(*methodAdvanced.methodNames.toTypedArray())
+            .setParamList(methodAdvanced.methodParams)
+            .setReturnType(methodAdvanced.methodReturn)
+            .setParamSize(methodAdvanced.methodParamSize)
+            .containsAnnotations(*methodAdvanced.annotations.toTypedArray())
+            .build()
         initialized = true
     }
 

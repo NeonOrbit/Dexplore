@@ -21,6 +21,8 @@ import com.beust.jcommander.Parameters
 import io.github.neonorbit.dexplore.CommandUtils
 import io.github.neonorbit.dexplore.DexSearchEngine
 import io.github.neonorbit.dexplore.DexFileDecoder
+import io.github.neonorbit.dexplore.cliutil.CmdAdvancedQuery
+import io.github.neonorbit.dexplore.cliutil.CmdQuery
 import io.github.neonorbit.dexplore.util.DexUtils
 import java.io.File
 import java.util.function.Predicate
@@ -95,7 +97,7 @@ internal class SearchCommand : Command {
         order = 8,
         variableArity = true,
         names = ["-num", "--numbers"],
-        description = "Provide a list of numbers to match against (-num 123 124.1f 121.3d)"
+        description = "Provide a list of numbers to match against (eg: 123 124.1f 121.1d)"
     )
     var numbers = ArrayList<String>()
 
@@ -129,11 +131,17 @@ internal class SearchCommand : Command {
 
     @Parameter(
         order = 13,
-        hidden = true,
-        names = ["-advance", "--advanced"],
-        description = "eg: \"m:public+final,a:annotation,s:superclass,i:interface1+interface2\""
+        names = ["-cdv", "--class-advanced"],
+        description = "'m:public+..., s:superclass, i:interface+..., a:annotation+...'"
     )
-    private var advanced = ""
+    private var cAdvanced = ""
+
+    @Parameter(
+        order = 14,
+        names = ["-mdv", "--method-advanced"],
+        description = "'m:public+..., n:name+..., p:param+..., r:return, a:annot+..., z:size'"
+    )
+    private var mAdvanced = ""
 
     override fun apply() {
         val decoder = DexFileDecoder(output).apply {
@@ -144,7 +152,10 @@ internal class SearchCommand : Command {
         val engine = DexSearchEngine(searchMode).apply {
             setMaximum(maximum)
             setDetails(printPool)
-            init(packages, classes, type, references, signatures, sources, toLong(numbers))
+            init(
+                CmdQuery(packages, classes, type, references, signatures, sources, numbers),
+                CmdAdvancedQuery.parse(cAdvanced), CmdAdvancedQuery.parse(mAdvanced)
+            )
         }
         files.map { File(it) }.also {
             CommandUtils.checkFiles(it)
@@ -162,20 +173,7 @@ internal class SearchCommand : Command {
         }
     }
 
-    private fun toLong(numbers: List<String>): List<Long> {
-        return numbers.map { n ->
-            when (n.last()) {
-                'd' -> n.toDouble().toBits()
-                'f' -> n.toFloat().toBits().toLong()
-                else -> if ('.' in n) n.toDouble().toBits() else n.toLong()
-            }
-        }.toList()
-    }
-
     override fun validate(): Boolean {
-        if (advanced.isNotEmpty()) {
-            TODO("--advanced option is not yet implemented")
-        }
         if (output.isEmpty()) {
             CommandUtils.error("\n  Invalid output directory name\n")
             return false
@@ -184,11 +182,12 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please provide input files\n")
             return false
         }
-        if (searchMode !in VALID_SEARCH_MODES) {
+        if (searchMode !in VALID_SEARCH_MODES && searchMode.length != 1) {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
-        if (classes.isEmpty() && sources.isEmpty() && numbers.isEmpty() && type.isEmpty()) {
+        if (classes.isEmpty() && sources.isEmpty() && numbers.isEmpty() && type.isEmpty() &&
+           (searchMode != "c" || cAdvanced.isEmpty()) && (searchMode != "m" || mAdvanced.isEmpty())) {
             CommandUtils.error("\n  Please provide a search query\n")
             return false
         }

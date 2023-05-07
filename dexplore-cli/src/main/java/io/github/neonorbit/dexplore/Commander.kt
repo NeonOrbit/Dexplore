@@ -97,12 +97,14 @@ internal class Commander(args: Array<String>) : JCommander() {
             command.usageFormatter.usage(origin)
             output.add("Usage: $program ${command.programName} <files> [options]")
             origin.toString().split("\n").filter { line ->
-                line.isNotEmpty() && line.trim { it <= ' ' }.let {
+                line.isNotEmpty() && line.trim().let {
                     !it.startsWith("Usage: ") && !it.startsWith("Default: ")
                 }
-            }.forEach { line ->
-                output.add(line)
+            }.forEachIndexed { i, line ->
+                output.add((if (i != 1 && line.trim().first() == '-') "\n" else "") + line)
             }
+            output.add("```")
+            output.add("Examples: https://neonorbit.github.io/dexplore-wiki-cmd\n")
         }
         console.println(output.toString())
     }
