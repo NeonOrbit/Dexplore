@@ -3,16 +3,18 @@
 A dex analyzing library for finding obfuscated classes and methods at runtime.
 
 ### Description
-With the help of dexplore, you can develop portable apps (eg: xposed module) for any obfuscated codes.
-It will automatically find obfuscated classes/methods dynamically based on your provided query.  
-Additionally, the command line tool can make your reverse-engineering work easier.
-It can also de-compile apps partially, which is faster and less resource extensive.
+Dexplore is a java library designed for analyzing and finding obfuscated classes and methods.
+The library can automatically locate obfuscated classes and methods based on specific queries,
+enabling developers to create portable apps, such as xposed modules, for any obfuscated codebase.  
+Additionally, Dexplore offers a command-line tool that provides the capability to perform static analysis and app de-compilation.
+The tool is also capable of extracting specific class files and resources, resulting in a faster and less resource-intensive process.
 
-**Supported types:** apk, dex, odex, oat, zip
+**Supported types:** apk, dex, odex, oat, zip.  
+**Supported inputs:** file path, byte buffer (in-memory dex).
 
 
 ## Usage
-Check latest version of dexplore from the release page.
+Please check the latest version of dexplore from the release page.
 
 ### Library
 Library dependency
@@ -22,7 +24,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'io.github.neonorbit:dexplore:1.4.3'
+    implementation 'io.github.neonorbit:dexplore:1.4.5'
 }
 ```
 
@@ -34,42 +36,55 @@ java -jar Dexplore.jar --help
 ```
 
 ### Xposed Sample
-A sample for xposed module. Read wiki page for detailed explanation.
+A sample for xposed module.  
+Please refer to the wiki page for detailed explanation.
 
 ```java
 public class XposedModule implements IXposedHookLoadPackage {
-    @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (!lpparam.packageName.equals("com.example.app")) return;
+  @Override
+  public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    if (!lpparam.packageName.equals("com.example.app")) return;
 
-        // Create a class filter to find your target class
-        ClassFilter classFilter = new ClassFilter.Builder()
-                .setReferenceTypes(ReferenceTypes.builder().addString().build())
-                .setReferenceFilter(pool ->
-                        pool.contains("a unique string inside the class")
-                ).build();
+    // Create a class filter to find your target class
+    ClassFilter classFilter = new ClassFilter.Builder()
+            .setReferenceTypes(ReferenceTypes.STRINGS_ONLY)
+            .setReferenceFilter(pool ->
+                    pool.contains("a unique string inside the class")
+            ).build();
 
-        // Create a method filter to find your target method from the class
-        MethodFilter methodFilter = new MethodFilter.Builder()
-                .setReferenceTypes(ReferenceTypes.builder().addString().build())
-                .setReferenceFilter(pool ->
-                        pool.contains("a unique string inside the method")
-                ).setParamSize(3)   // consider it has 3 parameters
-                .setModifiers(Modifier.PUBLIC)   // and it's a public method
-                .build();
+    // Create a method filter to find your target method from the class
+    MethodFilter methodFilter = new MethodFilter.Builder()
+            .setReferenceTypes(ReferenceTypes.STRINGS_ONLY)
+            .setReferenceFilter(pool ->
+                    pool.contains("a unique string inside the method")
+            ).setParamSize(2)   // suppose it has 3 parameters
+            .setModifiers(Modifier.PUBLIC)   // and it's a public method
+            .build();
 
-        // Load the base apk into Dexplore
-        Dexplore dexplore = DexFactory.load(lpparam.appInfo.sourceDir);
+    // Load the base apk into Dexplore
+    Dexplore dexplore = DexFactory.load(lpparam.appInfo.sourceDir);
 
-        // Perform a dex search
-        MethodData result = dexplore.findMethod(DexFilter.MATCH_ALL, classFilter, methodFilter);
+    // Perform a dex search
+    MethodData result = dexplore.findMethod(classFilter, methodFilter);
 
-        // Load the actual method
-        Method method = result.loadMethod(lpparam.classLoader);
+    // Load the actual method
+    Method method = result.loadMethod(lpparam.classLoader);
 
-        // Xposed hook
-        XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
-    }
+    // Hook with Xposed
+    XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(true));
+
+    // ------------------ Extra ------------------
+    // Please don't forget to save the result in Preferences.
+    preferences.edit()
+            .putString("targetMethod", result.serialize())  // serialize and save the result
+            .putLong("appVersion", pkgInfo.getLongVersionCode()) // version code (NOT version name)
+            .apply();
+    // Use the saved result until the app LongVersionCode changes.
+    String saved = preferences.getString("targetMethod", null);
+    MethodData retrieved = MethodData.deserialize(saved);  // Deserialize
+
+    // Please refer to the wiki page for a detailed explanation.
+  }
 }
 ```
 
@@ -81,7 +96,7 @@ public class XposedModule implements IXposedHookLoadPackage {
 
 ## Support
 For help: [XDA-Thread](https://forum.xda-developers.com/t/4477899)  
-You can find sample projects from the xda-thread.
+Sample projects can be found on the XDA thread.
 
 
 ## License
