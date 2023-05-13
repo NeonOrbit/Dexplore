@@ -266,7 +266,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     /**
      * Add a condition to the filter to match methods with the specified parameter list.
      * <p>
-     *   Note: Parameter list must match exactly. <br/>
+     *   Note: Parameter list must match exactly. <br>
      *   Note: Pass an empty list to match methods that have no parameters.
      * </p>
      *

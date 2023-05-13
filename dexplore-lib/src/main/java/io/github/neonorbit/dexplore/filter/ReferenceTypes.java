@@ -161,11 +161,10 @@ public final class ReferenceTypes {
 
   /**
    * Build a {@code ReferenceTypes} instance.
-   * <p>Example:
+   * <p>Example:</p>
    * <pre>
    *   new ReferenceTypes.Builder().addString().addMethod().build()
    * </pre>
-   * </p>
    */
   public static class Builder {
     private int flags = NONE;
