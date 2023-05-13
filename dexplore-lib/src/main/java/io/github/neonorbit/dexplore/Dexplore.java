@@ -42,6 +42,22 @@ public interface Dexplore {
   /**
    * Find a class using the given filters.
    * <p>
+   *   This is equivalent to calling
+   *   {@link #findClass(DexFilter, ClassFilter) findClass()},
+   *   except it doesn't filter any dex files.
+   * </p>
+   *
+   * @param classFilter a filter to find the desired dex class
+   * @return the first matching class or null if no match is found
+   */
+  @Nullable
+  default ClassData findClass(@Nonnull ClassFilter classFilter) {
+    return findClass(DexFilter.MATCH_ALL, classFilter);
+  }
+
+  /**
+   * Find a class using the given filters.
+   * <p>
    *   The search operation will stop as soon as it finds a match.
    * </p>
    *
@@ -69,6 +85,25 @@ public interface Dexplore {
   @Nonnull
   List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
                               @Nonnull ClassFilter classFilter, int limit);
+
+  /**
+   * Find a method using the given filters.
+   * <p>
+   *   This is equivalent to calling
+   *   {@link #findMethod(DexFilter, ClassFilter, MethodFilter) findMethod()},
+   *   except it doesn't filter any dex files.
+   * </p>
+   *
+   * @param classFilter a filter to select the desired dex classes
+   * @param methodFilter a filter to find the desired dex method
+   * @return the first matching method or null if no match is found
+   * @see #findMethods(DexFilter, ClassFilter, MethodFilter, int)
+   */
+  @Nullable
+  default MethodData findMethod(@Nonnull ClassFilter classFilter,
+                                @Nonnull MethodFilter methodFilter) {
+    return findMethod(DexFilter.MATCH_ALL, classFilter, methodFilter);
+  }
 
   /**
    * Find a method using the given filters.
