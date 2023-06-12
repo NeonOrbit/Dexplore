@@ -412,8 +412,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      */
     public Builder setNumbers(@Nonnull Number... numbers) {
       Set<Long> literals = Utils.nonNullList(numbers).stream().map(number ->
-              number instanceof Float ? Float.floatToIntBits((Float) number) :
-                      number instanceof Double ? Double.doubleToLongBits((Double) number) :
+              number instanceof Float ? Float.floatToRawIntBits((Float) number) :
+                      number instanceof Double ? Double.doubleToRawLongBits((Double) number) :
                               number.longValue()
       ).collect(Collectors.toSet());
       this.numLiterals = literals.isEmpty() ? null : Utils.optimizedSet(literals);

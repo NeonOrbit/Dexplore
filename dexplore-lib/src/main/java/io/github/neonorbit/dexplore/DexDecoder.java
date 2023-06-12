@@ -251,10 +251,10 @@ public final class DexDecoder {
         pool.add(((LongEncodedValue) value).getValue());
         break;
       case ValueType.FLOAT:
-        pool.add((long) Float.floatToIntBits(((FloatEncodedValue) value).getValue()));
+        pool.add((long) Float.floatToRawIntBits(((FloatEncodedValue) value).getValue()));
         break;
       case ValueType.DOUBLE:
-        pool.add(Double.doubleToLongBits(((DoubleEncodedValue) value).getValue()));
+        pool.add(Double.doubleToRawLongBits(((DoubleEncodedValue) value).getValue()));
         break;
     }
   }
