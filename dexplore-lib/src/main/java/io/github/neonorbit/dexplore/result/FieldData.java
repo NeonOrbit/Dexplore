@@ -40,6 +40,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   /** The type of the field. */
   @Nonnull public final String type;
 
+  private Object value = null;
   private ReferencePool referencePool;
 
   FieldData(@Nonnull String clazz,
@@ -48,6 +49,10 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
     this.clazz = clazz;
     this.field = field;
     this.type = type;
+  }
+
+  void setValue(Object value) {
+    this.value = value;
   }
 
   void setReferencePool(ReferencePool referencePool) {
@@ -64,7 +69,23 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   }
 
   /**
-   * The declaring class of the field.
+   * If the field is a compile-time constant,
+   * returns its value, otherwise returns null.
+   * <br><br>
+   * <p>Note: Make sure to check the field type and cast it accordingly.
+   * <br>Examples:
+   *   <pre>  if (field.getValue() instanceof Long) {...}</pre>
+   *   <pre>  if (field.type.equals(long.class.getName())) {...}</pre>
+   * </p>
+   * @return the initial value of the field
+   */
+  @Nullable
+  public Object getInitialValue() {
+    return value;
+  }
+
+  /**
+   * Returns the declaring class of the field.
    * @return declaring class {@linkplain Class#getName() name}
    */
   @Nonnull

@@ -17,8 +17,8 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.DexDecoder;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
@@ -94,6 +94,7 @@ public final class Results {
             dexField.getName(),
             DexUtils.dexToJavaTypeName(dexField.getType())
     );
+    instance.setValue(DexDecoder.decodeFieldValue(dexField));
     instance.setReferencePool(DexDecoder.decodeFully(dexField));
     return instance;
   }

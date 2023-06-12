@@ -35,6 +35,9 @@ import org.jf.dexlib2.iface.reference.MethodReference;
 import org.jf.dexlib2.iface.reference.Reference;
 import org.jf.dexlib2.iface.reference.StringReference;
 import org.jf.dexlib2.iface.reference.TypeReference;
+import org.jf.dexlib2.iface.value.BooleanEncodedValue;
+import org.jf.dexlib2.iface.value.ByteEncodedValue;
+import org.jf.dexlib2.iface.value.CharEncodedValue;
 import org.jf.dexlib2.iface.value.DoubleEncodedValue;
 import org.jf.dexlib2.iface.value.EncodedValue;
 import org.jf.dexlib2.iface.value.FloatEncodedValue;
@@ -125,6 +128,10 @@ public final class DexDecoder {
     Set<Long> pool = new HashSet<>();
     decodeNumberLiterals(dexMethod, pool);
     return pool;
+  }
+
+  public static Object decodeFieldValue(DexBackedField dexField) {
+    return decodeValue(dexField.getInitialValue());
   }
 
   private static ReferencePool decodeDexReferences(DexBackedDexFile dexFile,
@@ -250,5 +257,30 @@ public final class DexDecoder {
         pool.add(Double.doubleToLongBits(((DoubleEncodedValue) value).getValue()));
         break;
     }
+  }
+
+  private static Object decodeValue(EncodedValue value) {
+    if (value == null) return null;
+    switch (value.getValueType()) {
+      case ValueType.CHAR:
+        return ((CharEncodedValue) value).getValue();
+      case ValueType.BYTE:
+        return ((ByteEncodedValue) value).getValue();
+      case ValueType.SHORT:
+        return ((ShortEncodedValue) value).getValue();
+      case ValueType.INT:
+        return ((IntEncodedValue) value).getValue();
+      case ValueType.LONG:
+        return ((LongEncodedValue) value).getValue();
+      case ValueType.FLOAT:
+        return ((FloatEncodedValue) value).getValue();
+      case ValueType.DOUBLE:
+        return ((DoubleEncodedValue) value).getValue();
+      case ValueType.BOOLEAN:
+        return ((BooleanEncodedValue) value).getValue();
+      case ValueType.STRING:
+        return ((StringEncodedValue) value).getValue();
+    }
+    return null;
   }
 }
