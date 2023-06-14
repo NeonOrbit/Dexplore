@@ -21,6 +21,7 @@ import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Contains information about a class found in a dex file.
+ * Contains information about a class found in a dex file.??
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -58,7 +59,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
     this.referencePool = referencePool;
   }
 
-  MethodData getMethod(String signature) {
+  MethodData getMethodBySignature(String signature) {
     return Objects.requireNonNull(methods).get(signature);
   }
 
@@ -69,6 +70,15 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
     } catch (ClassNotFoundException e) {
       return null;
     }
+  }
+
+  /**
+   * @param name the name of the field
+   * @return the {@code FieldData} object of the specified field
+   */
+  @Nullable
+  public FieldData getField(@Nonnull String name) {
+    return getFields().stream().filter(f -> f.field.equals(name)).findFirst().orElse(null);
   }
 
   /**
@@ -83,6 +93,18 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
       fields = Collections.emptyList();
     }
     return fields;
+  }
+
+  /**
+   * @param name the name of the method
+   * @param params {@linkplain Class#getName() full names} of method parameter types
+   * @return the {@code MethodData} object of the specified method
+   */
+  @Nullable
+  public MethodData getMethod(@Nonnull String name, @Nonnull String... params) {
+    return getMethods().stream().filter(
+            m -> m.method.equals(name) && Arrays.equals(m.params, params)
+    ).findFirst().orElse(null);
   }
 
   /**

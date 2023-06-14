@@ -48,7 +48,7 @@ public final class Results {
         !DexUtils.dexClassToJavaTypeName(dexMethod.classDef).equals(shared.clazz)) {
       shared = buildClassData(dexMethod.classDef);
     }
-    MethodData method = shared.getMethod(DexUtils.getMethodSignature(dexMethod));
+    MethodData method = shared.getMethodBySignature(DexUtils.getMethodSignature(dexMethod));
     if (method == null) {
       throw new AssertionError();
     }
