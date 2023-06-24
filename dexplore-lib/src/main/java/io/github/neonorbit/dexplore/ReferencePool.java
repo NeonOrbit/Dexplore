@@ -16,17 +16,20 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.reference.FieldRefData;
 import io.github.neonorbit.dexplore.reference.MethodRefData;
 import io.github.neonorbit.dexplore.reference.StringRefData;
 import io.github.neonorbit.dexplore.reference.TypeRefData;
+import io.github.neonorbit.dexplore.util.MergedList;
 import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * An instance of this class holds the {@linkplain io.github.neonorbit.dexplore.reference references}
@@ -84,6 +87,17 @@ public final class ReferencePool {
     }
   }
 
+  @Internal
+  public static ReferencePool merge(@Nonnull List<ReferencePool> pools) {
+    if (pools.stream().allMatch(ReferencePool::isEmpty)) return EMPTY_POOL;
+    return new ReferencePool(
+            MergedList.merge(pools, ReferencePool::getStringSection),
+            MergedList.merge(pools, ReferencePool::getTypeSection),
+            MergedList.merge(pools, ReferencePool::getFieldSection),
+            MergedList.merge(pools, ReferencePool::getMethodSection)
+    );
+  }
+
   public static ReferencePool emptyPool() {
     return EMPTY_POOL;
   }
@@ -112,9 +126,14 @@ public final class ReferencePool {
     return types;
   }
 
+  /**
+   * Returns the constructor section of the pool.
+   * <p>Each time the method is invoked, a new list is created.</p>
+   * @return the constructor section of the pool
+   */
   @Nonnull
   public List<MethodRefData> getConstructorSection() {
-    return methods.stream().filter(MethodRefData::isConstructor).collect(Collectors.toList());
+    return methods.stream().filter(MethodRefData::isConstructor).collect(toList());
   }
 
   /**

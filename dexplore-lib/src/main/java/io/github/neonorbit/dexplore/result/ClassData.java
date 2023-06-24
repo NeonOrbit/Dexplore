@@ -17,17 +17,19 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.util.ShallowList;
 import io.github.neonorbit.dexplore.util.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Contains information about a class found in a dex file.??
@@ -55,10 +57,6 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
     this.methods = methods;
   }
 
-  void setReferencePool(ReferencePool referencePool) {
-    this.referencePool = referencePool;
-  }
-
   MethodData getMethodBySignature(String signature) {
     return Objects.requireNonNull(methods).get(signature);
   }
@@ -70,15 +68,6 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
     } catch (ClassNotFoundException e) {
       return null;
     }
-  }
-
-  /**
-   * @param name the name of the field
-   * @return the {@code FieldData} object of the specified field
-   */
-  @Nullable
-  public FieldData getField(@Nonnull String name) {
-    return getFields().stream().filter(f -> f.field.equals(name)).findFirst().orElse(null);
   }
 
   /**
@@ -96,6 +85,15 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   }
 
   /**
+   * @param name the name of the field
+   * @return the {@code FieldData} object of the specified field
+   */
+  @Nullable
+  public FieldData getField(@Nonnull String name) {
+    return getFields().stream().filter(f -> f.field.equals(name)).findFirst().orElse(null);
+  }
+
+  /**
    * @param name the name of the method
    * @param params {@linkplain Class#getName() full names} of method parameter types
    * @return the {@code MethodData} object of the specified method
@@ -108,31 +106,30 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   }
 
   /**
-   * Returns a collection containing {@code MethodData} objects
+   * Returns a list containing {@code MethodData} objects
    * representing all the declared methods of the class.
-   * <p>The returned collection is unmodifiable.</p>
+   * <p>The returned list is unmodifiable.</p>
    *
-   * @return a collection containing the declared methods of the class
+   * @return a list containing the declared methods of the class
    */
   @Nonnull
-  public Collection<MethodData> getMethods() {
+  public List<MethodData> getMethods() {
     if (methods == null) {
       methods = Collections.emptyMap();
     }
-    return methods.values();
+    return ShallowList.of(methods.values());
   }
 
   /**
    * Returns a list of {@code MethodData} objects
    * representing all the declared constructors of the class.
+   * <p>Each time the method is invoked, a new list is created.</p>
    *
    * @return a list containing the declared constructors of the class
    */
   @Nonnull
   public List<MethodData> getConstructors() {
-    return methods.values().stream()
-                  .filter(MethodData::isConstructor)
-                  .collect(Collectors.toList());
+    return methods.values().stream().filter(MethodData::isConstructor).collect(toList());
   }
 
   /**
@@ -156,7 +153,10 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   @Override
   public ReferencePool getReferencePool() {
     if (referencePool == null) {
-      referencePool = ReferencePool.emptyPool();
+      referencePool = ReferencePool.merge(Stream
+              .concat(fields.stream(), methods.values().stream())
+              .map(DexItemData::getReferencePool).filter(r -> !r.isEmpty()).collect(toList())
+      );
     }
     return referencePool;
   }
@@ -201,7 +201,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
         return new ClassData(clazz);
       }
     }
-    throw new IllegalArgumentException();
+    throw new IllegalArgumentException("Invalid format: " + serialized);
   }
 
   @Override

@@ -17,7 +17,9 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.DexDecoder;
+import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.reference.StringRefData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedField;
@@ -43,12 +45,11 @@ public final class Results {
 
   public static MethodData ofMethod(@Nonnull DexBackedMethod dexMethod,
                                     @Nullable ClassData sharedInstance) {
-    ClassData shared = sharedInstance;
-    if (shared == null || shared.getMethods().isEmpty() ||
-        !DexUtils.dexClassToJavaTypeName(dexMethod.classDef).equals(shared.clazz)) {
-      shared = buildClassData(dexMethod.classDef);
+    if (sharedInstance == null || sharedInstance.getMethods().isEmpty() ||
+        !DexUtils.dexClassToJavaTypeName(dexMethod.classDef).equals(sharedInstance.clazz)) {
+      sharedInstance = buildClassData(dexMethod.classDef);
     }
-    MethodData method = shared.getMethodBySignature(DexUtils.getMethodSignature(dexMethod));
+    MethodData method = sharedInstance.getMethodBySignature(DexUtils.getMethodSignature(dexMethod));
     if (method == null) {
       throw new AssertionError();
     }
@@ -58,19 +59,18 @@ public final class Results {
   private static ClassData buildClassData(@Nonnull DexBackedClassDef dexClass) {
     String clazz = DexUtils.dexClassToJavaTypeName(dexClass);
     ClassData instance = new ClassData(clazz);
-    Map<String, MethodData> methods = new LinkedHashMap<>();
-    DexUtils.dexMethods(dexClass).forEach(dexMethod -> {
-      MethodData method = buildMethodData(dexMethod, instance);
-      methods.put(method.getSignature(), method);
-    });
     List<FieldData> fields = new ArrayList<>();
     DexUtils.dexFields(dexClass).forEach(dexField -> {
       FieldData fieldData = buildFieldData(dexField, instance);
       fields.add(fieldData);
     });
+    Map<String, MethodData> methods = new LinkedHashMap<>();
+    DexUtils.dexMethods(dexClass).forEach(dexMethod -> {
+      MethodData method = buildMethodData(dexMethod, instance);
+      methods.put(method.getSignature(), method);
+    });
     instance.setFields(Collections.unmodifiableList(fields));
     instance.setMethods(Collections.unmodifiableMap(methods));
-    instance.setReferencePool(DexDecoder.decodeFully(dexClass));
     return instance;
   }
 
@@ -94,8 +94,14 @@ public final class Results {
             dexField.getName(),
             DexUtils.dexToJavaTypeName(dexField.getType())
     );
-    instance.setValue(DexDecoder.decodeFieldValue(dexField));
-    instance.setReferencePool(DexDecoder.decodeFully(dexField));
+    if (dexField.getInitialValue() != null) {
+      ReferencePool pool = DexDecoder.decodeFully(dexField);
+      List<StringRefData> strings = pool.getStringSection();
+      instance.setValue(
+              !strings.isEmpty() ? strings.get(0).getString() : DexDecoder.decodeFieldValue(dexField)
+      );
+      instance.setReferencePool(pool);
+    }
     return instance;
   }
 }
