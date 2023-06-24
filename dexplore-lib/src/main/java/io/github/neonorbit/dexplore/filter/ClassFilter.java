@@ -109,7 +109,12 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     if (classNames != null) {
       return classNames.contains(name);
     }
-    return clsShortNames == null || clsShortNames.stream().anyMatch(name::endsWith);
+    return clsShortNames == null || clsShortNames.stream().anyMatch(shortName -> {
+      if (name.length() < shortName.length()) return false;
+      if (name.length() == shortName.length()) return name.equals(shortName);
+      char separator = name.charAt(name.length() - shortName.length() - 1);
+      return (separator == '/' || separator == '$') && name.endsWith(shortName);
+    });
   }
 
   /**
