@@ -34,7 +34,6 @@ import java.lang.reflect.Field;
 public final class FieldRefData implements DexRefData {
   private final boolean details;
   private boolean resolved;
-  private String signature;
   private FieldReference data;
 
   private FieldRefData(FieldReference reference, boolean details) {
@@ -49,10 +48,11 @@ public final class FieldRefData implements DexRefData {
   private FieldReference getData() {
     if (!resolved) {
       resolved = true;
-      String name = data.getName();
-      String from = details ? DexUtils.dexToJavaTypeName(data.getDefiningClass()) : "";
-      String type = details ? DexUtils.dexToJavaTypeName(data.getType()) : "";
-      data = new ImmutableFieldReference(from, name, type);
+      data = new ImmutableFieldReference(
+              details ? DexUtils.dexToJavaTypeName(data.getDefiningClass()) : "",
+              data.getName(),
+              details ? DexUtils.dexToJavaTypeName(data.getType()) : ""
+      );
     }
     return data;
   }
@@ -89,12 +89,9 @@ public final class FieldRefData implements DexRefData {
    */
   @Override
   public boolean contains(@Nonnull String value) {
-    final FieldReference ref = getData();
-    return ref.getName().equals(value) ||
-           details && (
-              ref.getType().equals(value) ||
-              ref.getDefiningClass().equals(value)
-           );
+    return getName().equals(value) || details && (
+            getType().equals(value) || getDeclaringClass().equals(value)
+    );
   }
 
   /**
@@ -104,14 +101,8 @@ public final class FieldRefData implements DexRefData {
    * @return field signature
    */
   public String getSignature() {
-    if (signature == null) {
-      FieldReference ref = getData();
-      String name = ref.getName();
-      String from = details ? ref.getDefiningClass() : "[blank]";
-      String type = details ? ref.getType() : "[blank]";
-      signature = DexUtils.getFieldSignature(from, name, type);
-    }
-    return signature;
+    return !details ? DexUtils.getFieldSignature(getName()) :
+            DexUtils.getFieldSignature(getDeclaringClass(), getName(), getType());
   }
 
   @Override
@@ -121,8 +112,9 @@ public final class FieldRefData implements DexRefData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof FieldRefData) &&
-           (this.getData().equals(((FieldRefData)obj).getData()));
+    return (this == obj) || (obj instanceof FieldRefData) && (
+            this.getData().equals(((FieldRefData) obj).getData())
+    );
   }
 
   /**

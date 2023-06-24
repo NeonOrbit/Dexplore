@@ -46,9 +46,7 @@ public final class TypeRefData implements DexRefData {
   private TypeReference getData() {
     if (!resolved) {
       resolved = true;
-      data = new ImmutableTypeReference(
-                   DexUtils.dexToJavaTypeName(data.getType())
-                 );
+      data = new ImmutableTypeReference(DexUtils.dexToJavaTypeName(data.getType()));
     }
     return data;
   }
@@ -76,8 +74,9 @@ public final class TypeRefData implements DexRefData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof TypeRefData) &&
-           (this.getData().equals(((TypeRefData)obj).getData()));
+    return (this == obj) || (obj instanceof TypeRefData) && (
+            this.getData().equals(((TypeRefData) obj).getData())
+    );
   }
 
   @Override

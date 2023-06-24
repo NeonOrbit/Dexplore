@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Internal
 public final class Utils {
@@ -52,10 +53,6 @@ public final class Utils {
                                    @Nonnull String name) throws ClassNotFoundException {
     if (PRIMITIVE.containsKey(name)) return PRIMITIVE.get(name);
     else return Class.forName(name, true, classLoader);
-  }
-
-  public static String getString(@Nullable String source) {
-    return source == null ? "" : source;
   }
 
   public static boolean hasItem(@Nullable Collection<?> c) {
@@ -106,6 +103,13 @@ public final class Utils {
       if (compare != 0) return compare;
     }
     return a.length - b.length;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static List<String> toStringList(List<?> list) {
+    if (list.isEmpty()) return Collections.emptyList();
+    if (list.get(0) instanceof String) return (List<String>) list;
+    return list.stream().map(Object::toString).collect(Collectors.toList());
   }
 
   public static boolean isValidName(List<String> names) {

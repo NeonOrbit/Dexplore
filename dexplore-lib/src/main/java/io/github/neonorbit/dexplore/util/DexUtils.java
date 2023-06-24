@@ -27,21 +27,19 @@ import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Internal
 public final class DexUtils {
   @Nonnull
   public static String javaToDexTypeName(@Nonnull String javaTypeName) {
-    if (javaTypeName.isEmpty()) return javaTypeName;
-    return ReflectionUtils.javaToDexName(javaTypeName);
+    return javaTypeName.isEmpty() ? javaTypeName : ReflectionUtils.javaToDexName(javaTypeName);
   }
 
   @Nonnull
   public static List<String> javaToDexTypeName(@Nonnull Collection<String> javaTypeNames) {
-    return javaTypeNames.stream()
-                        .map(DexUtils::javaToDexTypeName)
-                        .collect(Collectors.toList());
+    return javaTypeNames.stream().map(DexUtils::javaToDexTypeName).collect(toList());
   }
 
   @Nonnull
@@ -53,9 +51,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> dexToJavaTypeName(@Nonnull Collection<String> dexTypeNames) {
-    return dexTypeNames.stream()
-                       .map(DexUtils::dexToJavaTypeName)
-                       .collect(Collectors.toList());
+    return dexTypeNames.stream().map(DexUtils::dexToJavaTypeName).collect(toList());
   }
 
   @Nonnull
@@ -65,9 +61,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> javaClassToDexTypeName(@Nonnull Collection<Class<?>> javaClasses) {
-    return javaClasses.stream()
-                      .map(DexUtils::javaClassToDexTypeName)
-                      .collect(Collectors.toList());
+    return javaClasses.stream().map(DexUtils::javaClassToDexTypeName).collect(toList());
   }
 
   @Nonnull
@@ -77,9 +71,7 @@ public final class DexUtils {
 
   @Nonnull
   public static List<String> dexClassToJavaTypeNames(@Nonnull Collection<DexBackedClassDef> dexClass) {
-    return dexClass.stream()
-                   .map(DexUtils::dexClassToJavaTypeName)
-                   .collect(Collectors.toList());
+    return dexClass.stream().map(DexUtils::dexClassToJavaTypeName).collect(toList());
   }
 
   @Nonnull
@@ -88,10 +80,17 @@ public final class DexUtils {
   }
 
   @Nonnull
+  public static String getFieldSignature(@Nonnull String name) {
+    return "[blank]." + name + ":[blank]";
+  }
+
+  @Nonnull
   public static String getFieldSignature(@Nonnull DexBackedField dexField) {
-    return getFieldSignature(dexToJavaTypeName(dexField.getDefiningClass()),
-                             dexField.getName(),
-                             dexToJavaTypeName(dexField.getType()));
+    return getFieldSignature(
+            dexToJavaTypeName(dexField.getDefiningClass()),
+            dexField.getName(),
+            dexToJavaTypeName(dexField.getType())
+    );
   }
 
   @Nonnull
@@ -102,11 +101,18 @@ public final class DexUtils {
   }
 
   @Nonnull
+  public static String getMethodSignature(@Nonnull String name) {
+    return "[blank]." + name + "([blank]):[blank]";
+  }
+
+  @Nonnull
   public static String getMethodSignature(@Nonnull DexBackedMethod dexMethod) {
-    return getMethodSignature(dexToJavaTypeName(dexMethod.getDefiningClass()),
-                              dexMethod.getName(),
-                              dexToJavaTypeName(dexMethod.getParameterTypes()),
-                              dexToJavaTypeName(dexMethod.getReturnType()));
+    return getMethodSignature(
+            dexToJavaTypeName(dexMethod.getDefiningClass()),
+            dexMethod.getName(),
+            dexToJavaTypeName(dexMethod.getParameterTypes()),
+            dexToJavaTypeName(dexMethod.getReturnType())
+    );
   }
 
   @Nonnull
@@ -136,6 +142,7 @@ public final class DexUtils {
   public static Iterable<DexBackedField> dexStaticFields(DexBackedClassDef dexClass) {
     return dexFields(dexClass, 1);
   }
+
   public static Iterable<DexBackedField> dexInstanceFields(DexBackedClassDef dexClass) {
     return dexFields(dexClass, 2);
   }
@@ -147,26 +154,22 @@ public final class DexUtils {
   @SuppressWarnings("unchecked")
   public static Iterable<DexBackedClassDef> dexClasses(DexBackedDexFile dexFile) {
     Iterable<DexBackedClassDef> it = (Iterable<DexBackedClassDef>) dexFile.getClasses();
-    return new FilteredIterable<>(it.iterator(), clazz -> isValid(clazz.getAccessFlags()));
+    return new FilteredIterable<>(it, clazz -> isValid(clazz.getAccessFlags()));
   }
 
   @SuppressWarnings("unchecked")
   private static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass, int type) {
     Iterable<DexBackedMethod> it = (Iterable<DexBackedMethod>) (
-                                      (type == 1) ? dexClass.getDirectMethods() :
-                                      (type == 2) ? dexClass.getVirtualMethods() :
-                                                    dexClass.getMethods()
-                                   );
-    return new FilteredIterable<>(it.iterator(), method -> isValid(method.getAccessFlags()));
+            (type==1) ? dexClass.getDirectMethods() : (type==2) ? dexClass.getVirtualMethods() : dexClass.getMethods()
+    );
+    return new FilteredIterable<>(it, method -> isValid(method.getAccessFlags()));
   }
 
   @SuppressWarnings("unchecked")
   private static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass, int type) {
     Iterable<DexBackedField> it = (Iterable<DexBackedField>) (
-                                      (type == 1) ? dexClass.getStaticFields() :
-                                      (type == 2) ? dexClass.getInstanceFields() :
-                                                    dexClass.getFields()
-                                  );
-    return new FilteredIterable<>(it.iterator(), field -> isValid(field.getAccessFlags()));
+            (type==1) ? dexClass.getStaticFields() : (type==2) ? dexClass.getInstanceFields() : dexClass.getFields()
+    );
+    return new FilteredIterable<>(it, field -> isValid(field.getAccessFlags()));
   }
 }

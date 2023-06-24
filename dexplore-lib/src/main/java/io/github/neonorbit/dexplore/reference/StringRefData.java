@@ -79,8 +79,9 @@ public final class StringRefData implements DexRefData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof StringRefData) &&
-           (this.getData().equals(((StringRefData) obj).getData()));
+    return (this == obj) || (obj instanceof StringRefData) && (
+            this.getData().equals(((StringRefData) obj).getData())
+    );
   }
 
   @Override

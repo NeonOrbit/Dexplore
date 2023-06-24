@@ -18,14 +18,13 @@ package io.github.neonorbit.dexplore.reference;
 
 import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.iface.reference.MethodReference;
 import org.jf.dexlib2.immutable.reference.ImmutableMethodReference;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a method.
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 public final class MethodRefData implements DexRefData {
   private final boolean details;
   private boolean resolved;
-  private String signature;
   private MethodReference data;
 
   private MethodRefData(MethodReference reference, boolean details) {
@@ -52,11 +50,12 @@ public final class MethodRefData implements DexRefData {
   private MethodReference getData() {
     if (!resolved) {
       resolved = true;
-      String name = data.getName();
-      String from = details ? DexUtils.dexToJavaTypeName(data.getDefiningClass()) : "";
-      String type = details ? DexUtils.dexToJavaTypeName(data.getReturnType()) : "";
-      List<String> param = details ? DexUtils.dexToJavaTypeName(getParamList(data)) : null;
-      data = new ImmutableMethodReference(from, name, param, type);
+      data = new ImmutableMethodReference(
+              details ? DexUtils.dexToJavaTypeName(data.getDefiningClass()) : "",
+              data.getName(),
+              details ? DexUtils.dexToJavaTypeName(Utils.toStringList(data.getParameterTypes())) : null,
+              details ? DexUtils.dexToJavaTypeName(data.getReturnType()) : ""
+      );
     }
     return data;
   }
@@ -84,8 +83,9 @@ public final class MethodRefData implements DexRefData {
    * @return parameter types
    */
   @Nonnull
+  @SuppressWarnings("unchecked")
   public List<String> getParameterTypes() {
-    return getParamList(getData());
+    return (List<String>) getData().getParameterTypes();
   }
 
   /**
@@ -109,13 +109,9 @@ public final class MethodRefData implements DexRefData {
    */
   @Override
   public boolean contains(@Nonnull String value) {
-    final MethodReference ref = getData();
-    return ref.getName().equals(value) ||
-           details && (
-              ref.getDefiningClass().equals(value) ||
-              ref.getReturnType().equals(value) ||
-              ref.getParameterTypes().stream().anyMatch(cs -> cs.toString().equals(value))
-           );
+    return getName().equals(value) || details && (
+            getDeclaringClass().equals(value) || getReturnType().equals(value) || getParameterTypes().contains(value)
+    );
   }
 
   /**
@@ -125,26 +121,8 @@ public final class MethodRefData implements DexRefData {
    * @return method signature
    */
   public String getSignature() {
-    if (signature == null) {
-      MethodReference ref = getData();
-      String name = ref.getName();
-      String from = details ? ref.getDefiningClass() : "[blank]";
-      String type = details ? ref.getReturnType() : "[blank]";
-      List<? extends CharSequence> param = details ? ref.getParameterTypes() :
-                                           Collections.singletonList("[blank]");
-      signature = DexUtils.getMethodSignature(from, name, param, type);
-    }
-    return signature;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static List<String> getParamList(MethodReference reference) {
-    List<? extends CharSequence> list = reference.getParameterTypes();
-    try {
-      return (List<String>) list;
-    } catch (ClassCastException ignore) {
-      return list.stream().map(CharSequence::toString).collect(Collectors.toList());
-    }
+    return !details ? DexUtils.getMethodSignature(getName()) :
+            DexUtils.getMethodSignature(getDeclaringClass(), getName(), getParameterTypes(), getReturnType());
   }
 
   @Override
@@ -154,8 +132,9 @@ public final class MethodRefData implements DexRefData {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof MethodRefData) &&
-           (this.getData().equals(((MethodRefData) obj).getData()));
+    return (this == obj) || (obj instanceof MethodRefData) && (
+            this.getData().equals(((MethodRefData) obj).getData())
+    );
   }
 
   /**
