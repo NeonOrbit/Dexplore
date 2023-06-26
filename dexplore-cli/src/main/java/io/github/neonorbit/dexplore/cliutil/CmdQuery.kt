@@ -26,16 +26,20 @@ class CmdQuery(
     val sources: List<String>,
     numbers: List<String>
 ) {
-    val numbers = parseNumbers(numbers)
+    val numbers: List<Number> = parseNumbers(numbers)
     companion object {
-        private fun parseNumbers(numbers: List<String>): List<Long> {
-            return numbers.map { n ->
-                when (n.last()) {
-                    'd' -> n.toDouble().toBits()
-                    'f' -> n.toFloat().toBits().toLong()
-                    else -> if ('.' in n) n.toDouble().toBits() else n.toLong()
+        private fun parseNumbers(numbers: List<String>): List<Number> {
+            return numbers.map {
+                val num = it.lowercase().removeSuffix("l")
+                when {
+                    num.isHex() -> num.replace("0x", "").toLong(16)
+                    num.last() == 'f' -> num.toFloat()
+                    num.last() == 'd' || '.' in num -> num.toDouble()
+                    else -> num.toLong()
                 }
             }.toList()
         }
+        private val HEX = Regex("^[+-]?0x[0-9a-f]+$")
+        private fun String.isHex() = matches(HEX)
     }
 }
