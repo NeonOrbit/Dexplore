@@ -98,6 +98,8 @@ public final class FieldRefData implements DexRefData {
    * Signature: className.<b>fieldName</b>:fieldType
    * <p>Example: java.lang.Byte.<b>SIZE</b>:int</p>
    *
+   * <p>Each time the method is invoked, a new string is generated.</p>
+   *
    * @return field signature
    */
   public String getSignature() {

@@ -27,12 +27,14 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Contains information about a field found in a dex file.
+ * Represents a dex field.
  *
  * @author NeonOrbit
  * @since 1.0.0
  */
 public final class FieldData implements DexItemData, Comparable<FieldData> {
+  private static final String HEADER = "f";
+
   /** The declaring class of the field. */
   @Nonnull public final String clazz;
   /** The name of the field. */
@@ -70,13 +72,11 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
 
   /**
    * If the field is a compile-time constant,
-   * returns its value, otherwise returns null.
-   * <br><br>
-   * <p>Note: Make sure to check the field type and cast it accordingly.
-   * <br>Examples:
+   * returns its value, otherwise returns null.<br><br>
+   * Note: Make sure to check the field type and cast it accordingly.<br>
+   * Examples:
    *   <pre>  if (field.getValue() instanceof Long) {...}</pre>
    *   <pre>  if (field.type.equals(long.class.getName())) {...}</pre>
-   * </p>
    * @return the initial value of the field
    */
   @Nullable
@@ -96,8 +96,8 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
 
   /**
    * Returns the {@code ReferencePool} of the field.
-   * <p>Note: If the field has a compile-time constant value,
-   * the returned pool will have a single item containing the value.
+   * <p>Note: If the field is a compile-time constant and its type is String,
+   * the returned pool will have a single item containing the String.
    * Otherwise an empty pool is returned.</p>
    *
    * @return the {@code ReferencePool} of the field
@@ -134,7 +134,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   @Nonnull
   @Override
   public String serialize() {
-    return "f:" + clazz + ':' + field + ':' + type;
+    return HEADER + ':' + clazz + ':' + field + ':' + type;
   }
 
   /**
@@ -147,11 +147,11 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   @Nonnull
   public static FieldData deserialize(@Nonnull String serialized) {
     final String[] parts = serialized.split(":");
-    if (parts.length == 4 && parts[0].equals("f") &&
+    if (parts.length == 4 && parts[0].equals(HEADER) &&
         Arrays.stream(parts).noneMatch(String::isEmpty)) {
       return new FieldData(parts[1], parts[2], parts[3]);
     }
-    throw new IllegalArgumentException();
+    throw new IllegalArgumentException("Invalid format: " + serialized);
   }
 
   @Override

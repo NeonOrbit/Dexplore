@@ -24,16 +24,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 abstract class BaseFilter<T> {
-  protected final boolean pass;
+  private final boolean skip;
   protected final boolean unique;
   protected final ReferenceTypes types;
   protected final ReferenceFilter filter;
 
   protected BaseFilter(Builder<?,?> builder, boolean unique) {
-    this.pass   = builder.types  == null ||
-                  builder.filter == null ||
-                  builder.types.hasNone();
-    this.types  = builder.types;
+    this.skip = shouldSkip(builder);
+    this.types = builder.types;
     this.filter = builder.filter;
     this.unique = unique;
   }
@@ -45,7 +43,11 @@ abstract class BaseFilter<T> {
 
   @Internal
   public boolean verify(@Nonnull T dexItem, @Nonnull LazyDecoder<T> decoder) {
-    return pass || filter.accept(decoder.decode(dexItem, types));
+    return skip || filter.accept(decoder.decode(dexItem, types));
+  }
+
+  private static boolean shouldSkip(Builder<?,?> builder) {
+    return builder.types == null || builder.filter == null || builder.types.hasNone();
   }
 
   protected static abstract class Builder<B extends Builder<B,?>,

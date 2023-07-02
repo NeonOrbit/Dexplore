@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static io.github.neonorbit.dexplore.util.Utils.isSingle;
+
 /**
  * A filter that decides whether a dex file should be loaded for analyzing.
  * <p><br>
@@ -48,7 +50,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   private final List<String> preferredDexNames;
 
   private DexFilter(Builder builder) {
-    super(builder, Utils.isSingle(builder.definedClassNames));
+    super(builder, isSingle(builder.definedClassNames));
     this.preferredDexOnly = builder.preferredDexOnly;
     this.preferredDexNames = builder.preferredDexNames;
     this.storedSourceNames = builder.storedSourceNames;

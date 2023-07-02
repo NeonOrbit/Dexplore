@@ -33,6 +33,8 @@ import java.util.Objects;
  * <ul>
  *   <li>{@link #load(String)}</li>
  *   <li>{@link #load(String, DexOptions)}</li>
+ *   <li>{@link #load(byte[])}</li>
+ *   <li>{@link #load(byte[], DexOptions)}</li>
  * </ul>
  * <b>Note:</b> The {@code Dexplore} instances created by this class are thread-safe.
  *

@@ -156,8 +156,7 @@ public final class QueryBatch {
 
     @Override
     public boolean equals(Object obj) {
-      return (this == obj) || (obj instanceof Query) &&
-             (this.key.equals(((Query) obj).key));
+      return (this == obj) || (obj instanceof Query) && (this.key.equals(((Query) obj).key));
     }
   }
 
@@ -173,8 +172,7 @@ public final class QueryBatch {
   @Internal
   public static class MethodQuery extends ClassQuery {
     public final MethodFilter methodFilter;
-    private MethodQuery(String key, DexFilter dexFilter, ClassFilter classFilter,
-                        MethodFilter methodFilter) {
+    private MethodQuery(String key, DexFilter dexFilter, ClassFilter classFilter, MethodFilter methodFilter) {
       super(key, dexFilter, classFilter);
       this.methodFilter = methodFilter;
     }

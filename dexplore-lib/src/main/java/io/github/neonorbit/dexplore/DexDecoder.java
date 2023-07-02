@@ -45,7 +45,6 @@ import org.jf.dexlib2.iface.value.IntEncodedValue;
 import org.jf.dexlib2.iface.value.LongEncodedValue;
 import org.jf.dexlib2.iface.value.ShortEncodedValue;
 import org.jf.dexlib2.iface.value.StringEncodedValue;
-import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -55,13 +54,13 @@ import java.util.Set;
 @Internal
 public final class DexDecoder {
   private final boolean cache;
-  private final RefsPoolCache<DexEntry> dexCache;
-  private final RefsPoolCache<DexBackedClassDef> classCache;
+  private final RefPoolCache<DexEntry> dexCache;
+  private final RefPoolCache<DexBackedClassDef> classCache;
 
   DexDecoder(DexOptions options) {
     this.cache = options.enableCache;
-    this.dexCache = new RefsPoolCache<>();
-    this.classCache = new RefsPoolCache<>();
+    this.dexCache = new RefPoolCache<>();
+    this.classCache = new RefPoolCache<>();
   }
 
   @Nonnull
@@ -106,8 +105,8 @@ public final class DexDecoder {
 
   @Nonnull
   public static ReferencePool decodeFully(@Nonnull DexBackedField dexField) {
-    if (dexField.getInitialValue() == null) return ReferencePool.emptyPool();
-    RefsPoolBuffer buffer = new RefsPoolBuffer(ReferenceTypes.all());
+    if (!DexUtils.hasValue(dexField)) return ReferencePool.emptyPool();
+    RefPoolBuffer buffer = new RefPoolBuffer(ReferenceTypes.all());
     decodeFieldReferences(dexField, buffer);
     return buffer.getPool(true);
   }
@@ -117,43 +116,38 @@ public final class DexDecoder {
     return decodeMethodReferences(dexMethod, ReferenceTypes.all(), true);
   }
 
-  public static Set<Long> decodeNumberLiterals(DexBackedClassDef dexClass) {
-    Set<Long> pool = new HashSet<>();
-    DexUtils.dexStaticFields(dexClass).forEach(f -> decodeNumberLiterals(f, pool));
-    DexUtils.dexMethods(dexClass).forEach(m -> decodeNumberLiterals(m, pool));
-    return pool;
+  public static Set<Long> decodeNumberLiterals(@Nonnull DexBackedClassDef dexClass) {
+    Set<Long> numbers = new HashSet<>();
+    DexUtils.dexStaticFields(dexClass).forEach(f -> decodeNumberLiterals(f, numbers));
+    DexUtils.dexMethods(dexClass).forEach(m -> decodeNumberLiterals(m, numbers));
+    return numbers;
   }
 
-  public static Set<Long> decodeNumberLiterals(DexBackedMethod dexMethod) {
-    Set<Long> pool = new HashSet<>();
-    decodeNumberLiterals(dexMethod, pool);
-    return pool;
+  public static Set<Long> decodeNumberLiterals(@Nonnull DexBackedMethod dexMethod) {
+    Set<Long> numbers = new HashSet<>();
+    decodeNumberLiterals(dexMethod, numbers);
+    return numbers;
   }
 
-  public static Object decodeFieldValue(DexBackedField dexField) {
+  public static Object decodeFieldValue(@Nonnull DexBackedField dexField) {
     return decodeValue(dexField.getInitialValue());
   }
 
   private static ReferencePool decodeDexReferences(DexBackedDexFile dexFile,
                                                    ReferenceTypes types,
                                                    boolean resolve) {
-    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
-    if (types.hasString()) {
-      HashSet<String> rm = new HashSet<>(dexFile.getTypeSection());
-      for (FieldReference r: dexFile.getFieldSection()) rm.add(r.getName());
-      for (MethodReference r: dexFile.getMethodSection()) rm.add(r.getName());
-      dexFile.getStringSection().stream().filter(s -> !rm.contains(s)).forEach(buffer::add);
-    }
+    RefPoolBuffer buffer = new RefPoolBuffer(types);
+    if (types.hasString()) dexFile.getStringReferences().forEach(buffer::add);
+    if (types.hasTypeDes()) dexFile.getTypeReferences().forEach(buffer::add);
     if (types.hasField()) dexFile.getFieldSection().forEach(buffer::add);
     if (types.hasMethod()) dexFile.getMethodSection().forEach(buffer::add);
-    if (types.hasTypeDes()) dexFile.getTypeReferences().forEach(buffer::add);
     return buffer.getPool(resolve);
   }
 
   private static ReferencePool decodeClassReferences(DexBackedClassDef dexClass,
                                                      ReferenceTypes types,
                                                      boolean resolve) {
-    final RefsPoolBuffer buffer = new RefsPoolBuffer(types);
+    RefPoolBuffer buffer = new RefPoolBuffer(types);
     decodeClassFieldReferences(dexClass, types, buffer);
     getMethods(dexClass, types).forEach(m -> decodeMethodReferences(m, types, buffer));
     return buffer.getPool(resolve);
@@ -171,38 +165,38 @@ public final class DexDecoder {
 
   private static void decodeClassFieldReferences(DexBackedClassDef dexClass,
                                                  ReferenceTypes types,
-                                                 RefsPoolBuffer pool) {
+                                                 RefPoolBuffer buffer) {
     if (types.hasString()) {
-      DexUtils.dexStaticFields(dexClass).forEach(field -> decodeFieldReferences(field, pool));
+      DexUtils.dexStaticFields(dexClass).forEach(field -> decodeFieldReferences(field, buffer));
     }
   }
 
   private static void decodeFieldReferences(DexBackedField dexField,
-                                            RefsPoolBuffer pool) {
+                                            RefPoolBuffer buffer) {
     EncodedValue value = dexField.getInitialValue();
     if (value != null && value.getValueType() == ValueType.STRING) {
-      pool.add(new ImmutableStringReference(((StringEncodedValue)value).getValue()));
+      buffer.add(((StringEncodedValue) value).getValue());
     }
   }
 
   private static ReferencePool decodeMethodReferences(DexBackedMethod dexMethod,
                                                       ReferenceTypes types,
                                                       boolean resolve) {
-    RefsPoolBuffer buffer = new RefsPoolBuffer(types);
+    RefPoolBuffer buffer = new RefPoolBuffer(types);
     decodeMethodReferences(dexMethod, types, buffer);
     return buffer.getPool(resolve);
   }
 
   private static void decodeMethodReferences(DexBackedMethod dexMethod,
                                              ReferenceTypes types,
-                                             RefsPoolBuffer pool) {
+                                             RefPoolBuffer buffer) {
     MethodImplementation implementation = dexMethod.getImplementation();
     if (implementation == null || types.hasNone()) return;
     for (Instruction instruction : implementation.getInstructions()) {
       if (instruction instanceof ReferenceInstruction) {
-        decodeReference(((ReferenceInstruction) instruction).getReference(), types, pool);
+        decodeReference(((ReferenceInstruction) instruction).getReference(), types, buffer);
         if (instruction instanceof DualReferenceInstruction) {
-          decodeReference(((DualReferenceInstruction) instruction).getReference2(), types, pool);
+          decodeReference(((DualReferenceInstruction) instruction).getReference2(), types, buffer);
         }
       }
     }
@@ -210,57 +204,57 @@ public final class DexDecoder {
 
   private static void decodeReference(Reference reference,
                                       ReferenceTypes types,
-                                      RefsPoolBuffer pool) {
+                                      RefPoolBuffer buffer) {
     try {
       reference.validateReference();
       if (reference instanceof StringReference) {
-        if (types.hasString()) pool.add(((StringReference) reference));
+        if (types.hasString()) buffer.add(((StringReference) reference));
       } else if (reference instanceof FieldReference) {
-        if (types.hasField()) pool.add(((FieldReference) reference));
+        if (types.hasField()) buffer.add(((FieldReference) reference));
       } else if (reference instanceof MethodReference) {
-        if (types.hasMethod()) pool.add(((MethodReference) reference));
+        if (types.hasMethod()) buffer.add(((MethodReference) reference));
       } else if (reference instanceof TypeReference) {
-        if (types.hasTypeDes()) pool.add(((TypeReference) reference));
+        if (types.hasTypeDes()) buffer.add(((TypeReference) reference));
       }
     } catch (Reference.InvalidReferenceException e) {
       DexLog.w(e.getMessage());
     }
   }
 
-  private static void decodeNumberLiterals(DexBackedMethod dexMethod, Set<Long> pool) {
+  private static void decodeNumberLiterals(DexBackedMethod dexMethod, Set<Long> numbers) {
     MethodImplementation implementation = dexMethod.getImplementation();
     if (implementation == null) return;
     for (Instruction instruction : implementation.getInstructions()) {
       if (instruction instanceof WideLiteralInstruction) {
-        pool.add(((WideLiteralInstruction) instruction).getWideLiteral());
+        numbers.add(((WideLiteralInstruction) instruction).getWideLiteral());
       }
     }
   }
 
-  private static void decodeNumberLiterals(DexBackedField dexField, Set<Long> pool) {
+  private static void decodeNumberLiterals(DexBackedField dexField, Set<Long> numbers) {
     EncodedValue value = dexField.getInitialValue();
-    if (value == null) return;
+    if (!DexUtils.hasValue(value)) return;
     switch (value.getValueType()) {
       case ValueType.SHORT:
-        pool.add((long) ((ShortEncodedValue) value).getValue());
+        numbers.add((long) ((ShortEncodedValue) value).getValue());
         break;
       case ValueType.INT:
-        pool.add((long) ((IntEncodedValue) value).getValue());
+        numbers.add((long) ((IntEncodedValue) value).getValue());
         break;
       case ValueType.LONG:
-        pool.add(((LongEncodedValue) value).getValue());
+        numbers.add(((LongEncodedValue) value).getValue());
         break;
       case ValueType.FLOAT:
-        pool.add((long) Float.floatToRawIntBits(((FloatEncodedValue) value).getValue()));
+        numbers.add((long) Float.floatToRawIntBits(((FloatEncodedValue) value).getValue()));
         break;
       case ValueType.DOUBLE:
-        pool.add(Double.doubleToRawLongBits(((DoubleEncodedValue) value).getValue()));
+        numbers.add(Double.doubleToRawLongBits(((DoubleEncodedValue) value).getValue()));
         break;
     }
   }
 
   private static Object decodeValue(EncodedValue value) {
-    if (value == null) return null;
+    if (!DexUtils.hasValue(value)) return null;
     switch (value.getValueType()) {
       case ValueType.CHAR:
         return ((CharEncodedValue) value).getValue();

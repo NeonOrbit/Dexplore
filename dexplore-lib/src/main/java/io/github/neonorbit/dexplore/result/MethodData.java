@@ -24,18 +24,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
 /**
- * Contains information about a method found in a dex file.
+ * Represents a dex method.
  *
  * @author NeonOrbit
  * @since 1.0.0
  */
 public final class MethodData implements DexItemData, Comparable<MethodData> {
+  private static final String HEADER = "m";
+
   /** The declaring class of the method. */
   @Nonnull public final String clazz;
   /** The name of the method. */
@@ -132,8 +133,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
   @Nonnull
   @Override
   public String getSignature() {
-    List<String> list = Arrays.asList(params);
-    return DexUtils.getMethodSignature(clazz, method, list, returnType);
+    return DexUtils.getMethodSignature(clazz, method, Arrays.asList(params), returnType);
   }
 
   /**
@@ -148,7 +148,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
   @Override
   public String serialize() {
     StringJoiner joiner = new StringJoiner(":");
-    joiner.add("m").add(clazz).add(method);
+    joiner.add(HEADER).add(clazz).add(method);
     for (String param : params) {
       joiner.add(param);
     }
@@ -166,7 +166,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
   @Nonnull
   public static MethodData deserialize(@Nonnull String serialized) {
     final String[] parts = serialized.split(":");
-    if (parts.length >= 4 && parts[0].equals("m")) {
+    if (parts.length >= 4 && parts[0].equals(HEADER)) {
       final String from = parts[1], name = parts[2], type = parts[parts.length - 1];
       final String[] params = Arrays.copyOfRange(parts, 3, parts.length - 1);
       if (Stream.of(name, from, type).noneMatch(String::isEmpty) &&
@@ -174,7 +174,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
         return new MethodData(from, name, params, type);
       }
     }
-    throw new IllegalArgumentException();
+    throw new IllegalArgumentException("Invalid format: " + serialized);
   }
 
   @Override

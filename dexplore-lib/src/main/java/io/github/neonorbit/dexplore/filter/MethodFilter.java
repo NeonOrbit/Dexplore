@@ -59,9 +59,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   private final Set<Long> numLiterals;
 
   private MethodFilter(Builder builder) {
-    super(builder, Utils.isSingle(builder.methodNames) &&
-         (builder.parameters != null || builder.paramSize == 0)
-    );
+    super(builder, isUniqueSig(builder));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
     this.paramSize = builder.paramSize;
@@ -71,6 +69,10 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     this.annotations = builder.annotations;
     this.annotValues = builder.annotValues;
     this.numLiterals = builder.numLiterals;
+  }
+
+  private static boolean isUniqueSig(Builder b) {
+    return Utils.isSingle(b.methodNames) && (b.parameters != null || b.paramSize == 0);
   }
 
   @Internal
@@ -322,8 +324,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
      */
     public Builder setNumbers(@Nonnull Number... numbers) {
       Set<Long> literals = Utils.nonNullList(numbers).stream().map(number ->
-              number instanceof Float ? Float.floatToIntBits((Float) number) :
-                      number instanceof Double ? Double.doubleToLongBits((Double) number) :
+              number instanceof Float ? Float.floatToRawIntBits((Float) number) :
+                      number instanceof Double ? Double.doubleToRawLongBits((Double) number) :
                               number.longValue()
       ).collect(Collectors.toSet());
       this.numLiterals = literals.isEmpty() ? null : Utils.optimizedSet(literals);

@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Internal
 public final class TaskHandler<V> {
-  private int   total, completed;
+  private int total, completed;
   private final TaskGuard taskGuard;
   private final ThreadPoolExecutor boundedThreads;
   private final CompletionService<V> taskDispatcher;

@@ -52,7 +52,7 @@ public final class Utils {
   public static Class<?> loadClass(@Nonnull ClassLoader classLoader,
                                    @Nonnull String name) throws ClassNotFoundException {
     if (PRIMITIVE.containsKey(name)) return PRIMITIVE.get(name);
-    else return Class.forName(name, true, classLoader);
+    return Class.forName(name, true, classLoader);
   }
 
   public static boolean hasItem(@Nullable Collection<?> c) {
@@ -83,8 +83,7 @@ public final class Utils {
   }
 
   public static void checkNotNull(Object... o) {
-    Objects.requireNonNull(o);
-    if (Arrays.stream(o).anyMatch(Objects::isNull)) {
+    if (Arrays.stream(Objects.requireNonNull(o)).anyMatch(Objects::isNull)) {
       throw new NullPointerException();
     }
   }

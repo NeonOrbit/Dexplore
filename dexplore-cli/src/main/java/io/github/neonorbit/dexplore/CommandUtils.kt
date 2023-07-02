@@ -20,6 +20,11 @@ import java.io.File
 import java.io.FileNotFoundException
 
 internal object CommandUtils {
+    private val HEX by lazy {
+        Regex("^[+-]?0x[0-9a-f]+$")
+    }
+    fun String.isHex() = matches(HEX)
+
     fun memoryUsage(): String {
         val maximum = Runtime.getRuntime().maxMemory()
         val used = runtime().totalMemory() - runtime().freeMemory()

@@ -94,7 +94,7 @@ public final class Results {
             dexField.getName(),
             DexUtils.dexToJavaTypeName(dexField.getType())
     );
-    if (dexField.getInitialValue() != null) {
+    if (DexUtils.hasValue(dexField)) {
       ReferencePool pool = DexDecoder.decodeFully(dexField);
       List<StringRefData> strings = pool.getStringSection();
       instance.setValue(

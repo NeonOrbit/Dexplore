@@ -20,12 +20,24 @@ import com.beust.jcommander.JCommander
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal open class BaseJCommanderTest {
-    protected fun validate(command: Command, args: Array<String>): Boolean {
-        JCommander().apply {
-            addCommand(command)
-            parse(*args)
+internal abstract class BaseJCommanderTest {
+    abstract fun newInstance(): Command
+
+    protected fun run(vararg args: String) {
+        build(*args).apply()
+        // TO-DO
+    }
+
+    protected fun validate(vararg args: String): Boolean {
+        return build(*args).validate()
+    }
+
+    private fun build(vararg args: String): Command {
+        return newInstance().also { cmd ->
+            JCommander().apply {
+                addCommand(cmd)
+                parse(*args)
+            }
         }
-        return command.validate()
     }
 }

@@ -18,13 +18,16 @@ package io.github.neonorbit.dexplore.util;
 
 import io.github.neonorbit.dexplore.iface.Internal;
 import org.jf.dexlib2.AccessFlags;
+import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.analysis.reflection.util.ReflectionUtils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
+import org.jf.dexlib2.iface.value.EncodedValue;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,6 +35,14 @@ import static java.util.stream.Collectors.toList;
 
 @Internal
 public final class DexUtils {
+  public static boolean hasValue(@Nonnull DexBackedField dexField) {
+    return hasValue(dexField.initialValue);
+  }
+
+  public static boolean hasValue(@Nullable EncodedValue encodedValue) {
+    return encodedValue != null && encodedValue.getValueType() != ValueType.NULL;
+  }
+
   @Nonnull
   public static String javaToDexTypeName(@Nonnull String javaTypeName) {
     return javaTypeName.isEmpty() ? javaTypeName : ReflectionUtils.javaToDexName(javaTypeName);

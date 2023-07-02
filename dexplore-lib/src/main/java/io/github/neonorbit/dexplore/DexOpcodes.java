@@ -19,7 +19,7 @@ package io.github.neonorbit.dexplore;
 import org.jf.dexlib2.Opcodes;
 
 /**
- * A wrapper class for {@link Opcodes}
+ * A class representing Dalvik/ART Opcodes
  */
 public final class DexOpcodes {
   private final Opcodes opcodes;
@@ -32,14 +32,15 @@ public final class DexOpcodes {
     return this.opcodes;
   }
 
-  static DexOpcodes auto() {
+  /**
+   * @return an instance that auto-detects opcode
+   */
+  public static DexOpcodes auto() {
     return new DexOpcodes(null);
   }
 
   /**
-   * Wrapper method for {@link Opcodes#getDefault()}
-   *
-   * @return a default Opcodes instance
+   * @return an instance for api level 20 (the last pre-art api)
    */
   public static DexOpcodes getDefault() {
     return new DexOpcodes(Opcodes.getDefault());

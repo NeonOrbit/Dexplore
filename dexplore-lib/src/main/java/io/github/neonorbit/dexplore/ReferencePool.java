@@ -16,7 +16,6 @@
 
 package io.github.neonorbit.dexplore;
 
-import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.reference.FieldRefData;
 import io.github.neonorbit.dexplore.reference.MethodRefData;
 import io.github.neonorbit.dexplore.reference.StringRefData;
@@ -44,7 +43,6 @@ import static java.util.stream.Collectors.toList;
  * @since 1.0.0
  */
 public final class ReferencePool {
-  private String toString;
   private final static ReferencePool EMPTY_POOL;
   private final List<StringRefData> strings;
   private final List<TypeRefData> types;
@@ -74,8 +72,7 @@ public final class ReferencePool {
                              List<TypeRefData> types,
                              List<FieldRefData> fields,
                              List<MethodRefData> methods) {
-    if (strings.isEmpty() && types.isEmpty() &&
-        fields.isEmpty() && methods.isEmpty()) {
+    if (strings.isEmpty() && types.isEmpty() && fields.isEmpty() && methods.isEmpty()) {
       return EMPTY_POOL;
     } else {
       return new ReferencePool(
@@ -87,7 +84,6 @@ public final class ReferencePool {
     }
   }
 
-  @Internal
   public static ReferencePool merge(@Nonnull List<ReferencePool> pools) {
     if (pools.stream().allMatch(ReferencePool::isEmpty)) return EMPTY_POOL;
     return new ReferencePool(
@@ -143,10 +139,8 @@ public final class ReferencePool {
    * @return {@code true} if this {@code Pool} contains the given string
    */
   public boolean contains(@Nonnull String value) {
-    return stringsContain(value) ||
-           typesContain(value)   ||
-           fieldsContain(value)  ||
-           methodsContain(value);
+    return stringsContain(value) || typesContain(value) ||
+            fieldsContain(value) || methodsContain(value);
   }
 
   /**
@@ -213,18 +207,16 @@ public final class ReferencePool {
 
   /**
    * Returns a string containing all the reference signatures (separated by newline).
+   * <p>Each time the method is invoked, a new string is generated.</p>
    * @return a string representing all the reference signatures
    */
   @Override
   public String toString() {
-    if (toString == null) {
-      StringJoiner joiner = new StringJoiner("\n");
-      strings.forEach(s -> joiner.add(s.toString()));
-      types.forEach(t -> joiner.add(t.toString()));
-      fields.forEach(f -> joiner.add(f.toString()));
-      methods.forEach(m -> joiner.add(m.toString()));
-      toString = joiner.toString();
-    }
-    return toString;
+    StringJoiner joiner = new StringJoiner("\n");
+    strings.forEach(s -> joiner.add(s.toString()));
+    types.forEach(t -> joiner.add(t.toString()));
+    fields.forEach(f -> joiner.add(f.toString()));
+    methods.forEach(m -> joiner.add(m.toString()));
+    return joiner.toString();
   }
 }

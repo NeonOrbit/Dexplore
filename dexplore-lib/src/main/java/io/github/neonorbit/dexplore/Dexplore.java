@@ -40,7 +40,7 @@ import java.util.List;
  */
 public interface Dexplore {
   /**
-   * Find a class using the given filters.
+   * Find a class using the given filter.
    * <p>
    *   This is equivalent to calling
    *   {@link #findClass(DexFilter, ClassFilter) findClass()},

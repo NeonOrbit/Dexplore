@@ -30,31 +30,16 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-final class RefsPoolBuffer {
-  private boolean needsCopy;
-  private List<StringRefData> strings;
-  private List<TypeRefData> types;
-  private List<FieldRefData> fields;
-  private List<MethodRefData> methods;
+final class RefPoolBuffer {
+  private List<StringRefData> strings = new ArrayList<>();
+  private List<TypeRefData> types = new ArrayList<>();
+  private List<FieldRefData> fields = new ArrayList<>();
+  private List<MethodRefData> methods = new ArrayList<>();
   private final boolean fieldDetails, methodDetails;
 
-  RefsPoolBuffer(ReferenceTypes types) {
-    this.strings = new ArrayList<>();
-    this.types = new ArrayList<>();
-    this.fields = new ArrayList<>();
-    this.methods = new ArrayList<>();
+  RefPoolBuffer(ReferenceTypes types) {
     this.fieldDetails = types.hasFieldDetails();
     this.methodDetails = types.hasMethodDetails();
-  }
-
-  private void update() {
-    if (needsCopy) {
-      needsCopy = false;
-      strings = new ArrayList<>(strings);
-      types = new ArrayList<>(types);
-      fields = new ArrayList<>(fields);
-      methods = new ArrayList<>(methods);
-    }
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -67,8 +52,9 @@ final class RefsPoolBuffer {
 
   @Nonnull
   public ReferencePool getPool() {
-    needsCopy = true;
-    return ReferencePool.build(strings, types, fields, methods);
+    ReferencePool pool = ReferencePool.build(strings, types, fields, methods);
+    this.strings = null; this.types = null; this.fields = null; this.methods = null;
+    return pool;
   }
 
   @Nonnull
@@ -78,27 +64,22 @@ final class RefsPoolBuffer {
   }
 
   public void add(@Nonnull String value) {
-    update();
     strings.add(StringRefData.build(value));
   }
 
   public void add(@Nonnull StringReference value) {
-    update();
     strings.add(StringRefData.build(value));
   }
 
   public void add(@Nonnull TypeReference value) {
-    update();
     types.add(TypeRefData.build(value));
   }
 
   public void add(@Nonnull FieldReference value) {
-    update();
     fields.add(FieldRefData.build(value, fieldDetails));
   }
 
   public void add(@Nonnull MethodReference value) {
-    update();
     methods.add(MethodRefData.build(value, methodDetails));
   }
 }

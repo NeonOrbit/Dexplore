@@ -141,32 +141,34 @@ internal class DecodeCommand : Command {
     }
 
     private fun buildSrcFilter(): Predicate<String>? {
-        val lPackages = packages.takeIf { it.isNotEmpty() }?.map { list ->
-            "L${list.replace('.','/')}/"
+        val lPackages = packages.takeIfNoneEmpty()?.map { list ->
+            "L${list.replace('.', '/')}/"
         }
-        val lClasses = classes.takeIf { it.isNotEmpty() }?.let { list ->
+        val lClasses = classes.takeIfNoneEmpty()?.let { list ->
             DexUtils.javaToDexTypeName(list).map { it.dropLast(1) }
         }
-        val lClassNames = classNames.takeIf { it.isNotEmpty() }?.map {
-            it.substringAfterLast('.')
-        }?.filter { it.isNotEmpty() }
+        val lClassNames = classNames.takeIfNoneEmpty()?.map {
+            Regex("(?:^|.*[/\$])\\Q" + it.substringAfterLast('.') + "\\E[;\$].*")
+        }
         return if (lPackages == null && lClasses == null && lClassNames == null) {
             return null
         } else Predicate<String> { entry ->
-            (lPackages != null && lPackages.stream().anyMatch { entry.startsWith(it) }) ||
+            (lPackages != null && lPackages.any { entry.startsWith(it) }) ||
             (lClasses != null && matchClassesIncludingInner(lClasses, entry)) ||
-            (lClassNames != null && matchSimpleClassNames(lClassNames, entry))
+            (lClassNames != null && lClassNames.any { entry.matches(it) })
         }
-    }
-
-    private fun matchSimpleClassNames(names: List<String>, entry: String): Boolean {
-        return matchClassesIncludingInner(names, entry.substringAfterLast('/'))
     }
 
     private fun matchClassesIncludingInner(classes: List<String>, entry: String): Boolean {
-        return classes.any {
-            entry.startsWith(it) && (entry[it.length] == ';' || entry[it.length] == '$')
+        return classes.any { cls ->
+            entry.length > cls.length && entry.startsWith(cls) && entry[cls.length].let {
+                it == ';' || it == '$'
+            }
         }
+    }
+
+    private fun List<String>.takeIfNoneEmpty(): List<String>? {
+        return if (isNotEmpty() && all { it.isNotEmpty() }) this else null
     }
 
     override fun validate(): Boolean {
@@ -176,6 +178,10 @@ internal class DecodeCommand : Command {
         }
         if (decodeMode.any { it.toString() !in VALID_DECODE_MODES }) {
             CommandUtils.error("\n  Please enter correct decode mode\n")
+            return false
+        }
+        if (classNames.any { '.' in it }) {
+            CommandUtils.error("\n  [-cnm, --cls-names] Invalid class simple-names\n")
             return false
         }
         return true

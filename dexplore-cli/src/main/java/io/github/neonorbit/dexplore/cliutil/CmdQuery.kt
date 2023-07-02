@@ -16,17 +16,22 @@
 
 package io.github.neonorbit.dexplore.cliutil
 
+import io.github.neonorbit.dexplore.CommandUtils.isHex
+import io.github.neonorbit.dexplore.filter.ReferenceTypes
+
 class CmdQuery(
     val packages: List<String>,
     val classes: List<String>,
     val classNames: List<String>,
-    val refTypes: String,
+    referenceTypes: String,
     val references: List<String>,
     val signatures: List<String>,
     val sources: List<String>,
     numbers: List<String>
 ) {
+    val refTypes = buildRefTypes(referenceTypes)
     val numbers: List<Number> = parseNumbers(numbers)
+
     companion object {
         private fun parseNumbers(numbers: List<String>): List<Number> {
             return numbers.map {
@@ -39,7 +44,15 @@ class CmdQuery(
                 }
             }.toList()
         }
-        private val HEX = Regex("^[+-]?0x[0-9a-f]+$")
-        private fun String.isHex() = matches(HEX)
+        fun buildRefTypes(types: String): ReferenceTypes {
+            return if ("a" in types) ReferenceTypes.all() else {
+                val builder = ReferenceTypes.builder()
+                if ("s" in types) builder.addString()
+                if ("t" in types) builder.addTypeDes()
+                if ("f" in types) builder.addFieldWithDetails()
+                if ("m" in types) builder.addMethodWithDetails()
+                builder.build()
+            }
+        }
     }
 }

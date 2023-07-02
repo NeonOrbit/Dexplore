@@ -23,4 +23,8 @@ internal class MapverCommandTest : BaseJCommanderTest() {
     fun validateOptions() {
         // TO-DO
     }
+
+    override fun newInstance(): Command {
+        throw NotImplementedError()
+    }
 }

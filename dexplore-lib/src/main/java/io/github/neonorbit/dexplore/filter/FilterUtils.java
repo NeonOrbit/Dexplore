@@ -31,9 +31,10 @@ import org.jf.dexlib2.iface.value.TypeEncodedValue;
 import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.toSet;
 
 final class FilterUtils {
   public static boolean containsAllAnnotations(@Nonnull DexBackedClassDef dexClass,
@@ -59,8 +60,7 @@ final class FilterUtils {
   public static boolean containsAllAnnotations(@Nonnull Set<? extends Annotation> reader,
                                                @Nonnull Set<String> annotations) {
     if (reader.size() < annotations.size()) return false;
-    return reader.stream().map(Annotation::getType)
-                 .collect(Collectors.toSet()).containsAll(annotations);
+    return reader.stream().map(Annotation::getType).collect(toSet()).containsAll(annotations);
   }
 
   public static boolean containsAllAnnotationValues(@Nonnull Set<? extends Annotation> reader,
@@ -104,6 +104,6 @@ final class FilterUtils {
             StreamSupport.stream(
                     DexUtils.dexMethods(dexClass).spliterator(), false
             ).flatMap(m -> m.getAnnotations().stream())
-    ).collect(Collectors.toSet());
+    ).collect(toSet());
   }
 }

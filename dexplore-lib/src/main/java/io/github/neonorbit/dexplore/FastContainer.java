@@ -54,13 +54,10 @@ final class FastContainer extends ZipDexContainer {
   @Override
   protected boolean isDex(@Nonnull ZipFile zipFile,
                           @Nonnull ZipEntry zipEntry) throws IOException {
-    final String name = zipEntry.getName();
-    boolean filter = rootDexOnly ? name.startsWith("classes") && name.endsWith(".dex")
-                                 : (!(isApkFile && (name.startsWith("r/") ||
-                                                    name.startsWith("res/") ||
-                                                    name.startsWith("lib/")
-                                                   )
-                                   ));
+    String name = zipEntry.getName();
+    boolean filter = rootDexOnly ? name.startsWith("classes") && name.endsWith(".dex") : !(
+            isApkFile && (name.startsWith("r/") || name.startsWith("res/") || name.startsWith("lib/"))
+    );
     return filter && super.isDex(zipFile, zipEntry);
   }
 }

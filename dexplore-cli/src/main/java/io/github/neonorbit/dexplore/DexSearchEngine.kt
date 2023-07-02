@@ -49,8 +49,8 @@ internal class DexSearchEngine(mode: String) {
         maximumResult = maximum
     }
 
-    fun setDetails(details: String) {
-        detailsType = buildRefTypes(details)
+    fun setDetails(types: ReferenceTypes) {
+        detailsType = types
     }
 
     fun init(
@@ -59,8 +59,7 @@ internal class DexSearchEngine(mode: String) {
         methodAdvanced: CmdAdvancedQuery
     ) {
         checkEngineState(false)
-        val types = buildRefTypes(cmdQuery.refTypes)
-        val filter = if (types.hasNone()) null else ReferenceFilter { pool ->
+        val filter = if (cmdQuery.refTypes.hasNone()) null else ReferenceFilter { pool ->
             val result = cmdQuery.references.stream().allMatch { pool.contains(it) }
             result and cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
         }
@@ -70,7 +69,7 @@ internal class DexSearchEngine(mode: String) {
             .setPackages(*cmdQuery.packages.toTypedArray())
             .setClasses(*cmdQuery.classes.toTypedArray())
             .setClassSimpleNames(*cmdQuery.classNames.toTypedArray())
-            .setReferenceTypes(types)
+            .setReferenceTypes(cmdQuery.refTypes)
             .setReferenceFilter(filter)
             .setSourceNames(*cmdQuery.sources.toTypedArray())
             .setNumbers(*cmdQuery.numbers.toTypedArray())
@@ -81,7 +80,7 @@ internal class DexSearchEngine(mode: String) {
             .build()
         methodFilter = if (isClassMode) MethodFilter.MATCH_ALL else MethodFilter
             .builder()
-            .setReferenceTypes(types)
+            .setReferenceTypes(cmdQuery.refTypes)
             .setReferenceFilter(filter)
             .setNumbers(*cmdQuery.numbers.toTypedArray())
             .setModifiers(methodAdvanced.modifiers)
@@ -153,19 +152,6 @@ internal class DexSearchEngine(mode: String) {
             else pool.methodSection.forEach { joiner.add("  $it") }
         }
         CommandUtils.print(joiner.toString())
-    }
-
-    private fun buildRefTypes(types: String): ReferenceTypes {
-        return if ("a" in types) {
-            ReferenceTypes.all()
-        } else {
-            val builder = ReferenceTypes.builder()
-            if ("s" in types) builder.addString()
-            if ("t" in types) builder.addTypeDes()
-            if ("f" in types) builder.addFieldWithDetails()
-            if ("m" in types) builder.addMethodWithDetails()
-            builder.build()
-        }
     }
 
     private fun checkEngineState(state: Boolean) {

@@ -35,6 +35,9 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static io.github.neonorbit.dexplore.util.Utils.isSingle;
+import static io.github.neonorbit.dexplore.util.Utils.isValidName;
+
 /**
  * A filter used to select dex classes of interest.
  * <p><br>
@@ -63,7 +66,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private final Set<String> clsShortNames;
 
   private ClassFilter(Builder builder) {
-    super(builder, Utils.isSingle(builder.classNames));
+    super(builder, isSingle(builder.classNames));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
     this.pkgPattern = builder.pkgPattern;
@@ -130,8 +133,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
    * @return a {@code ClassFilter} instance
    */
   public static ClassFilter ofClass(@Nonnull String clazz) {
-    Objects.requireNonNull(clazz);
-    return builder().setClasses(clazz).build();
+    return builder().setClasses(Objects.requireNonNull(clazz)).build();
   }
 
   public Builder toBuilder() {
@@ -211,7 +213,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       List<String> pkg = Utils.nonNullList(packages);
       if (!Utils.hasItem(pkg)) {
         this.pkgPattern = null;
-      } else if (!Utils.isValidName(pkg)) {
+      } else if (!isValidName(pkg)) {
         throw new IllegalArgumentException("Invalid Package Name");
       } else {
         this.pkgPattern = getPackagePattern(pkg, null);
@@ -233,8 +235,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
                                 @Nullable List<String> exception) {
       if (!Utils.hasItem(packages)) {
         this.pkgPattern = null;
-      } else if (!Utils.isValidName(packages) ||
-                !(!Utils.hasItem(exception) || Utils.isValidName(exception))) {
+      } else if (!isValidName(packages) || Utils.hasItem(exception) && !isValidName(exception)) {
         throw new IllegalArgumentException("Invalid Package Name");
       } else {
         this.pkgPattern = getPackagePattern(exception, packages);
@@ -277,7 +278,11 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
      * @see #setClasses(String...) setClasses(classes)
      */
     public Builder setClassSimpleNames(@Nonnull String... names) {
-      List<String> list = Utils.nonNullList(names).stream().map(n-> n+';').collect(Collectors.toList());
+      List<String> list = Utils.nonNullList(names);
+      if (list.stream().anyMatch(n -> n.contains(".") || n.contains("/"))) {
+        throw new IllegalArgumentException("Invalid class simple-name");
+      }
+      list = list.stream().map(n -> n + ';').collect(Collectors.toList());
       this.clsShortNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       if (this.clsShortNames != null && this.classNames != null) throw new IllegalStateException(
               "ClassFilter: setClassSimpleNames() cannot be used together with setClasses()"

@@ -117,6 +117,7 @@ public final class MethodRefData implements DexRefData {
   /**
    * Signature: class.<b>method</b>(param1,param2,...paramN):returnType
    * <p> Example: com.util.Time.<b>setNow</b>(int,java.lang.String,int):int </p>
+   * <p>Each time the method is invoked, a new string is generated.</p>
    *
    * @return method signature
    */

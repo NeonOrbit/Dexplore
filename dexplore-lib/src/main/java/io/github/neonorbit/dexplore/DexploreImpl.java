@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Internal
 final class DexploreImpl implements Dexplore {
   private final DexOperation dexOperation;
-  private TaskHandler<Object> internalHandler;
+  private TaskHandler<Object> taskHandler;
 
   DexploreImpl(String path, DexOptions options) {
     this.dexOperation = new DexOperation(path, options);
@@ -51,24 +51,24 @@ final class DexploreImpl implements Dexplore {
   }
 
   private synchronized TaskHandler<Object> getTaskHandler() {
-    if (internalHandler == null || internalHandler.isDirty()) {
-      internalHandler = new TaskHandler<>();
+    if (taskHandler == null || taskHandler.isDirty()) {
+      taskHandler = new TaskHandler<>();
     }
-    return internalHandler;
+    return taskHandler;
   }
 
   @Nullable
   @Override
   public ClassData findClass(@Nonnull DexFilter dexFilter,
                              @Nonnull ClassFilter classFilter) {
-    return Utils.findFirst(classQuery(dexFilter, classFilter, 1));
+    return Utils.findFirst(classSearch(dexFilter, classFilter, 1));
   }
 
   @Nonnull
   @Override
   public List<ClassData> findClasses(@Nonnull DexFilter dexFilter,
                                      @Nonnull ClassFilter classFilter, int limit) {
-    return classQuery(dexFilter, classFilter, limit);
+    return classSearch(dexFilter, classFilter, limit);
   }
 
   @Nullable
@@ -76,7 +76,7 @@ final class DexploreImpl implements Dexplore {
   public MethodData findMethod(@Nonnull DexFilter dexFilter,
                                @Nonnull ClassFilter classFilter,
                                @Nonnull MethodFilter methodFilter) {
-    return Utils.findFirst(methodQuery(dexFilter, classFilter, methodFilter, 1));
+    return Utils.findFirst(methodSearch(dexFilter, classFilter, methodFilter, 1));
   }
 
   @Nonnull
@@ -84,15 +84,16 @@ final class DexploreImpl implements Dexplore {
   public List<MethodData> findMethods(@Nonnull DexFilter dexFilter,
                                       @Nonnull ClassFilter classFilter,
                                       @Nonnull MethodFilter methodFilter, int limit) {
-    return methodQuery(dexFilter, classFilter, methodFilter, limit);
+    return methodSearch(dexFilter, classFilter, methodFilter, limit);
   }
 
   @Override
   public void onClassResult(@Nonnull DexFilter dexFilter,
                             @Nonnull ClassFilter classFilter,
                             @Nonnull Operator<ClassData> operator) {
-    dexOperation.onClasses(dexFilter, classFilter,
-                           dexClass -> operator.operate(Results.ofClass(dexClass)));
+    dexOperation.onClasses(
+            dexFilter, classFilter, dexClass -> operator.operate(Results.ofClass(dexClass))
+    );
   }
 
   @Override
@@ -100,8 +101,9 @@ final class DexploreImpl implements Dexplore {
                              @Nonnull ClassFilter classFilter,
                              @Nonnull MethodFilter methodFilter,
                              @Nonnull Operator<MethodData> operator) {
-    dexOperation.onMethods(dexFilter, classFilter, methodFilter,
-                           dexMethod -> operator.operate(Results.ofMethod(dexMethod)));
+    dexOperation.onMethods(
+            dexFilter, classFilter, methodFilter, dexMethod -> operator.operate(Results.ofMethod(dexMethod))
+    );
   }
 
   @Override
@@ -125,8 +127,8 @@ final class DexploreImpl implements Dexplore {
     taskHandler.awaitCompletion();
   }
 
-  private List<ClassData> classQuery(DexFilter dexFilter,
-                                     ClassFilter classFilter, int limit) {
+  private List<ClassData> classSearch(DexFilter dexFilter,
+                                      ClassFilter classFilter, int limit) {
     List<ClassData> results = new ArrayList<>();
     dexOperation.onClasses(dexFilter, classFilter, dexClass -> {
       results.add(Results.ofClass(dexClass));
@@ -135,9 +137,9 @@ final class DexploreImpl implements Dexplore {
     return results;
   }
 
-  private List<MethodData> methodQuery(DexFilter dexFilter,
-                                       ClassFilter classFilter,
-                                       MethodFilter methodFilter, int limit) {
+  private List<MethodData> methodSearch(DexFilter dexFilter,
+                                        ClassFilter classFilter,
+                                        MethodFilter methodFilter, int limit) {
     List<MethodData> results = new ArrayList<>();
     AtomicReference<ClassData> shared = new AtomicReference<>();
     dexOperation.onMethods(dexFilter, classFilter, methodFilter, dexMethod -> {

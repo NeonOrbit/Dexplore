@@ -23,6 +23,7 @@ import io.github.neonorbit.dexplore.DexSearchEngine
 import io.github.neonorbit.dexplore.DexFileDecoder
 import io.github.neonorbit.dexplore.cliutil.CmdAdvancedQuery
 import io.github.neonorbit.dexplore.cliutil.CmdQuery
+import io.github.neonorbit.dexplore.cliutil.CmdQuery.Companion.buildRefTypes
 import io.github.neonorbit.dexplore.util.DexUtils
 import java.io.File
 import java.util.function.Predicate
@@ -159,7 +160,7 @@ internal class SearchCommand : Command {
         }
         val engine = DexSearchEngine(searchMode).apply {
             setMaximum(maximum)
-            setDetails(printPool)
+            setDetails(buildRefTypes(printPool))
             init(
                 CmdQuery(packages, classes, clsNames, type, references, signatures, sources, numbers),
                 CmdAdvancedQuery.parse(cAdvanced), CmdAdvancedQuery.parse(mAdvanced)
@@ -190,7 +191,7 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please provide input files\n")
             return false
         }
-        if (searchMode !in VALID_SEARCH_MODES && searchMode.length != 1) {
+        if (searchMode.length != 1 || searchMode !in VALID_SEARCH_MODES) {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
@@ -213,15 +214,15 @@ internal class SearchCommand : Command {
                 return false
             }
             if (references.isEmpty() && signatures.isEmpty()) {
-                CommandUtils.error("\n  Please provide references\n")
+                CommandUtils.error("\n  Please provide references with [-ref, --references]\n")
                 return false
             }
         } else if (references.isNotEmpty() || signatures.isNotEmpty()) {
-            CommandUtils.error("\n  Please provide reference types\n")
+            CommandUtils.error("\n  Please provide reference types with [-rt, -ref-type]\n")
             return false
         }
         if (printPool.isNotEmpty() && printPool.any { it.toString() !in VALID_REFERENCE_TYPES }) {
-            CommandUtils.error("\n  Please enter correct details types\n")
+            CommandUtils.error("\n  [-pool, --print-pool] Please enter correct pool types\n")
             return false
         }
         return true

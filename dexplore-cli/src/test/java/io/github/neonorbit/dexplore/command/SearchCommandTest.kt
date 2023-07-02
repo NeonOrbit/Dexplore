@@ -20,14 +20,25 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class SearchCommandTest : BaseJCommanderTest() {
+    override fun newInstance(): Command {
+        return SearchCommand()
+    }
+
     @Test
     fun validateOptions() {
         Assertions.assertFalse(
-            validate(SearchCommand(), arrayOf("search", "file"))
+            validate("search", "file")
         )
         Assertions.assertTrue(
-            validate(SearchCommand(), arrayOf("search", "file", "-src", "dummy"))
+            validate("search", "file", "-src", "dummy")
         )
+        // TO-DO
+    }
+
+    @Test
+    fun searchTest() {
+        // run("search", "file", "-src", "dummy1")
+        // run("search", "file", "-src", "dummy2")
         // TO-DO
     }
 }

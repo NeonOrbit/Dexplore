@@ -32,12 +32,14 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Contains information about a class found in a dex file.??
+ * Represents a dex class.
  *
  * @author NeonOrbit
  * @since 1.0.0
  */
 public final class ClassData implements DexItemData, Comparable<ClassData> {
+  private static final String HEADER = "c";
+
   /** The {@linkplain Class#getName() full name} of the class. */
   @Nonnull public final String clazz;
 
@@ -182,7 +184,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   @Nonnull
   @Override
   public String serialize() {
-    return "c:" + this.clazz;
+    return HEADER + ':' + this.clazz;
   }
 
   /**
@@ -195,7 +197,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   @Nonnull
   public static ClassData deserialize(@Nonnull String serialized) {
     final String[] parts = serialized.split(":");
-    if (parts.length == 2 && parts[0].equals("c")) {
+    if (parts.length == 2 && parts[0].equals(HEADER)) {
       final String clazz = parts[1];
       if (!clazz.isEmpty()) {
         return new ClassData(clazz);
@@ -216,8 +218,9 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
 
   @Override
   public boolean equals(Object obj) {
-    return (this == obj) || (obj instanceof ClassData) &&
-           (this.clazz.equals(((ClassData) obj).clazz));
+    return (this == obj) || (obj instanceof ClassData) && (
+            this.clazz.equals(((ClassData) obj).clazz)
+    );
   }
 
   /**
