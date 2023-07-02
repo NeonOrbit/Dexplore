@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="SourceCode" pattern="src:io.github.neonorbit.dexplore..*||test:io.github.neonorbit.dexplore..*" />
+</component>

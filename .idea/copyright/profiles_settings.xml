@@ -1,0 +1,7 @@
+<component name="CopyrightManager">
+  <settings default="NeonOrbit">
+    <module2copyright>
+      <element module="SourceCode" copyright="NeonOrbit" />
+    </module2copyright>
+  </settings>
+</component>
