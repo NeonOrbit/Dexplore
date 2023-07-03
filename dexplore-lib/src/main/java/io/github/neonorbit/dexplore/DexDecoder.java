@@ -157,9 +157,9 @@ public final class DexDecoder {
                                                       ReferenceTypes types) {
     switch (types.getScope()) {
       default: return Collections.emptyList();
-      case ALL: return DexUtils.dexMethods(dexClass);
-      case DIRECT: return DexUtils.dexDirectMethods(dexClass);
-      case VIRTUAL: return DexUtils.dexVirtualMethods(dexClass);
+      case ALL: return DexUtils.dexMethods(dexClass, types.synthEnabled());
+      case DIRECT: return DexUtils.dexDirectMethods(dexClass, types.synthEnabled());
+      case VIRTUAL: return DexUtils.dexVirtualMethods(dexClass, types.synthEnabled());
     }
   }
 

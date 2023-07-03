@@ -138,12 +138,19 @@ public final class DexUtils {
     return dexMethods(dexClass, 0);
   }
 
-  public static Iterable<DexBackedMethod> dexDirectMethods(DexBackedClassDef dexClass) {
-    return dexMethods(dexClass, 1);
+  @SuppressWarnings("unchecked")
+  public static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass, boolean synthEnabled) {
+    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getMethods() : dexMethods(dexClass, 0);
   }
 
-  public static Iterable<DexBackedMethod> dexVirtualMethods(DexBackedClassDef dexClass) {
-    return dexMethods(dexClass, 2);
+  @SuppressWarnings("unchecked")
+  public static Iterable<DexBackedMethod> dexDirectMethods(DexBackedClassDef dexClass, boolean synthEnabled) {
+    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getDirectMethods() : dexMethods(dexClass, 1);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Iterable<DexBackedMethod> dexVirtualMethods(DexBackedClassDef dexClass, boolean synthEnabled) {
+    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getVirtualMethods() : dexMethods(dexClass, 2);
   }
 
   public static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass) {

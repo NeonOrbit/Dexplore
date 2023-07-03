@@ -78,14 +78,20 @@ public final class ReferenceTypes {
   private int hash;
   private final int flags;
   private final Scope scope;
+  private final boolean synthetic;
 
   private ReferenceTypes(Builder builder) {
     this.flags = builder.flags;
     this.scope = builder.scope;
+    this.synthetic = builder.synthetic;
   }
 
   public Scope getScope() {
     return scope;
+  }
+
+  public boolean synthEnabled() {
+    return synthetic;
   }
 
   public boolean hasAll() {
@@ -125,7 +131,8 @@ public final class ReferenceTypes {
     if (hash == 0) {
       int h = 1;
       h = 31 * h + flags;
-      h = 31 * h + scope.ordinal();
+      h = 31 * h + scope.hashCode();
+      h = 31 * h + ((Boolean) synthetic).hashCode();
       this.hash = h;
     }
     return hash;
@@ -137,14 +144,10 @@ public final class ReferenceTypes {
     if (obj instanceof ReferenceTypes) {
       ReferenceTypes another = (ReferenceTypes) obj;
       return this.flags == another.flags &&
-             this.scope.ordinal() == another.scope.ordinal();
+             this.scope == another.scope &&
+             this.synthetic == another.synthetic;
     }
     return false;
-  }
-
-  @Override
-  public String toString() {
-    return "S" + scope.ordinal() + "F" + flags;
   }
 
   public static ReferenceTypes all() {
@@ -168,6 +171,7 @@ public final class ReferenceTypes {
    */
   public static class Builder {
     private int flags = NONE;
+    private boolean synthetic;
     private Scope scope = Scope.ALL;
 
     public ReferenceTypes build() {
@@ -273,6 +277,18 @@ public final class ReferenceTypes {
      */
     public Builder setScope(@Nonnull Scope scope) {
       this.scope = Objects.requireNonNull(scope);
+      return this;
+    }
+
+    /**
+     * Specify whether references should also be added from synthetic members.
+     * (Default: disabled)
+     * @param enable {@code true} to enable
+     * @return {@code this} builder
+     * @see Scope
+     */
+    public Builder enableSynthetic(boolean enable) {
+      this.synthetic = enable;
       return this;
     }
   }
