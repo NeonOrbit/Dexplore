@@ -34,7 +34,11 @@ import io.github.neonorbit.dexplore.util.Utils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Internal
@@ -104,6 +108,23 @@ final class DexploreImpl implements Dexplore {
     dexOperation.onMethods(
             dexFilter, classFilter, methodFilter, dexMethod -> operator.operate(Results.ofMethod(dexMethod))
     );
+  }
+
+  @Nonnull
+  @Override
+  public Map<String, List<DexItemData>> findAll(@Nonnull QueryBatch batch, int limit) {
+    Map<String, List<DexItemData>> results = batch.isParallel() ? new ConcurrentHashMap<>() : new HashMap<>();
+    int capacity = limit > 0 ? limit : 10;
+    onQueryResult(batch, (key, item) -> {
+      if (limit == 1) {
+        results.put(key, Collections.singletonList(item));
+        return true;
+      }
+      List<DexItemData> current = results.computeIfAbsent(key, k -> new ArrayList<>(capacity));
+      current.add(item);
+      return (limit > 0 && current.size() >= limit);
+    });
+    return results;
   }
 
   @Override

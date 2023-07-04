@@ -19,15 +19,16 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
+import io.github.neonorbit.dexplore.iface.KOperator;
+import io.github.neonorbit.dexplore.iface.Operator;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.MethodData;
-import io.github.neonorbit.dexplore.iface.KOperator;
-import io.github.neonorbit.dexplore.iface.Operator;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A dex explorer for finding classes and methods from dex files.
@@ -175,7 +176,17 @@ public interface Dexplore {
                       @Nonnull Operator<MethodData> operator);
 
   /**
-   * Perform a batch of queries. See {@link QueryBatch}.
+   * Perform a dex search on a batch of queries.
+   * @param batch a batch of queries
+   * @param limit maximum result limit for each query or -1 if no limit
+   * @return a map containing all the matching results from each query
+   * @see #onQueryResult(QueryBatch, KOperator) onQueryResult(batch, callback)
+   */
+  @Nonnull
+  Map<String, List<DexItemData>> findAll(@Nonnull QueryBatch batch, int limit);
+
+  /**
+   * Perform a dex search on a batch of queries. See {@link QueryBatch}.
    * <p>
    *   The specified callback {@link KOperator#operate(String, Object) operate(key,item)}
    *   will be called for each result.
@@ -193,7 +204,7 @@ public interface Dexplore {
    *
    * @param batch a batch of queries
    * @param operator a callback for consuming the search results
+   * @see #findAll(QueryBatch, int) findAll(batch, limit)
    */
-  void onQueryResult(@Nonnull QueryBatch batch,
-                     @Nonnull KOperator<DexItemData> operator);
+  void onQueryResult(@Nonnull QueryBatch batch, @Nonnull KOperator<DexItemData> operator);
 }
