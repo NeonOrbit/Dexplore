@@ -19,11 +19,12 @@ package io.github.neonorbit.dexplore;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
-import io.github.neonorbit.dexplore.iface.KOperator;
-import io.github.neonorbit.dexplore.iface.Operator;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.MethodData;
+import io.github.neonorbit.dexplore.iface.KOperator;
+import io.github.neonorbit.dexplore.iface.Operator;
+import io.github.neonorbit.dexplore.util.DexHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -177,6 +178,17 @@ public interface Dexplore {
 
   /**
    * Perform a dex search on a batch of queries.
+   * <br>
+   * <b>Note:</b> The resulting items will be in the form of {@link DexItemData},
+   *  You should cast them into appropriate ({@link ClassData} or {@link MethodData}) objects.
+   * <p>
+   * <br/> See helper methods: <br/>
+   * * {@link DexHelper#getFirstMatchingResults(Dexplore, QueryBatch)
+   *          DexHelper.getFirstMatchingResults()
+   * } <br/>
+   * * {@link DexHelper#getSingleMatchingResults(Dexplore, QueryBatch)
+   *          DexHelper.getSingleMatchingResults()
+   * }
    * @param batch a batch of queries
    * @param limit maximum result limit for each query or -1 if no limit
    * @return a map containing all the matching results from each query
@@ -199,8 +211,8 @@ public interface Dexplore {
    * <br>
    * <b>Note:</b> If no result is found for a given key, it will be ignored silently.
    * <br>
-   * <b>Note:</b> Result item will be in {@link DexItemData} form,
-   * cast it to an appropriate ({@link ClassData} or {@link MethodData}) object.
+   * <b>Note:</b> The resulting items will be in the form of {@link DexItemData},
+   * You should cast them into appropriate ({@link ClassData} or {@link MethodData}) objects.
    *
    * @param batch a batch of queries
    * @param operator a callback for consuming the search results
