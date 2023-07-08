@@ -72,22 +72,29 @@ internal class SearchCommand : Command {
     var clsNames = ArrayList<String>()
 
     @Parameter(
-            order = 5,
+        order = 5,
+        names = ["-reg", "--cls-regex"],
+        description = "Filter classes with regex pattern (against full name)"
+    )
+    var clsRegex = ""
+
+    @Parameter(
+            order = 6,
             names = ["-rt", "--ref-type"],
             description = "Reference types: a: all, s: string, t: type, f: field, m: method"
     )
     var type = ""
 
     @Parameter(
-            order = 6,
+            order = 7,
             variableArity = true,
             names = ["-ref", "--references"],
             description = "References: string, type, field or method names"
     )
-    var references: List<String> = ArrayList()
+    var refs: List<String> = ArrayList()
 
     @Parameter(
-        order = 7,
+        order = 8,
         variableArity = true,
         names = ["-sig", "--signatures"],
         description = "Same as --references except that it compares with signatures"
@@ -95,7 +102,7 @@ internal class SearchCommand : Command {
     var signatures: List<String> = ArrayList()
 
     @Parameter(
-        order = 8,
+        order = 9,
         variableArity = true,
         names = ["-src", "--sources"],
         description = "Provide a list of source names to match against (eg: 'Cache.java')"
@@ -103,7 +110,7 @@ internal class SearchCommand : Command {
     var sources = ArrayList<String>()
 
     @Parameter(
-        order = 9,
+        order = 10,
         variableArity = true,
         names = ["-num", "--numbers"],
         description = "Provide a list of numbers to match against (eg: 123 124.1f 121.1d)"
@@ -111,7 +118,7 @@ internal class SearchCommand : Command {
     var numbers = ArrayList<String>()
 
     @Parameter(
-        order = 10,
+        order = 11,
         variableArity = true,
         names = ["-res", "--res-name"],
         description = "Match against resource names: 'com.app.R' 'string:res_name' 'color:..'"
@@ -119,42 +126,42 @@ internal class SearchCommand : Command {
     var resNames = ArrayList<String>()
 
     @Parameter(
-            order = 11,
+            order = 12,
             names = ["-l", "--limit"],
             description = "Limit maximum results. Default: -1 (no limit)"
     )
     private var maximum = -1
 
     @Parameter(
-            order = 12,
+            order = 13,
             names = ["-pool", "--print-pool"],
             description = "Print ReferencePool: a: all, s: string, t: type, f: field, m: method"
     )
     var printPool = ""
 
     @Parameter(
-            order = 13,
+            order = 14,
             names = ["-gen", "--gen-sources"],
             description = "Generate java and smali source files from search results"
     )
     private var generate = false
 
     @Parameter(
-            order = 14,
+            order = 15,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
     private var output = "dexplore-out"
 
     @Parameter(
-        order = 15,
+        order = 16,
         names = ["-cdv", "--class-advanced"],
         description = "'m:public+..., s:superclass, i:interface+..., a:annotation+...'"
     )
     private var cAdvanced = ""
 
     @Parameter(
-        order = 16,
+        order = 17,
         names = ["-mdv", "--method-advanced"],
         description = "'m:public+..., n:name+..., p:param+..., r:return, a:annot+..., z:size'"
     )
@@ -171,7 +178,7 @@ internal class SearchCommand : Command {
             setDetails(buildRefTypes(printPool))
             setResourceNames(parseResNames(resNames))
             init(
-                CmdQuery(packages, classes, clsNames, type, references, signatures, sources, numbers),
+                CmdQuery(packages, classes, clsNames, clsRegex, type, refs, signatures, sources, numbers),
                 CmdAdvancedQuery.parse(cAdvanced), CmdAdvancedQuery.parse(mAdvanced)
             )
         }
@@ -214,8 +221,8 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
-        if (classes.isEmpty() && clsNames.isEmpty() && type.isEmpty() &&
-            sources.isEmpty() && resNames.isEmpty() && numbers.isEmpty() &&
+        if (classes.isEmpty() && clsNames.isEmpty() && clsRegex.isEmpty() &&
+            type.isEmpty() && sources.isEmpty() && resNames.isEmpty() && numbers.isEmpty() &&
             (searchMode != "c" || cAdvanced.isEmpty()) &&
             (searchMode != "m" || mAdvanced.isEmpty())) {
             CommandUtils.error("\n  Please provide a search query\n")
@@ -232,11 +239,11 @@ internal class SearchCommand : Command {
                 CommandUtils.error("\n  Please enter correct reference types\n")
                 return false
             }
-            if (references.isEmpty() && signatures.isEmpty()) {
+            if (refs.isEmpty() && signatures.isEmpty()) {
                 CommandUtils.error("\n  Please provide references with [-ref, --references]\n")
                 return false
             }
-        } else if (references.isNotEmpty() || signatures.isNotEmpty()) {
+        } else if (refs.isNotEmpty() || signatures.isNotEmpty()) {
             CommandUtils.error("\n  Please provide reference types with [-rt, -ref-type]\n")
             return false
         }

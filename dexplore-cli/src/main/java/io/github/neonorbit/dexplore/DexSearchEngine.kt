@@ -34,6 +34,7 @@ import java.util.regex.Pattern
 internal class DexSearchEngine(private val classMode: Boolean) {
     private var initialized = false
     private var maximumResult = 0
+    private var patternExists = false
     private var resourceNames = listOf<String>()
     private lateinit var dexFilter: DexFilter
     private lateinit var classFilter: ClassFilter
@@ -62,6 +63,7 @@ internal class DexSearchEngine(private val classMode: Boolean) {
     ) {
         checkEngineState(false)
         this.numberLiterals = cmdQuery.numbers
+        this.patternExists = cmdQuery.classPattern != null
         val filter = if (cmdQuery.refTypes.hasNone()) null else ReferenceFilter { pool ->
             val result = cmdQuery.references.stream().allMatch { pool.contains(it) }
             result and cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
@@ -72,6 +74,7 @@ internal class DexSearchEngine(private val classMode: Boolean) {
             .setPackages(*cmdQuery.packages.toTypedArray())
             .setClasses(*cmdQuery.classes.toTypedArray())
             .setClassSimpleNames(*cmdQuery.classNames.toTypedArray())
+            .setClassPattern(cmdQuery.classPattern)
             .setReferenceTypes(cmdQuery.refTypes)
             .setReferenceFilter(filter)
             .setSourceNames(*cmdQuery.sources.toTypedArray())
@@ -159,7 +162,7 @@ internal class DexSearchEngine(private val classMode: Boolean) {
     }
 
     private fun ClassFilter.exclude(classes: Set<String>): ClassFilter {
-        return if (classes.isEmpty()) this else toBuilder().setClassPattern(
+        return if (patternExists || classes.isEmpty()) this else toBuilder().setClassPattern(
             Pattern.compile("^(?!" + classes.joinToString("|") { "\\Q$it\\E" } + ").*\$")
         ).build()
     }

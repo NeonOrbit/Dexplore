@@ -18,11 +18,13 @@ package io.github.neonorbit.dexplore.cliutil
 
 import io.github.neonorbit.dexplore.CommandUtils.isHex
 import io.github.neonorbit.dexplore.filter.ReferenceTypes
+import java.util.regex.Pattern
 
 class CmdQuery(
     val packages: List<String>,
     val classes: List<String>,
     val classNames: List<String>,
+    classRegex: String,
     referenceTypes: String,
     val references: List<String>,
     val signatures: List<String>,
@@ -31,6 +33,7 @@ class CmdQuery(
 ) {
     val refTypes = buildRefTypes(referenceTypes)
     val numbers: List<Number> = parseNumbers(numbers)
+    val classPattern = if (classRegex.isEmpty()) null else Pattern.compile(classRegex)
 
     companion object {
         private fun parseNumbers(numbers: List<String>): List<Number> {
