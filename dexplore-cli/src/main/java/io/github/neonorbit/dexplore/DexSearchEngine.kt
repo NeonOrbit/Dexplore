@@ -24,33 +24,35 @@ import io.github.neonorbit.dexplore.filter.DexFilter
 import io.github.neonorbit.dexplore.filter.MethodFilter
 import io.github.neonorbit.dexplore.filter.ReferenceFilter
 import io.github.neonorbit.dexplore.filter.ReferenceTypes
+import io.github.neonorbit.dexplore.result.ClassData
 import io.github.neonorbit.dexplore.result.DexItemData
+import io.github.neonorbit.dexplore.util.DexHelper
 import java.util.StringJoiner
 import java.util.function.Function
+import java.util.regex.Pattern
 
-internal class DexSearchEngine(mode: String) {
+internal class DexSearchEngine(private val classMode: Boolean) {
     private var initialized = false
     private var maximumResult = 0
-    private val titleResult: String
-    private val titleSearch: String
-    private val isClassMode: Boolean
+    private var resourceNames = listOf<String>()
     private lateinit var dexFilter: DexFilter
     private lateinit var classFilter: ClassFilter
     private lateinit var methodFilter: MethodFilter
     private lateinit var detailsType: ReferenceTypes
-
-    init {
-        isClassMode = mode == "c"
-        titleResult = if (isClassMode) "Class" else "Method"
-        titleSearch = if (isClassMode) "classes" else "methods"
-    }
+    private lateinit var numberLiterals: List<Number>
+    private val titleResult = if (classMode) "Class" else "Method"
+    private val titleSearch = if (classMode) "classes" else "methods"
 
     fun setMaximum(maximum: Int) {
-        maximumResult = maximum
+        this.maximumResult = maximum
     }
 
     fun setDetails(types: ReferenceTypes) {
-        detailsType = types
+        this.detailsType = types
+    }
+
+    fun setResourceNames(resNames: List<String>) {
+        this.resourceNames = resNames
     }
 
     fun init(
@@ -59,6 +61,7 @@ internal class DexSearchEngine(mode: String) {
         methodAdvanced: CmdAdvancedQuery
     ) {
         checkEngineState(false)
+        this.numberLiterals = cmdQuery.numbers
         val filter = if (cmdQuery.refTypes.hasNone()) null else ReferenceFilter { pool ->
             val result = cmdQuery.references.stream().allMatch { pool.contains(it) }
             result and cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
@@ -78,7 +81,7 @@ internal class DexSearchEngine(mode: String) {
             .setInterfaces(classAdvanced.interfaces)
             .containsAnnotations(*classAdvanced.annotations.toTypedArray())
             .build()
-        methodFilter = if (isClassMode) MethodFilter.MATCH_ALL else MethodFilter
+        methodFilter = if (classMode) MethodFilter.MATCH_ALL else MethodFilter
             .builder()
             .setReferenceTypes(cmdQuery.refTypes)
             .setReferenceFilter(filter)
@@ -96,14 +99,14 @@ internal class DexSearchEngine(mode: String) {
     fun search(file: String): Set<String> {
         checkEngineState(true)
         try {
-            return dexQuery(file)
+            return dexSearch(file)
         } catch (e: DexException) {
             CommandUtils.error("Failed", e)
         }
         return setOf()
     }
 
-    private fun dexQuery(file: String): Set<String> {
+    private fun dexSearch(file: String): Set<String> {
         val results = HashSet<String>()
         CommandUtils.print("Searching $titleSearch...")
         val handler = Function { result: DexItemData ->
@@ -116,14 +119,49 @@ internal class DexSearchEngine(mode: String) {
             maximumResult > 0 && results.size >= maximumResult
         }
         with(DexFactory.load(file)) {
-            if (isClassMode) {
+            val (rClasses, numbers) = getNumbersWithResIds(this)
+            val classFilter = classFilter.exclude(rClasses).resetNumbers(numbers)
+            if (classMode) {
                 onClassResult(dexFilter, classFilter) { handler.apply(it) }
             } else {
+                val methodFilter = methodFilter.resetNumbers(numbers)
                 onMethodResult(dexFilter, classFilter, methodFilter) { handler.apply(it) }
             }
         }
         if (results.isEmpty()) CommandUtils.print("Result:  [Not Found]")
         return results
+    }
+
+    private fun getNumbersWithResIds(dexplore: Dexplore): Pair<Set<String>, Array<Number>> {
+        if (resourceNames.isEmpty()) return Pair(setOf(), arrayOf())
+        val numbers = ArrayList<Number>()
+        val resClasses = HashMap<String, ClassData>()
+        resourceNames.forEach { res ->
+            val resClass = resClasses.computeIfAbsent(res.substringBeforeLast('.')) {
+                DexHelper.getClass(dexplore, it) ?: throw Exception("Class not found: $it")
+            }
+            val resName = res.substringAfterLast('.')
+            numbers.add(
+                DexHelper.getResId(resClass, resName) ?:
+                throw Exception("Resource id couldn't retrieve: ${resClass.clazz}.$resName")
+            )
+        }
+        numbers.addAll(numberLiterals)
+        return Pair(resClasses.keys, numbers.toTypedArray())
+    }
+
+    private fun ClassFilter.resetNumbers(numbers: Array<Number>): ClassFilter {
+        return if (numbers.isEmpty()) this else toBuilder().setNumbers(*numbers).build()
+    }
+
+    private fun MethodFilter.resetNumbers(numbers: Array<Number>): MethodFilter {
+        return if (numbers.isEmpty()) this else toBuilder().setNumbers(*numbers).build()
+    }
+
+    private fun ClassFilter.exclude(classes: Set<String>): ClassFilter {
+        return if (classes.isEmpty()) this else toBuilder().setClassPattern(
+            Pattern.compile("^(?!" + classes.joinToString("|") { "\\Q$it\\E" } + ").*\$")
+        ).build()
     }
 
     private fun printReferencePool(data: DexItemData) {

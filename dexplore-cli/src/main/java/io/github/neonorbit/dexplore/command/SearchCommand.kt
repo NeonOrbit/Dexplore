@@ -111,42 +111,50 @@ internal class SearchCommand : Command {
     var numbers = ArrayList<String>()
 
     @Parameter(
-            order = 10,
+        order = 10,
+        variableArity = true,
+        names = ["-res", "--res-name"],
+        description = "Match against resource names: 'com.app.R' 'string:res_name' 'color:..'"
+    )
+    var resNames = ArrayList<String>()
+
+    @Parameter(
+            order = 11,
             names = ["-l", "--limit"],
             description = "Limit maximum results. Default: -1 (no limit)"
     )
     private var maximum = -1
 
     @Parameter(
-            order = 11,
+            order = 12,
             names = ["-pool", "--print-pool"],
             description = "Print ReferencePool: a: all, s: string, t: type, f: field, m: method"
     )
     var printPool = ""
 
     @Parameter(
-            order = 12,
+            order = 13,
             names = ["-gen", "--gen-sources"],
             description = "Generate java and smali source files from search results"
     )
     private var generate = false
 
     @Parameter(
-            order = 13,
+            order = 14,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
     private var output = "dexplore-out"
 
     @Parameter(
-        order = 14,
+        order = 15,
         names = ["-cdv", "--class-advanced"],
         description = "'m:public+..., s:superclass, i:interface+..., a:annotation+...'"
     )
     private var cAdvanced = ""
 
     @Parameter(
-        order = 15,
+        order = 16,
         names = ["-mdv", "--method-advanced"],
         description = "'m:public+..., n:name+..., p:param+..., r:return, a:annot+..., z:size'"
     )
@@ -158,9 +166,10 @@ internal class SearchCommand : Command {
             decodeJava = true
             decodeSmali = true
         }
-        val engine = DexSearchEngine(searchMode).apply {
+        val engine = DexSearchEngine(searchMode == "c").apply {
             setMaximum(maximum)
             setDetails(buildRefTypes(printPool))
+            setResourceNames(parseResNames(resNames))
             init(
                 CmdQuery(packages, classes, clsNames, type, references, signatures, sources, numbers),
                 CmdAdvancedQuery.parse(cAdvanced), CmdAdvancedQuery.parse(mAdvanced)
@@ -182,6 +191,16 @@ internal class SearchCommand : Command {
         }
     }
 
+    private fun parseResNames(resNames: ArrayList<String>): List<String> {
+        if (resNames.isEmpty()) return listOf()
+        val prefix = resNames.first()
+        return resNames.drop(1).map {
+            val split = it.split(':')
+            val inner = if (split[0].isEmpty()) "" else ('$' + split[0])
+            prefix + inner + '.' + split[1]
+        }
+    }
+
     override fun validate(): Boolean {
         if (output.isEmpty()) {
             CommandUtils.error("\n  Invalid output directory name\n")
@@ -195,8 +214,8 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
-        if (classes.isEmpty() && clsNames.isEmpty() &&
-            sources.isEmpty() && numbers.isEmpty() && type.isEmpty() &&
+        if (classes.isEmpty() && clsNames.isEmpty() && type.isEmpty() &&
+            sources.isEmpty() && resNames.isEmpty() && numbers.isEmpty() &&
             (searchMode != "c" || cAdvanced.isEmpty()) &&
             (searchMode != "m" || mAdvanced.isEmpty())) {
             CommandUtils.error("\n  Please provide a search query\n")
@@ -220,6 +239,19 @@ internal class SearchCommand : Command {
         } else if (references.isNotEmpty() || signatures.isNotEmpty()) {
             CommandUtils.error("\n  Please provide reference types with [-rt, -ref-type]\n")
             return false
+        }
+        if (resNames.isNotEmpty()) {
+            if (resNames.size < 2) {
+                CommandUtils.error("\n  [-res, --res-name] Please provide " +
+                        (if (resNames[0] == "R" || resNames[0].endsWith(".R") ) "resource names"
+                        else "the R class as first value") + '\n'
+                )
+                return false
+            }
+            if (resNames.drop(1).any { it.contains('.') || it.split(':').size != 2 }) {
+                CommandUtils.error("\n  [-res, --res-name] Please enter correct resource names\n")
+                return false
+            }
         }
         if (printPool.isNotEmpty() && printPool.any { it.toString() !in VALID_REFERENCE_TYPES }) {
             CommandUtils.error("\n  [-pool, --print-pool] Please enter correct pool types\n")
