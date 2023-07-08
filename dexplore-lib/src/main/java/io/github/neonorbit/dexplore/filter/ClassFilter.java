@@ -57,27 +57,29 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   private final int skipFlag;
   private final String superClass;
   private final Pattern pkgPattern;
+  private final Pattern clsPattern;
   private final Set<String> classNames;
+  private final Set<String> shortNames;
   private final List<String> interfaces;
   private final Set<String> sourceNames;
   private final Set<String> annotations;
   private final Set<String> annotValues;
   private final Set<Long> numLiterals;
-  private final Set<String> clsShortNames;
 
   private ClassFilter(Builder builder) {
     super(builder, isSingle(builder.classNames));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
-    this.pkgPattern = builder.pkgPattern;
     this.superClass = builder.superClass;
+    this.pkgPattern = builder.pkgPattern;
+    this.clsPattern = builder.clsPattern;
     this.classNames = builder.classNames;
+    this.shortNames = builder.shortNames;
     this.interfaces = builder.interfaces;
     this.sourceNames = builder.sourceNames;
     this.annotations = builder.annotations;
     this.annotValues = builder.annotValues;
     this.numLiterals = builder.numLiterals;
-    this.clsShortNames = builder.clsShortNames;
   }
 
   @Internal
@@ -109,10 +111,9 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   }
 
   private boolean checkClassNames(String name) {
-    if (classNames != null) {
-      return classNames.contains(name);
-    }
-    return clsShortNames == null || clsShortNames.stream().anyMatch(shortName -> {
+    if (clsPattern != null && !clsPattern.matcher(name).matches()) return false;
+    if (classNames != null) return classNames.contains(name);
+    return shortNames == null || shortNames.stream().anyMatch(shortName -> {
       if (name.length() < shortName.length()) return false;
       if (name.length() == shortName.length()) return name.equals(shortName);
       char separator = name.charAt(name.length() - shortName.length() - 1);
@@ -147,15 +148,16 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   public static class Builder extends BaseFilter.Builder<Builder, ClassFilter> {
     private int flag = NEG;
     private int skipFlag = NEG;
-    private Pattern pkgPattern;
     private String superClass;
+    private Pattern pkgPattern;
+    private Pattern clsPattern;
     private Set<String> classNames;
     private List<String> interfaces;
     private Set<String> sourceNames;
     private Set<String> annotations;
     private Set<String> annotValues;
     private Set<Long> numLiterals;
-    private Set<String> clsShortNames;
+    private Set<String> shortNames;
 
     public Builder() {}
 
@@ -163,15 +165,16 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       super(instance);
       this.flag = instance.flag;
       this.skipFlag = instance.skipFlag;
-      this.pkgPattern = instance.pkgPattern;
       this.superClass = instance.superClass;
+      this.pkgPattern = instance.pkgPattern;
+      this.clsPattern = instance.clsPattern;
       this.classNames = instance.classNames;
+      this.shortNames = instance.shortNames;
       this.interfaces = instance.interfaces;
       this.sourceNames = instance.sourceNames;
       this.annotations = instance.annotations;
       this.annotValues = instance.annotValues;
       this.numLiterals = instance.numLiterals;
-      this.clsShortNames = instance.clsShortNames;
     }
 
     @Override
@@ -179,15 +182,16 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       return super.isDefault()    &&
               flag        == NEG  &&
               skipFlag    == NEG  &&
-              pkgPattern  == null &&
               superClass  == null &&
+              pkgPattern  == null &&
+              clsPattern  == null &&
               classNames  == null &&
+              shortNames  == null &&
               interfaces  == null &&
               sourceNames == null &&
               annotations == null &&
               annotValues == null &&
-              numLiterals == null &&
-              clsShortNames == null;
+              numLiterals == null;
     }
 
     @Override
@@ -202,8 +206,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Add a condition to the filter to match classes from the specified packages only.
-     * <p><b>Note:</b>
-     *    This will silently overwrite {@link #skipPackages(List, List) skipPackages()}.
+     * <p>
+     *   <b>Note:</b> This will silently overwrite {@link #skipPackages(List, List) skipPackages()}.
+     *   <br>
+     *   <b>Remark:</b> This condition uses regex pattern internally.
      * </p>
      *
      * @param packages package names
@@ -223,8 +229,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Specify a list of packages that should be excluded.
-     * <p><b>Note:</b>
-     *    This will silently overwrite {@link #setPackages(String...) setPackages()}.
+     * <p>
+     *   <b>Note:</b> This will silently overwrite {@link #setPackages(String...) setPackages()}.
+     *   <br>
+     *   <b>Remark:</b> This condition uses regex pattern internally.
      * </p>
      *
      * @param packages a list of packages to exclude
@@ -244,7 +252,21 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that match with any of the specified classes.
+     * Add a regex pattern for filtering classes by their full names.
+     * <p><b>Note:</b>
+     * The pattern will be matched against the {@linkplain Class#getName() full names} of classes.
+     * </p>
+     *
+     * @param regex pattern to match against classes
+     * @return {@code this} builder
+     */
+    public Builder setClassPattern(@Nullable Pattern regex) {
+      this.clsPattern = regex == null ? null : DexUtils.javaToDexPattern(regex);
+      return this;
+    }
+
+    /**
+     * Add a condition to the filter to match classes that match with any of the specified class names.
      * <p>
      *   <b>Note:</b> This method takes the {@linkplain Class#getName() full names} of classes
      *   <i>(eg: java.io.FileReader)</i>.
@@ -259,14 +281,14 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     public Builder setClasses(@Nonnull String... classes) {
       List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
       this.classNames = list.isEmpty() ? null : Utils.optimizedSet(list);
-      if (this.classNames != null && this.clsShortNames != null) throw new IllegalStateException(
+      if (this.classNames != null && this.shortNames != null) throw new IllegalStateException(
               "ClassFilter: setClasses() cannot be used together with setClassSimpleNames()"
       );
       return this;
     }
 
     /**
-     * Add a condition to the filter to match classes that match with any of the specified class names.
+     * Add a condition to the filter to match classes that match with any of the specified class simple-names.
      * <p>
      *   <b>Note:</b> This method takes the {@link Class#getSimpleName() Simple Names} of classes.
      *   This is different from {@link #setClasses(String...) setClasses()},
@@ -283,8 +305,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
         throw new IllegalArgumentException("Invalid class simple-name");
       }
       list = list.stream().map(n -> n + ';').collect(Collectors.toList());
-      this.clsShortNames = list.isEmpty() ? null : Utils.optimizedSet(list);
-      if (this.clsShortNames != null && this.classNames != null) throw new IllegalStateException(
+      this.shortNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      if (this.shortNames != null && this.classNames != null) throw new IllegalStateException(
               "ClassFilter: setClassSimpleNames() cannot be used together with setClasses()"
       );
       return this;
@@ -431,9 +453,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     private static Pattern getPackagePattern(List<String> includes, List<String> excludes) {
-      Function<String, String> mapper = s -> 'L' + s.replaceAll("\\.", "/")
-                                                    .replaceAll("\\$", "\\\\\\$")
-                                           + '/';
+      Function<String, String> mapper = s -> 'L' + s.replaceAll("\\.", "/") + '/';
       String regex = "^(";
       if (Utils.hasItem(includes)) {
         regex += includes.stream().map(mapper).collect(Collectors.joining("|"));

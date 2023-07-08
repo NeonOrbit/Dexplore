@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.toList;
 
@@ -132,6 +133,58 @@ public final class DexUtils {
                                           @Nonnull Iterable<? extends CharSequence> params,
                                           @Nonnull String returnType) {
     return definingClass + '.' + methodName + '(' + String.join(",", params) + "):" + returnType;
+  }
+
+  public static Pattern javaToDexPattern(Pattern pattern) {
+    String regex = pattern.pattern();
+    if (regex.isEmpty()) return pattern;
+    if ((pattern.flags() & Pattern.LITERAL) == Pattern.LITERAL) {
+      return Pattern.compile(javaToDexTypeName(regex), pattern.flags());
+    }
+    String dexPattern = javaToDexPattern(regex);
+    return regex.equals(dexPattern) ? pattern : Pattern.compile(dexPattern, pattern.flags());
+  }
+
+  private static String javaToDexPattern(String regex) {
+    StringBuilder buffer = new StringBuilder(regex.length() + 2);
+    boolean inEscape = false, inQuote = false;
+    int brackets = 0;
+    int i = -1;
+    while (++i < regex.length()) {
+      char current = regex.charAt(i);
+      if (current == '\\') {
+        if (inEscape) {
+          buffer.append('\\');
+          if (!inQuote) buffer.append('\\');
+        }
+        inEscape = inQuote || !inEscape;
+        continue;
+      }
+      if (inQuote) {
+        if (inEscape && current == 'E') inQuote = false;
+      } else if (inEscape) {
+        if (current == 'Q') inQuote = true;
+      } else if (brackets > 0) {
+        if (current == '[') brackets++;
+        else if (current == ']') brackets--;
+      } else {
+        switch (current) {
+          case '[': brackets++; break;
+          case '$': buffer.append(';'); break;
+          case '^': buffer.append(current); current = 'L'; break;
+        }
+      }
+      if (current == '.' && (inEscape || inQuote || brackets > 0)) {
+        if (!inQuote) inEscape = false;
+        current = '/';
+      }
+      if (inEscape) {
+        inEscape = false;
+        buffer.append('\\');
+      }
+      buffer.append(current);
+    }
+    return buffer.toString();
   }
 
   public static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass) {

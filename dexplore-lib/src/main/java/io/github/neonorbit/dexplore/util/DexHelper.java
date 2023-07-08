@@ -19,6 +19,7 @@ package io.github.neonorbit.dexplore.util;
 import io.github.neonorbit.dexplore.Dexplore;
 import io.github.neonorbit.dexplore.QueryBatch;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
+import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.DexItemData;
 import io.github.neonorbit.dexplore.result.FieldData;
@@ -27,12 +28,14 @@ import io.github.neonorbit.dexplore.result.MethodData;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public final class DexHelper {
   /**
-   * Find a dex class.
+   * Retrieves a dex class.
    * @param dexplore a dexplore instance
    * @param fullName {@linkplain Class#getName() full name} of the class
    * @return a {@code ClassData} object of the specified classname or null
@@ -43,7 +46,20 @@ public final class DexHelper {
   }
 
   /**
-   * Find a dex method.
+   * Retrieves a dex class, including its inner classes.
+   * @param dexplore a dexplore instance
+   * @param fullName {@linkplain Class#getName() full name} of the class
+   * @return a list containing the specified class and its inner classes
+   */
+  @Nonnull
+  public static List<ClassData> getClassWithInners(@Nonnull Dexplore dexplore, @Nonnull String fullName) {
+    return dexplore.findClasses(DexFilter.MATCH_ALL, ClassFilter.builder().setClassPattern(
+            Pattern.compile("^\\Q" + fullName + "\\E(\\$.*)?$")
+    ).build(), -1);
+  }
+
+  /**
+   * Retrieves a dex method.
    * @param dexplore a dexplore instance
    * @param className full name of the declaring class
    * @param methodName name of the method
@@ -64,13 +80,15 @@ public final class DexHelper {
    *   using the {@link #getClass(Dexplore, String) getClass()} method.
    *   Resource class must be specific, such as,
    *   <pre>  com.app.R$string, com.app.R$color  etc...</pre>
-   * </p>
    * Example:
    * <pre>
    *   ClassData rString = DexHelper.getClass(dexplore, "com.app.R$string")
    *   Integer aStringResId = DexHelper.getResId(rString, "a_string_res_name")
    *   Integer aPageTitleId = DexHelper.getResId(rString, "app_main_page_title")
    * </pre>
+   * @apiNote This method is intended to be used with
+   *   {@link ClassFilter.Builder#setNumbers(Number...) ClassFilter.setNumbers()}
+   *   to assist in locating classes with resource usage.
    * @param resClass {@code ClassData} instance of the resource class
    * @param resName resource name
    * @return the resource id associated with the specified resource name
