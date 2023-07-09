@@ -23,6 +23,7 @@ import io.github.neonorbit.dexplore.DexFileDecoder
 import io.github.neonorbit.dexplore.util.DexUtils
 import java.io.File
 import java.util.function.Predicate
+import java.util.regex.Pattern
 
 @Parameters(commandNames = [DecodeCommand.NAME], commandDescription = DecodeCommand.DESC)
 internal class DecodeCommand : Command {
@@ -59,7 +60,14 @@ internal class DecodeCommand : Command {
     var classNames = ArrayList<String>()
 
     @Parameter(
-            order = 4,
+        order = 4,
+        names = ["-reg", "--cls-regex"],
+        description = "Filter classes with java regex pattern (against full name)"
+    )
+    var classRegex = ""
+
+    @Parameter(
+            order = 5,
             variableArity = true,
             names = ["-pkg", "--packages"],
             description = "Decompile a list of packages. Default: all"
@@ -67,7 +75,7 @@ internal class DecodeCommand : Command {
     var packages = ArrayList<String>()
 
     @Parameter(
-        order = 5,
+        order = 6,
         variableArity = true,
         names = ["-res", "--resources"],
         description = "Resource types: color, values, drawable etc. Default: all"
@@ -75,35 +83,35 @@ internal class DecodeCommand : Command {
     var resources = ArrayList<String>()
 
     @Parameter(
-            order = 6,
+            order = 7,
             names = ["-job", "--jobs"],
             description = "The number of threads to use. Default: [core-size]"
     )
     private var threadCount = CommandUtils.cores()
 
     @Parameter(
-        order = 7,
+        order = 8,
         names = ["-dren", "--disable-rename"],
         description = "Disable class names renaming. Default: enabled"
     )
     private var disableRename = false
 
     @Parameter(
-        order = 8,
+        order = 9,
         names = ["-dmem", "--disable-cache"],
         description = "Disable In-Memory cache. Default: enabled"
     )
     private var disableMemCache = false
 
     @Parameter(
-        order = 9,
+        order = 10,
         names = ["-eps", "--enable-pause"],
         description = "Pause capability (with ENTER key). Default: disabled"
     )
     private var pauseSupport = false
 
     @Parameter(
-            order = 10,
+            order = 11,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
@@ -150,12 +158,16 @@ internal class DecodeCommand : Command {
         val lClassNames = classNames.takeIfNoneEmpty()?.map {
             Regex("(?:^|.*[/\$])\\Q" + it.substringAfterLast('.') + "\\E[;\$].*")
         }
-        return if (lPackages == null && lClasses == null && lClassNames == null) {
+        val lClassRegex = classRegex.takeIf { it.isNotEmpty() }?.let {
+            DexUtils.javaToDexPattern(Pattern.compile(classRegex))
+        }
+        return if (lPackages == null && lClasses == null && lClassNames == null && lClassRegex == null) {
             return null
         } else Predicate<String> { entry ->
             (lPackages != null && lPackages.any { entry.startsWith(it) }) ||
             (lClasses != null && matchClassesIncludingInner(lClasses, entry)) ||
-            (lClassNames != null && lClassNames.any { entry.matches(it) })
+            (lClassNames != null && lClassNames.any { entry.matches(it) }) ||
+            (lClassRegex != null) && lClassRegex.matcher(entry).matches()
         }
     }
 
