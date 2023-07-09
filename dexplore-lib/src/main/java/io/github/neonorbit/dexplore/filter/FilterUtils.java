@@ -99,11 +99,12 @@ final class FilterUtils {
   }
 
   private static Set<? extends Annotation> getAllAnnotations(DexBackedClassDef dexClass) {
-    return Stream.concat(
-            dexClass.getAnnotations().stream(),
-            StreamSupport.stream(
-                    DexUtils.dexMethods(dexClass).spliterator(), false
-            ).flatMap(m -> m.getAnnotations().stream())
-    ).collect(toSet());
+    Stream<Annotation> members = Stream.concat(
+            StreamSupport.stream(DexUtils.dexMethods(dexClass).spliterator(), false)
+                    .flatMap(m -> m.getAnnotations().stream()),
+            StreamSupport.stream(DexUtils.dexFields(dexClass).spliterator(), false)
+                    .flatMap(f -> f.getAnnotations().stream())
+    );
+    return Stream.concat(dexClass.getAnnotations().stream(), members).collect(toSet());
   }
 }
