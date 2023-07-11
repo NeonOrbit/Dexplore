@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.reference;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.iface.reference.TypeReference;
 import org.jf.dexlib2.immutable.reference.ImmutableTypeReference;
@@ -65,6 +66,13 @@ public final class TypeRefData implements DexRefData {
   @Override
   public boolean contains(@Nonnull String value) {
     return getData().getType().equals(value);
+  }
+
+  /**
+   * @return a {@code ClassData} object representing the type (class)
+   */
+  public ClassData toClassData() {
+    return ClassData.of(this);
   }
 
   @Override

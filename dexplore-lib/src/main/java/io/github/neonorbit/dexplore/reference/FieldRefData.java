@@ -17,6 +17,8 @@
 package io.github.neonorbit.dexplore.reference;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.result.ClassData;
+import io.github.neonorbit.dexplore.result.FieldData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.iface.reference.FieldReference;
 import org.jf.dexlib2.immutable.reference.ImmutableFieldReference;
@@ -105,6 +107,13 @@ public final class FieldRefData implements DexRefData {
   public String getSignature() {
     return !details ? DexUtils.getFieldSignature(getName()) :
             DexUtils.getFieldSignature(getDeclaringClass(), getName(), getType());
+  }
+
+  /**
+   * @return a {@code FieldData} object representing the field
+   */
+  public FieldData toFieldData() {
+    return FieldData.of(this);
   }
 
   @Override

@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.reference;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.result.MethodData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.iface.reference.MethodReference;
@@ -124,6 +125,13 @@ public final class MethodRefData implements DexRefData {
   public String getSignature() {
     return !details ? DexUtils.getMethodSignature(getName()) :
             DexUtils.getMethodSignature(getDeclaringClass(), getName(), getParameterTypes(), getReturnType());
+  }
+
+  /**
+   * @return a {@code MethodData} object representing the method
+   */
+  public MethodData toMethodData() {
+    return MethodData.of(this);
   }
 
   @Override
