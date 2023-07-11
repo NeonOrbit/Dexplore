@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.reference.TypeRefData;
 import io.github.neonorbit.dexplore.util.ShallowList;
 import io.github.neonorbit.dexplore.util.Utils;
 
@@ -38,6 +39,7 @@ import static java.util.stream.Collectors.toList;
  * @since 1.0.0
  */
 public final class ClassData implements DexItemData, Comparable<ClassData> {
+  private static final String DLM = ":";
   private static final String HEADER = "c";
 
   /** The {@linkplain Class#getName() full name} of the class. */
@@ -49,6 +51,18 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
 
   ClassData(@Nonnull String clazz) {
     this.clazz = clazz;
+  }
+
+  public static ClassData of(@Nonnull String clazz) {
+    return new ClassData(Objects.requireNonNull(clazz));
+  }
+
+  public static ClassData of(@Nonnull TypeRefData type) {
+    return of(Objects.requireNonNull(type).getType());
+  }
+
+  public static ClassData of(@Nonnull Class<?> clazz) {
+    return of(Objects.requireNonNull(clazz).getName());
   }
 
   void setFields(List<FieldData> fields) {
@@ -184,7 +198,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   @Nonnull
   @Override
   public String serialize() {
-    return HEADER + ':' + this.clazz;
+    return HEADER + DLM + this.clazz;
   }
 
   /**
@@ -196,7 +210,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
    */
   @Nonnull
   public static ClassData deserialize(@Nonnull String serialized) {
-    final String[] parts = serialized.split(":");
+    final String[] parts = serialized.split(DLM);
     if (parts.length == 2 && parts[0].equals(HEADER)) {
       final String clazz = parts[1];
       if (!clazz.isEmpty()) {

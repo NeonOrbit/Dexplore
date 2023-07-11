@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.reference.MethodRefData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
  * @since 1.0.0
  */
 public final class MethodData implements DexItemData, Comparable<MethodData> {
+  private static final String DLM = ":";
   private static final String HEADER = "m";
 
   /** The declaring class of the method. */
@@ -57,6 +59,36 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
     this.method = method;
     this.params = params;
     this.returnType = returnType;
+  }
+
+  public static MethodData of(@Nonnull String clazz,
+                              @Nonnull String method,
+                              @Nonnull String[] params,
+                              @Nonnull String returnType) {
+    return new MethodData(
+            Objects.requireNonNull(clazz),
+            Objects.requireNonNull(method),
+            Objects.requireNonNull(params),
+            Objects.requireNonNull(returnType)
+    );
+  }
+
+  public static MethodData of(@Nonnull MethodRefData method) {
+    return of(
+            method.getDeclaringClass(),
+            method.getName(),
+            method.getParameterTypes().toArray(new String[0]),
+            method.getReturnType()
+    );
+  }
+
+  public static MethodData of(@Nonnull Method method) {
+    return of(
+            method.getDeclaringClass().getName(),
+            method.getName(),
+            Arrays.stream(method.getParameterTypes()).map(Class::getName).toArray(String[]::new),
+            method.getReturnType().getName()
+    );
   }
 
   void setClassData(ClassData classData) {
@@ -147,7 +179,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
   @Nonnull
   @Override
   public String serialize() {
-    StringJoiner joiner = new StringJoiner(":");
+    StringJoiner joiner = new StringJoiner(DLM);
     joiner.add(HEADER).add(clazz).add(method);
     for (String param : params) {
       joiner.add(param);
@@ -165,7 +197,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
    */
   @Nonnull
   public static MethodData deserialize(@Nonnull String serialized) {
-    final String[] parts = serialized.split(":");
+    final String[] parts = serialized.split(DLM);
     if (parts.length >= 4 && parts[0].equals(HEADER)) {
       final String from = parts[1], name = parts[2], type = parts[parts.length - 1];
       final String[] params = Arrays.copyOfRange(parts, 3, parts.length - 1);

@@ -17,6 +17,7 @@
 package io.github.neonorbit.dexplore.result;
 
 import io.github.neonorbit.dexplore.ReferencePool;
+import io.github.neonorbit.dexplore.reference.FieldRefData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 
@@ -33,6 +34,7 @@ import java.util.Objects;
  * @since 1.0.0
  */
 public final class FieldData implements DexItemData, Comparable<FieldData> {
+  private static final String DLM = ":";
   private static final String HEADER = "f";
 
   /** The declaring class of the field. */
@@ -51,6 +53,24 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
     this.clazz = clazz;
     this.field = field;
     this.type = type;
+  }
+
+  public static FieldData of(@Nonnull String clazz,
+                             @Nonnull String field,
+                             @Nonnull String type) {
+    return new FieldData(
+            Objects.requireNonNull(clazz),
+            Objects.requireNonNull(field),
+            Objects.requireNonNull(type)
+    );
+  }
+
+  public static FieldData of(@Nonnull FieldRefData field) {
+    return of(field.getDeclaringClass(), field.getName(), field.getType());
+  }
+
+  public static FieldData of(@Nonnull Field field) {
+    return of(field.getDeclaringClass().getName(), field.getName(), field.getType().getName());
   }
 
   void setValue(Object value) {
@@ -134,7 +154,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
   @Nonnull
   @Override
   public String serialize() {
-    return HEADER + ':' + clazz + ':' + field + ':' + type;
+    return HEADER + DLM + clazz + DLM + field + DLM + type;
   }
 
   /**
@@ -146,7 +166,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
    */
   @Nonnull
   public static FieldData deserialize(@Nonnull String serialized) {
-    final String[] parts = serialized.split(":");
+    final String[] parts = serialized.split(DLM);
     if (parts.length == 4 && parts[0].equals(HEADER) &&
         Arrays.stream(parts).noneMatch(String::isEmpty)) {
       return new FieldData(parts[1], parts[2], parts[3]);
