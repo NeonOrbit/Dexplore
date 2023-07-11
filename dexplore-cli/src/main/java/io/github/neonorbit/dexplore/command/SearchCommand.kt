@@ -21,6 +21,7 @@ import com.beust.jcommander.Parameters
 import io.github.neonorbit.dexplore.CommandUtils
 import io.github.neonorbit.dexplore.DexSearchEngine
 import io.github.neonorbit.dexplore.DexFileDecoder
+import io.github.neonorbit.dexplore.cliutil.CmdAdvSpec
 import io.github.neonorbit.dexplore.cliutil.CmdAdvancedQuery
 import io.github.neonorbit.dexplore.cliutil.CmdQuery
 import io.github.neonorbit.dexplore.cliutil.CmdQuery.Companion.buildRefTypes
@@ -74,7 +75,7 @@ internal class SearchCommand : Command {
     @Parameter(
         order = 5,
         names = ["-reg", "--cls-regex"],
-        description = "Filter classes with regex pattern (against full name)"
+        description = "Filter classes with java regex (checks against the full name)"
     )
     var clsRegex = ""
 
@@ -156,30 +157,31 @@ internal class SearchCommand : Command {
     @Parameter(
         order = 16,
         names = ["-cdv", "--class-advanced"],
-        description = "'m:public+..., s:superclass, i:interface+..., a:annotation+...'"
+        description = CmdAdvSpec.CLASS_QUERY_FORMAT
     )
     private var cAdvanced = ""
 
     @Parameter(
         order = 17,
         names = ["-mdv", "--method-advanced"],
-        description = "'m:public+..., n:name+..., p:param+..., r:return, a:annot+..., z:size'"
+        description = CmdAdvSpec.METHOD_QUERY_FORMAT
     )
     private var mAdvanced = ""
 
     override fun apply() {
+        val isClass = searchMode == "c"
         val decoder = DexFileDecoder(output).apply {
             flatOutput = true
             decodeJava = true
             decodeSmali = true
         }
-        val engine = DexSearchEngine(searchMode == "c").apply {
+        val engine = DexSearchEngine(isClass).apply {
             setMaximum(maximum)
             setDetails(buildRefTypes(printPool))
             setResourceNames(parseResNames(resNames))
             init(
                 CmdQuery(packages, classes, clsNames, clsRegex, type, refs, signatures, sources, numbers),
-                CmdAdvancedQuery.parse(cAdvanced), CmdAdvancedQuery.parse(mAdvanced)
+                CmdAdvancedQuery.parse(isClass, cAdvanced), CmdAdvancedQuery.parse(isClass, mAdvanced)
             )
         }
         files.map { File(it) }.also {
@@ -221,8 +223,8 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
-        if (classes.isEmpty() && clsNames.isEmpty() && clsRegex.isEmpty() &&
-            type.isEmpty() && sources.isEmpty() && resNames.isEmpty() && numbers.isEmpty() &&
+        if (listOf(classes, clsNames, sources, resNames, numbers).all { it.isEmpty() } &&
+            listOf(type, clsRegex).all { it.isEmpty() } &&
             (searchMode != "c" || cAdvanced.isEmpty()) &&
             (searchMode != "m" || mAdvanced.isEmpty())) {
             CommandUtils.error("\n  Please provide a search query\n")

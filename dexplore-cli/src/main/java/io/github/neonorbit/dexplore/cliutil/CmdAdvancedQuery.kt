@@ -16,17 +16,27 @@
 
 package io.github.neonorbit.dexplore.cliutil
 
+import io.github.neonorbit.dexplore.cliutil.CmdAdvSpec.KEY
+import io.github.neonorbit.dexplore.cliutil.CmdAdvSpec.KEY_EXTRACTOR
+import io.github.neonorbit.dexplore.cliutil.CmdAdvSpec.QUERY_DIVIDER
+import io.github.neonorbit.dexplore.cliutil.CmdAdvSpec.VALUE_DIVIDER
 import java.lang.reflect.Modifier
 
 internal class CmdAdvancedQuery {
     var modifiers: Int = -1
+        private set
     var superClass: String? = null
+        private set
     var interfaces: List<String>? = null
+        private set
+    var paramSize: Int = -1
+        private set
     var methodNames: List<String> = listOf()
+        private set
     var methodParams: List<String>? = null
+        private set
     var methodReturn: String? = null
-    var annotations: List<String> = listOf()
-    var methodParamSize: Int = -1
+        private set
 
     companion object {
         private val MODIFIERS = mapOf(
@@ -41,30 +51,52 @@ internal class CmdAdvancedQuery {
             Pair("SYNCHRONIZED", Modifier.SYNCHRONIZED)
         )
 
-        private fun toModifier(name: String) = MODIFIERS[name] ?: throw Exception("Invalid modifier")
+        private fun toModifier(name: String) = MODIFIERS[name] ?: throwIllegal("modifier: $name")
 
-        fun parse(raw: String): CmdAdvancedQuery {
+        fun parse(isClass: Boolean, raw: String): CmdAdvancedQuery {
             val advanced = CmdAdvancedQuery()
             if (raw.isEmpty()) return advanced
-            raw.split(',').forEach { query ->
-                val key = query.substringBefore(':', "").last()
-                val values = query.substringAfter(':', "").split('+').map { it.trim() }.toList()
+            raw.split(QUERY_DIVIDER).forEach { query ->
+                val (key, args) = divideQuery(query)
+                val values = args.split(VALUE_DIVIDER).sanitize(key)
+                checkQueryKeyValidity(key, isClass)
                 when (key) {
-                    'm' -> {
+                    KEY.FLAGS -> {
                         advanced.modifiers = values.map {
                             toModifier(it.uppercase())
                         }.reduce { acc, value -> acc or value }
                     }
-                    's' -> advanced.superClass = values.first()
-                    'i' -> advanced.interfaces = values
-                    'n' -> advanced.methodNames = values
-                    'p' -> advanced.methodParams = values
-                    'r' -> advanced.methodReturn = values.first()
-                    'a' -> advanced.annotations = values
-                    'z' -> advanced.methodParamSize = values.first().toInt()
+                    KEY.SUPER -> advanced.superClass = values.first()
+                    KEY.IFACES -> advanced.interfaces = values
+                    KEY.METHODS -> advanced.methodNames = values
+                    KEY.PARAMS -> advanced.methodParams = values
+                    KEY.PSIZE -> advanced.paramSize = values.first().toInt()
+                    KEY.RETURN -> advanced.methodReturn = values.first()
+                    else -> throwIllegal("advanced query key: $key")
                 }
             }
             return advanced
         }
+
+        private fun divideQuery(query: String): Pair<Char, String> {
+            val del = KEY_EXTRACTOR
+            if (del !in query) throwIllegal("advanced query: $query")
+            return Pair(query.substringBefore(del).lastOrNull() ?: ' ', query.substringAfter(del)).also {
+                if (it.first.isWhitespace()) throwIllegal("key in advanced query: $query")
+            }
+        }
+
+        private fun List<String>.sanitize(key: Char): List<String> {
+            return this.map { it.trim() }.filter { it.isNotEmpty() }.toList().also {
+                if (!CmdAdvSpec.isEmptyValueAllowed(key) && it.isEmpty()) throwIllegal("value for key: $key")
+            }
+        }
+
+        private fun checkQueryKeyValidity(key: Char, isClass: Boolean) {
+            if (isClass && !CmdAdvSpec.isClassQuery(key)) throwIllegal("query key for class: $key")
+            if (!isClass && !CmdAdvSpec.isMethodQuery(key)) throwIllegal("query key for method: $key")
+        }
+
+        private fun throwIllegal(msg: String): Nothing = throw IllegalArgumentException("Invalid $msg")
     }
 }
