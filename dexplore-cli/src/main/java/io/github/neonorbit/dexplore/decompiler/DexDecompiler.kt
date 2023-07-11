@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.decompiler
 
+import jadx.api.CommentsLevel
 import jadx.api.JadxArgs
 import jadx.api.JadxDecompiler
 import jadx.api.JavaClass
@@ -30,6 +31,7 @@ import java.io.Closeable
 internal class DexDecompiler(private val loader: DexInputLoader,
                              private val disableCache: Boolean,
                              private val renameClasses: Boolean,
+                             private val noCodeComments: Boolean,
                              private val includeSource: Boolean,
                              private val includeResource: Boolean) : Closeable {
     private val args: JadxArgs = JadxArgs().apply {
@@ -39,6 +41,7 @@ internal class DexDecompiler(private val loader: DexInputLoader,
         isSkipResources = !includeResource
         if (!renameClasses) renameFlags = setOf()
         if (disableCache) codeCache = NoOpCodeCache()
+        if (noCodeComments) commentsLevel = CommentsLevel.NONE
     }
     private val decompiler: JadxDecompiler = JadxDecompiler(args)
 

@@ -98,20 +98,27 @@ internal class DecodeCommand : Command {
 
     @Parameter(
         order = 9,
+        names = ["-dcom", "--disable-comment"],
+        description = "Disable adding comments. Default: enabled"
+    )
+    private var disableComments = false
+
+    @Parameter(
+        order = 10,
         names = ["-dmem", "--disable-cache"],
         description = "Disable In-Memory cache. Default: enabled"
     )
     private var disableMemCache = false
 
     @Parameter(
-        order = 10,
+        order = 11,
         names = ["-eps", "--enable-pause"],
         description = "Pause capability (with ENTER key). Default: disabled"
     )
     private var pauseSupport = false
 
     @Parameter(
-            order = 11,
+            order = 12,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
@@ -123,6 +130,7 @@ internal class DecodeCommand : Command {
             resFilter = buildResFilter()
             disableCache = disableMemCache
             renameClass = !disableRename
+            noComments = disableComments
             decodeRes = 'r' in decodeMode
             decodeJava = 'j' in decodeMode
             decodeSmali = 's' in decodeMode

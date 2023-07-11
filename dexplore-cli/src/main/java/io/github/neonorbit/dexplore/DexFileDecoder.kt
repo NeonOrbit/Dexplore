@@ -33,12 +33,13 @@ import java.util.function.Predicate
 internal class DexFileDecoder(private val output: String,
                               private val threadCount: Int = 2,
                               private val pauseSupport: Boolean = false) {
-    var flatOutput:   Boolean = false
-    var decodeJava:   Boolean = false
-    var decodeSmali:  Boolean = false
-    var decodeRes:    Boolean = false
-    var renameClass:  Boolean = false
+    var flatOutput: Boolean = false
+    var decodeJava: Boolean = false
+    var decodeSmali: Boolean = false
+    var decodeRes: Boolean = false
+    var renameClass: Boolean = false
     var disableCache: Boolean = false
+    var noComments: Boolean = false
     var srcFilter: Predicate<String>? = null
     var resFilter: Predicate<String>? = null
 
@@ -49,8 +50,12 @@ internal class DexFileDecoder(private val output: String,
 
     private fun buildDecompiler(file: File): DexDecompiler {
         return DexDecompiler(
-            DexInputLoader(file, srcFilter, resFilter),
-            disableCache, renameClass, decodeJava || decodeSmali, decodeRes
+            loader = DexInputLoader(file, srcFilter, resFilter),
+            disableCache = disableCache,
+            renameClasses = renameClass,
+            noCodeComments = noComments,
+            includeSource = (decodeJava || decodeSmali),
+            includeResource = decodeRes
         )
     }
 
