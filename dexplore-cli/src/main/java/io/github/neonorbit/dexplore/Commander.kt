@@ -53,8 +53,12 @@ internal class Commander(args: Array<String>) : JCommander() {
 
     fun run() {
         val command = allCommands[parsedCommand]
-        if (help || command?.validate() != true) {
-            usage(help)
+        if (help) {
+            usage()
+            return
+        }
+        if (command?.validate() != true) {
+            console.println("Usage: $TITLE --help $parsedCommand\n")
             return
         }
         if (verbose) {
@@ -71,17 +75,11 @@ internal class Commander(args: Array<String>) : JCommander() {
         command.apply()
     }
 
-    private fun usage(help: Boolean) {
-        if (help) {
-            console.println("$TITLE v${VERSION}\n")
-        }
-        usage()
-    }
-
     override fun usage() {
         val output = StringJoiner("\n")
         val program = programDisplayName
         val command = commands[parsedCommand]
+        output.add("$TITLE v${VERSION}\n")
         if (command == null) {
             output.add("Usage: $program <command> <files> [options]\n")
             output.add("Commands:")
