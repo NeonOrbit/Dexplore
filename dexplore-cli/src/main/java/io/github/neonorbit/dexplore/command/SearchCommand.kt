@@ -135,42 +135,50 @@ internal class SearchCommand : Command {
     var annotTypes = ArrayList<String>()
 
     @Parameter(
-            order = 13,
+        order = 13,
+        variableArity = true,
+        names = ["-anv", "--annot-value"],
+        description = "Match based on contained annotation values (values of elements)"
+    )
+    var annotValues = ArrayList<String>()
+
+    @Parameter(
+            order = 14,
             names = ["-l", "--limit"],
             description = "Limit maximum results. Default: -1 (no limit)"
     )
     private var maximum = -1
 
     @Parameter(
-            order = 14,
+            order = 15,
             names = ["-pool", "--print-pool"],
             description = "Print ReferencePool: a: all, s: string, t: type, f: field, m: method"
     )
     var printPool = ""
 
     @Parameter(
-            order = 15,
+            order = 16,
             names = ["-gen", "--gen-sources"],
             description = "Generate java and smali source files from search results"
     )
     private var generate = false
 
     @Parameter(
-            order = 16,
+            order = 17,
             names = ["-o", "--output"],
             description = "Output directory. Default: dexplore-out"
     )
     private var output = "dexplore-out"
 
     @Parameter(
-        order = 17,
+        order = 18,
         names = ["-cdv", "--class-advanced"],
         description = CmdAdvSpec.CLASS_QUERY_FORMAT
     )
     private var cAdvanced = ""
 
     @Parameter(
-        order = 18,
+        order = 19,
         names = ["-mdv", "--method-advanced"],
         description = CmdAdvSpec.METHOD_QUERY_FORMAT
     )
@@ -189,7 +197,9 @@ internal class SearchCommand : Command {
             setResourceNames(parseResNames(resNames))
             init(
                 CmdQuery(
-                    packages, classes, clsNames, clsRegex, type, refs, signatures, sources, numbers, annotTypes),
+                    packages, classes, clsNames, clsRegex, type, refs,
+                    signatures, sources, numbers, annotTypes, annotValues
+                ),
                 CmdAdvancedQuery.parse(isClass, cAdvanced), CmdAdvancedQuery.parse(isClass, mAdvanced)
             )
         }
@@ -232,8 +242,9 @@ internal class SearchCommand : Command {
             CommandUtils.error("\n  Please enter correct search mode\n")
             return false
         }
-        if (listOf(classes, clsNames, sources, resNames, numbers, annotTypes).all { it.isEmpty() } &&
-            listOf(type, clsRegex).all { it.isEmpty() } &&
+        if (listOf(classes, clsNames, sources, resNames, numbers, annotTypes, annotValues).all {
+            it.isEmpty()
+        } && listOf(type, clsRegex).all { it.isEmpty() } &&
             (searchMode != "c" || cAdvanced.isEmpty()) &&
             (searchMode != "m" || mAdvanced.isEmpty())) {
             CommandUtils.error("\n  Please provide a search query\n")
