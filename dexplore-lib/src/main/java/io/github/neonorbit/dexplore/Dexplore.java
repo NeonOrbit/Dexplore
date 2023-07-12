@@ -69,13 +69,29 @@ public interface Dexplore {
    * @see #findClasses(DexFilter, ClassFilter, int)
    */
   @Nullable
-  ClassData findClass(@Nonnull DexFilter dexFilter,
-                      @Nonnull ClassFilter classFilter);
+  ClassData findClass(@Nonnull DexFilter dexFilter, @Nonnull ClassFilter classFilter);
+
+  /**
+   * Find all the classes that match the given filter.
+   * <p>
+   *   Note: This is equivalent to
+   *   {@link #findClasses(DexFilter, ClassFilter, int) findClasses()},
+   *   but without search limits or dex file filtering.
+   * <p>
+   *   <b>Note:</b> Not setting search limits can slow down the search process.
+   *
+   * @param classFilter a filter to find the desired dex classes
+   * @return a list of matching classes or an empty list if nothing matches
+   */
+  @Nonnull
+  default List<ClassData> findClasses(@Nonnull ClassFilter classFilter) {
+    return findClasses(DexFilter.MATCH_ALL, classFilter, -1);
+  }
 
   /**
    * Find all the classes that match the specified filters.
    * <p>
-   *   The search operation will stop once the specified limit is reached.
+   *   Note: The search operation will stop once the specified limit is reached.
    * </p>
    *
    * @param dexFilter a filter to select the desired dex files
@@ -99,7 +115,6 @@ public interface Dexplore {
    * @param classFilter a filter to select the desired dex classes
    * @param methodFilter a filter to find the desired dex method
    * @return the first matching method or null if no match is found
-   * @see #findMethods(DexFilter, ClassFilter, MethodFilter, int)
    */
   @Nullable
   default MethodData findMethod(@Nonnull ClassFilter classFilter,
@@ -123,6 +138,25 @@ public interface Dexplore {
   MethodData findMethod(@Nonnull DexFilter dexFilter,
                         @Nonnull ClassFilter classFilter,
                         @Nonnull MethodFilter methodFilter);
+
+  /**
+   * Find all the methods that match the specified filters.
+   * <p>
+   *   Note: This is equivalent to
+   *   {@link #findMethods(DexFilter, ClassFilter, MethodFilter, int) findMethods()},
+   *   but without search limits or dex file filtering.
+   * <p>
+   *   <b>Note:</b> Not setting search limits can slow down the search process.
+   *
+   * @param classFilter a filter to select the desired dex classes
+   * @param methodFilter a filter to find the desired dex methods
+   * @return a list of matching classes or an empty list if nothing matches
+   */
+  @Nonnull
+  default List<MethodData> findMethods(@Nonnull ClassFilter classFilter,
+                                       @Nonnull MethodFilter methodFilter) {
+    return findMethods(DexFilter.MATCH_ALL, classFilter, methodFilter, -1);
+  }
 
   /**
    * Find all the methods that match the specified filters.
@@ -182,10 +216,10 @@ public interface Dexplore {
    * <b>Note:</b> The resulting items will be in the form of {@link DexItemData},
    *  You should cast them into appropriate ({@link ClassData} or {@link MethodData}) objects.
    * <p>
-   * <br/> See helper methods: <br/>
+   * <br> See helper methods: <br>
    * * {@link DexHelper#getFirstMatchingResults(Dexplore, QueryBatch)
    *          DexHelper.getFirstMatchingResults()
-   * } <br/>
+   * } <br>
    * * {@link DexHelper#getSingleMatchingResults(Dexplore, QueryBatch)
    *          DexHelper.getSingleMatchingResults()
    * }
