@@ -20,21 +20,15 @@ import io.github.neonorbit.dexplore.DexEntry;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.exception.AbortException;
 import io.github.neonorbit.dexplore.iface.Internal;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 
 import javax.annotation.Nonnull;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-
-import static io.github.neonorbit.dexplore.util.Utils.isSingle;
 
 /**
- * A filter that decides whether a dex file should be loaded for analyzing.
+ * A filter that determines the dex files to be loaded for searching.
  * <p><br>
- *   Note: The filter will match if and only if all the specified conditions are satisfied.
+ *   Note: The filter will match only if all the specified conditions are satisfied.
  * </p>
  *
  * @author NeonOrbit
@@ -45,16 +39,12 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   public static final DexFilter MATCH_ALL = new DexFilter(builder());
 
   private final boolean preferredDexOnly;
-  private final Set<String> storedSourceNames;
-  private final Set<String> definedClassNames;
   private final List<String> preferredDexNames;
 
   private DexFilter(Builder builder) {
-    super(builder, isSingle(builder.definedClassNames));
+    super(builder, false);
     this.preferredDexOnly = builder.preferredDexOnly;
     this.preferredDexNames = builder.preferredDexNames;
-    this.storedSourceNames = builder.storedSourceNames;
-    this.definedClassNames = builder.definedClassNames;
   }
 
   @Internal
@@ -70,15 +60,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     if (shouldTerminate(dexEntry)) {
       throw AbortException.silently();
     }
-    if (!checkDefinedClasses(dexEntry)) return false;
-    boolean result = (
-            checkStoredSources(dexEntry) &&
-            super.verify(dexEntry, decoder)
-    );
-    if (unique && !result) {
-      throw new AbortException("Dex found but the filter didn't match");
-    }
-    return result;
+    return super.verify(dexEntry, decoder);
   }
 
   private boolean shouldTerminate(DexEntry dexEntry) {
@@ -88,40 +70,19 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     return false;
   }
 
-  private boolean checkStoredSources(DexEntry dexEntry) {
-    if (storedSourceNames == null) return true;
-    for (DexBackedClassDef c : DexUtils.dexClasses(dexEntry.getDexFile())) {
-      String source = c.getSourceFile();
-      if (source != null && storedSourceNames.contains(source)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean checkDefinedClasses(DexEntry dexEntry) {
-    if (definedClassNames == null) return true;
-    for (DexBackedClassDef c : DexUtils.dexClasses(dexEntry.getDexFile())) {
-      if (definedClassNames.contains(c.getType())) return true;
-    }
-    return false;
-  }
-
   /**
-   * This is equivalent to:
-   * <blockquote><pre>
-   *   new DexFilter.Builder()
-   *                .{@link DexFilter.Builder#setDefinedClasses(String...)
-   *                             setDefinedClasses(clazz)}
-   *                .build();
-   * </pre></blockquote>
-   *
+   * <b>DEPRECATED</b>: Currently does nothing.
+   * @deprecated {@link
+   *    ClassFilter.Builder#setClasses(String...)
+   *    ClassFilter.setClasses()
+   * } makes it obsolete
    * @param clazz class name
    * @return a {@code DexFilter} instance
    */
+  @Deprecated
+  @SuppressWarnings("unused")
   public static DexFilter ofDefinedClass(@Nonnull String clazz) {
-    Objects.requireNonNull(clazz);
-    return builder().setDefinedClasses(clazz).build();
+    return MATCH_ALL;
   }
 
   public Builder toBuilder() {
@@ -134,8 +95,6 @@ public final class DexFilter extends BaseFilter<DexEntry> {
 
   public static class Builder extends BaseFilter.Builder<Builder, DexFilter> {
     private boolean preferredDexOnly;
-    private Set<String> storedSourceNames;
-    private Set<String> definedClassNames;
     private List<String> preferredDexNames;
 
     public Builder() {}
@@ -144,17 +103,13 @@ public final class DexFilter extends BaseFilter<DexEntry> {
       super(instance);
       this.preferredDexOnly = instance.preferredDexOnly;
       this.preferredDexNames = instance.preferredDexNames;
-      this.storedSourceNames = instance.storedSourceNames;
-      this.definedClassNames = instance.definedClassNames;
     }
 
     @Override
     protected boolean isDefault() {
       return super.isDefault()  &&
               !preferredDexOnly &&
-              preferredDexNames == null &&
-              storedSourceNames == null &&
-              definedClassNames == null;
+              preferredDexNames == null;
     }
 
     @Override
@@ -168,7 +123,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     }
 
     /**
-     * Specify a list of dex files that should be analyzed first.
+     * Specify a prioritized list of dex files to be searched first.
      *
      * @param names dex file names
      * @return {@code this} builder
@@ -180,7 +135,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     }
 
     /**
-     * If true, only the {@link #setPreferredDexNames(String...) preferred} dex files will be analyzed.
+     * If true, only the {@link #setPreferredDexNames(String...) preferred} dex files will be searched.
      *
      * @param allow {@code true} to set, {@code false} to unset.
      * @return {@code this} builder
@@ -195,28 +150,32 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     }
 
     /**
-     * Add a condition to the filter to match dex files that contain any of the specified source files.
-     * <p>Examples: "Application.java", "AnyFileName.java" etc.</p>
-     *
+     * <b>DEPRECATED</b>: Currently does nothing.
+     * @deprecated {@link
+     *    ClassFilter.Builder#setSourceNames(String...)
+     *    ClassFilter.setSourceNames()
+     * } makes it obsolete
      * @param sources source file names
      * @return {@code this} builder
      */
+    @Deprecated
+    @SuppressWarnings("unused")
     public Builder setStoredSources(@Nonnull String... sources) {
-      List<String> list = Utils.nonNullList(sources);
-      this.storedSourceNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
 
     /**
-     * Add a condition to the filter to match dex files that contain any of the specified classes.
-     * <p>This is useful if you want to search in specific classes only.</p>
-     *
-     * @param classes {@linkplain Class#getName() full names} of classes
+     * <b>DEPRECATED</b>: Currently does nothing.
+     * @deprecated {@link
+     *    ClassFilter.Builder#setClasses(String...)
+     *    ClassFilter.setClasses()
+     * } makes it obsolete
+     * @param classes full names of classes
      * @return {@code this} builder
      */
+    @Deprecated
+    @SuppressWarnings("unused")
     public Builder setDefinedClasses(@Nonnull String... classes) {
-      List<String> list = DexUtils.javaToDexTypeName(Utils.nonNullList(classes));
-      this.definedClassNames = list.isEmpty() ? null : Utils.optimizedSet(list);
       return this;
     }
   }
