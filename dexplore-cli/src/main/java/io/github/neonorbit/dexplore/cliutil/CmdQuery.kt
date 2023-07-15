@@ -31,7 +31,8 @@ class CmdQuery(
     val sources: List<String>,
     numbers: List<String>,
     val annotTypes: List<String>,
-    val annotValues: List<String>
+    val annotValues: List<String>,
+    val enableSynthetic: Boolean
 ) {
     val refTypes = buildRefTypes(referenceTypes)
     val numbers: List<Number> = parseNumbers(numbers)

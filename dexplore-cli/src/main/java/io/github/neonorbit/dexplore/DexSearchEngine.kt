@@ -84,6 +84,8 @@ internal class DexSearchEngine(private val classMode: Boolean) {
             .setInterfaces(classAdvanced.interfaces)
             .containsAnnotations(*cmdQuery.annotTypes.toTypedArray())
             .containsAnnotationValues(*cmdQuery.annotValues.toTypedArray())
+            .enableSyntheticClasses(cmdQuery.enableSynthetic)
+            .enableSyntheticMembers(cmdQuery.enableSynthetic)
             .build()
         methodFilter = if (classMode) MethodFilter.MATCH_ALL else MethodFilter
             .builder()
@@ -97,6 +99,7 @@ internal class DexSearchEngine(private val classMode: Boolean) {
             .setParamSize(methodAdvanced.paramSize)
             .containsAnnotations(*cmdQuery.annotTypes.toTypedArray())
             .containsAnnotationValues(*cmdQuery.annotValues.toTypedArray())
+            .enableSyntheticMethods(cmdQuery.enableSynthetic)
             .build()
         initialized = true
     }
