@@ -41,7 +41,7 @@ import static io.github.neonorbit.dexplore.util.Utils.isValidName;
 /**
  * A filter used to select dex classes of interest.
  * <p><br>
- *   Note: The filter will match if and only if all the specified conditions are satisfied.
+ *   Note: The filter will match only if all the specified conditions are satisfied.
  * </p>
  *
  * @author NeonOrbit
@@ -55,6 +55,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
   private final int flag;
   private final int skipFlag;
+  private final boolean synthClass;
+  private final boolean synthItems;
   private final String superClass;
   private final Pattern pkgPattern;
   private final Pattern clsPattern;
@@ -70,6 +72,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     super(builder, isSingle(builder.classNames));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
+    this.synthClass = builder.synthClass;
+    this.synthItems = builder.synthItems;
     this.superClass = builder.superClass;
     this.pkgPattern = builder.pkgPattern;
     this.clsPattern = builder.clsPattern;
@@ -83,21 +87,28 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   }
 
   @Internal
+  public boolean synthItems() {
+    return synthItems;
+  }
+
+  @Internal
   @Override
   public boolean verify(@Nonnull DexBackedClassDef dexClass,
                         @Nonnull LazyDecoder<DexBackedClassDef> decoder) {
     if (this == MATCH_ALL) return true;
+    int classAccessFlags = dexClass.getAccessFlags();
+    if (DexUtils.skipSynthetic(synthClass, classAccessFlags)) return false;
     if (!checkClassNames(dexClass.getType())) return false;
     boolean result = (
-            (flag == NEG || (dexClass.getAccessFlags() & flag) == flag) &&
-            (skipFlag == NEG || (dexClass.getAccessFlags() & skipFlag) == 0) &&
+            (flag == NEG || (classAccessFlags & flag) == flag) &&
+            (skipFlag == NEG || (classAccessFlags & skipFlag) == 0) &&
             (superClass == null || superClass.equals(dexClass.getSuperclass())) &&
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
             (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
             (sourceNames == null || containsSourceFileName(dexClass.getSourceFile())) &&
-            (annotations == null || FilterUtils.containsAllAnnotations(dexClass, annotations)) &&
-            (annotValues == null || FilterUtils.containsAllAnnotationValues(dexClass, annotValues)) &&
-            (numLiterals == null || DexDecoder.decodeNumberLiterals(dexClass).containsAll(numLiterals)) &&
+            (annotations == null || FilterUtils.containsAllAnnotations(dexClass, annotations, synthItems)) &&
+            (annotValues == null || FilterUtils.containsAllAnnotationValues(dexClass, annotValues, synthItems)) &&
+            (numLiterals == null || DexDecoder.decodeNumberLiterals(dexClass, synthItems).containsAll(numLiterals)) &&
             super.verify(dexClass, decoder)
     );
     if (unique && !result) {
@@ -148,6 +159,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   public static class Builder extends BaseFilter.Builder<Builder, ClassFilter> {
     private int flag = NEG;
     private int skipFlag = NEG;
+    private boolean synthClass;
+    private boolean synthItems;
     private String superClass;
     private Pattern pkgPattern;
     private Pattern clsPattern;
@@ -165,6 +178,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       super(instance);
       this.flag = instance.flag;
       this.skipFlag = instance.skipFlag;
+      this.synthClass = instance.synthClass;
+      this.synthItems = instance.synthItems;
       this.superClass = instance.superClass;
       this.pkgPattern = instance.pkgPattern;
       this.clsPattern = instance.clsPattern;
@@ -179,7 +194,9 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     @Override
     protected boolean isDefault() {
-      return super.isDefault()    &&
+      return super.isDefault() &&
+              !synthClass &&
+              !synthItems &&
               flag        == NEG  &&
               skipFlag    == NEG  &&
               superClass  == null &&
@@ -201,7 +218,11 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     @Override
     public ClassFilter build() {
-      return isDefault() ? MATCH_ALL : new ClassFilter(this);
+      if (isDefault()) return MATCH_ALL;
+      if (types != null) {
+        setReferenceTypes(types.withSynthetic(synthItems));
+      }
+      return new ClassFilter(this);
     }
 
     /**
@@ -309,6 +330,39 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
       if (this.shortNames != null && this.classNames != null) throw new IllegalStateException(
               "ClassFilter: setClassSimpleNames() cannot be used together with setClasses()"
       );
+      return this;
+    }
+
+    /**
+     * Specify whether to include synthetic classes in the search.
+     * <br> <b>Default:</b> disabled
+     * @param enable {@code true} to enable, {@code false} to disable
+     * @return {@code this} builder
+     */
+    public Builder enableSyntheticClasses(boolean enable) {
+      this.synthClass = enable;
+      return this;
+    }
+
+    /**
+     * Specify whether the synthetic items of the class should also be checked.
+     * <p>
+     * Synthetic items are
+     * {@link #setReferenceFilter(ReferenceFilter) references},
+     * {@link #setNumbers(Number...) numbers},
+     * {@link #containsAnnotations(String...) annotations},
+     * {@link #containsAnnotationValues(String...) annotation-values}
+     * of synthetic members (synthetic fields and methods).
+     * <p>
+     *   <b>Note:</b> This will also include synthetic members (synthetic fields and methods)
+     *   and their references in the resulting {@code ClassData} object.
+     * </p>
+     * <b>Default:</b> disabled <br>
+     * @param enable {@code true} to enable, {@code false} to disable
+     * @return {@code this} builder
+     */
+    public Builder enableSyntheticMembers(boolean enable) {
+      this.synthItems = enable;
       return this;
     }
 
@@ -436,7 +490,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match methods that contain all the specified numbers.
+     * Add a condition to the filter to match classes that contain all the specified numbers.
      * <p>Note: Each float value must end with an 'f' character.</p>
      *
      * @param numbers list of numbers to match

@@ -116,10 +116,10 @@ public final class DexDecoder {
     return decodeMethodReferences(dexMethod, ReferenceTypes.all(), true);
   }
 
-  public static Set<Long> decodeNumberLiterals(@Nonnull DexBackedClassDef dexClass) {
+  public static Set<Long> decodeNumberLiterals(@Nonnull DexBackedClassDef dexClass, boolean synthetic) {
     Set<Long> numbers = new HashSet<>();
     DexUtils.dexStaticFields(dexClass).forEach(f -> decodeNumberLiterals(f, numbers));
-    DexUtils.dexMethods(dexClass).forEach(m -> decodeNumberLiterals(m, numbers));
+    DexUtils.dexMethods(dexClass, synthetic).forEach(m -> decodeNumberLiterals(m, numbers));
     return numbers;
   }
 
@@ -157,9 +157,9 @@ public final class DexDecoder {
                                                       ReferenceTypes types) {
     switch (types.getScope()) {
       default: return Collections.emptyList();
-      case ALL: return DexUtils.dexMethods(dexClass, types.synthEnabled());
-      case DIRECT: return DexUtils.dexDirectMethods(dexClass, types.synthEnabled());
-      case VIRTUAL: return DexUtils.dexVirtualMethods(dexClass, types.synthEnabled());
+      case ALL: return DexUtils.dexMethods(dexClass, types.synthRefs());
+      case DIRECT: return DexUtils.dexDirectMethods(dexClass, types.synthRefs());
+      case VIRTUAL: return DexUtils.dexVirtualMethods(dexClass, types.synthRefs());
     }
   }
 

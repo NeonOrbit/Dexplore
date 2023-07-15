@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore.filter;
 
+import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.reference.FieldRefData;
 import io.github.neonorbit.dexplore.reference.MethodRefData;
 import io.github.neonorbit.dexplore.reference.StringRefData;
@@ -86,11 +87,16 @@ public final class ReferenceTypes {
     this.synthetic = builder.synthetic;
   }
 
+  @Internal
+  ReferenceTypes withSynthetic(boolean enable) {
+    return toBuilder().enableSynthetic(enable).build();
+  }
+
   public Scope getScope() {
     return scope;
   }
 
-  public boolean synthEnabled() {
+  public boolean synthRefs() {
     return synthetic;
   }
 
@@ -158,6 +164,10 @@ public final class ReferenceTypes {
     return builder().setScope(Scope.NONE).build();
   }
 
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -174,8 +184,21 @@ public final class ReferenceTypes {
     private boolean synthetic;
     private Scope scope = Scope.ALL;
 
+    private Builder() {}
+
+    private Builder(ReferenceTypes instance) {
+      this.flags = instance.flags;
+      this.scope = instance.scope;
+      this.synthetic = instance.synthetic;
+    }
+
     public ReferenceTypes build() {
       return new ReferenceTypes(this);
+    }
+
+    private Builder enableSynthetic(boolean enable) {
+      this.synthetic = enable;
+      return this;
     }
 
     /**
@@ -277,18 +300,6 @@ public final class ReferenceTypes {
      */
     public Builder setScope(@Nonnull Scope scope) {
       this.scope = Objects.requireNonNull(scope);
-      return this;
-    }
-
-    /**
-     * Specify whether references should also be added from synthetic members.
-     * (Default: disabled)
-     * @param enable {@code true} to enable
-     * @return {@code this} builder
-     * @see Scope
-     */
-    public Builder enableSynthetic(boolean enable) {
-      this.synthetic = enable;
       return this;
     }
   }

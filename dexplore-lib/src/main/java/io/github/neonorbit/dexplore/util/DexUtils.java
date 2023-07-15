@@ -21,7 +21,6 @@ import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.ValueType;
 import org.jf.dexlib2.analysis.reflection.util.ReflectionUtils;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import org.jf.dexlib2.iface.value.EncodedValue;
@@ -187,60 +186,67 @@ public final class DexUtils {
     return buffer.toString();
   }
 
-  public static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass) {
-    return dexMethods(dexClass, 0);
+  public static boolean skipSynthetic(boolean isSynthEnabled, int flags) {
+    return !isSynthEnabled && AccessFlags.SYNTHETIC.isSet(flags);
   }
 
   @SuppressWarnings("unchecked")
   public static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass, boolean synthEnabled) {
-    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getMethods() : dexMethods(dexClass, 0);
+    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getMethods() : filterSynthMethods(dexClass, 0);
   }
 
   @SuppressWarnings("unchecked")
   public static Iterable<DexBackedMethod> dexDirectMethods(DexBackedClassDef dexClass, boolean synthEnabled) {
-    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getDirectMethods() : dexMethods(dexClass, 1);
+    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getDirectMethods() : filterSynthMethods(dexClass, 1);
   }
 
   @SuppressWarnings("unchecked")
   public static Iterable<DexBackedMethod> dexVirtualMethods(DexBackedClassDef dexClass, boolean synthEnabled) {
-    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getVirtualMethods() : dexMethods(dexClass, 2);
-  }
-
-  public static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass) {
-    return dexFields(dexClass, 0);
+    return synthEnabled ? (Iterable<DexBackedMethod>) dexClass.getVirtualMethods() : filterSynthMethods(dexClass, 2);
   }
 
   public static Iterable<DexBackedField> dexStaticFields(DexBackedClassDef dexClass) {
-    return dexFields(dexClass, 1);
-  }
-
-  public static Iterable<DexBackedField> dexInstanceFields(DexBackedClassDef dexClass) {
-    return dexFields(dexClass, 2);
-  }
-
-  private static boolean isValid(int flag) {
-    return !AccessFlags.SYNTHETIC.isSet(flag);
+    return dexStaticFields(dexClass, false);
   }
 
   @SuppressWarnings("unchecked")
-  public static Iterable<DexBackedClassDef> dexClasses(DexBackedDexFile dexFile) {
-    Iterable<DexBackedClassDef> it = (Iterable<DexBackedClassDef>) dexFile.getClasses();
-    return new FilteredIterable<>(it, clazz -> isValid(clazz.getAccessFlags()));
+  public static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass, boolean synthEnabled) {
+    return synthEnabled ? (Iterable<DexBackedField>) dexClass.getFields() : filterSynthFields(dexClass, 0);
   }
 
   @SuppressWarnings("unchecked")
-  private static Iterable<DexBackedMethod> dexMethods(DexBackedClassDef dexClass, int type) {
+  public static Iterable<DexBackedField> dexStaticFields(DexBackedClassDef dexClass, boolean synthEnabled) {
+    return synthEnabled ? (Iterable<DexBackedField>) dexClass.getStaticFields() : filterSynthFields(dexClass, 1);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Iterable<DexBackedField> dexInstanceFields(DexBackedClassDef dexClass, boolean synthEnabled) {
+    return synthEnabled ? (Iterable<DexBackedField>) dexClass.getInstanceFields() : filterSynthFields(dexClass, 2);
+  }
+
+  /**
+   * @param dexClass source
+   * @param type 1: direct, 2: virtual
+   * @return filtered dex methods
+   */
+  @SuppressWarnings("unchecked")
+  private static Iterable<DexBackedMethod> filterSynthMethods(DexBackedClassDef dexClass, int type) {
     Iterable<DexBackedMethod> it = (Iterable<DexBackedMethod>) (
             (type==1) ? dexClass.getDirectMethods() : (type==2) ? dexClass.getVirtualMethods() : dexClass.getMethods()
     );
-    return new FilteredIterable<>(it, method -> isValid(method.getAccessFlags()));
+    return new FilteredIterable<>(it, method -> !AccessFlags.SYNTHETIC.isSet(method.accessFlags));
   }
 
+  /**
+   * @param dexClass source
+   * @param type 1: static, 2: instance
+   * @return filtered dex fields
+   */
   @SuppressWarnings("unchecked")
-  private static Iterable<DexBackedField> dexFields(DexBackedClassDef dexClass, int type) {
+  private static Iterable<DexBackedField> filterSynthFields(DexBackedClassDef dexClass, int type) {
     Iterable<DexBackedField> it = (Iterable<DexBackedField>) (
             (type==1) ? dexClass.getStaticFields() : (type==2) ? dexClass.getInstanceFields() : dexClass.getFields()
     );
-    return new FilteredIterable<>(it, field -> isValid(field.getAccessFlags()));
+    return new FilteredIterable<>(it, field -> !AccessFlags.SYNTHETIC.isSet(field.accessFlags));
   }
 }

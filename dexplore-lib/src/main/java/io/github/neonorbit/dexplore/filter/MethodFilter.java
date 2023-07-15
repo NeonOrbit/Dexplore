@@ -19,8 +19,8 @@ package io.github.neonorbit.dexplore.filter;
 import io.github.neonorbit.dexplore.DexDecoder;
 import io.github.neonorbit.dexplore.LazyDecoder;
 import io.github.neonorbit.dexplore.exception.AbortException;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.iface.Internal;
+import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.util.Utils;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * A filter used to select dex methods of interest.
  * <p><br>
- *   Note: The filter will match if and only if all the specified conditions are satisfied.
+ *   Note: The filter will match only if all the specified conditions are satisfied.
  * </p>
  *
  * @author NeonOrbit
@@ -51,6 +51,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   private final int flag;
   private final int skipFlag;
   private final int paramSize;
+  private final boolean synthetic;
   private final String returnType;
   private final Set<String> methodNames;
   private final List<String> parameters;
@@ -62,6 +63,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     super(builder, isUniqueSig(builder));
     this.flag = builder.flag;
     this.skipFlag = builder.skipFlag;
+    this.synthetic = builder.synthetic;
     this.paramSize = builder.paramSize;
     this.parameters = builder.parameters;
     this.returnType = builder.returnType;
@@ -71,8 +73,13 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     this.numLiterals = builder.numLiterals;
   }
 
+  public boolean synthEnabled() {
+    return synthetic;
+  }
+
   private static boolean isUniqueSig(Builder b) {
-    return Utils.isSingle(b.methodNames) && (b.parameters != null || b.paramSize == 0);
+    if (!Utils.isSingle(b.methodNames)) return false;
+    return (b.parameters != null || b.paramSize == 0) && (!b.synthetic || b.returnType != null);
   }
 
   @Internal
@@ -80,6 +87,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   public boolean verify(@Nonnull DexBackedMethod dexMethod,
                         @Nonnull LazyDecoder<DexBackedMethod> decoder) {
     if (this == MATCH_ALL) return true;
+    if (DexUtils.skipSynthetic(synthetic, dexMethod.accessFlags)) return false;
     if (!checkMethodSignature(dexMethod)) return false;
     boolean result = (
             (flag == NEG || (dexMethod.accessFlags & flag) == flag) &&
@@ -113,6 +121,26 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
    *                   .{@link MethodFilter.Builder#setMethodNames(String...)
    *                           setMethodNames(method)}
    *                   .{@link MethodFilter.Builder#setParamList(List)
+   *                           setParamList(Collections.emptyList())}
+   *                   .build();
+   * </pre></blockquote>
+   * Matches a single method with the specified name and no parameters.
+   *
+   * @param method method name
+   * @return a {@code MethodFilter} instance
+   * @see #ofMethod(String, List) MethodFilter.ofMethod(method, params)
+   */
+  public static MethodFilter ofMethod(@Nonnull String method) {
+    return ofMethod(method, Collections.emptyList());
+  }
+
+  /**
+   * This is equivalent to:
+   * <blockquote><pre>
+   *   new MethodFilter.Builder()
+   *                   .{@link MethodFilter.Builder#setMethodNames(String...)
+   *                           setMethodNames(method)}
+   *                   .{@link MethodFilter.Builder#setParamList(List)
    *                           setParamList(params)}
    *                   .build();
    * </pre></blockquote>
@@ -126,24 +154,6 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     return builder().setMethodNames(method).setParamList(params).build();
   }
 
-  /**
-   * This is equivalent to:
-   * <blockquote><pre>
-   *   new MethodFilter.Builder()
-   *                   .{@link MethodFilter.Builder#setMethodNames(String...)
-   *                           setMethodNames(method)}
-   *                   .{@link MethodFilter.Builder#setParamList(List)
-   *                           setParamList(Collections.emptyList())}
-   *                   .build();
-   * </pre></blockquote>
-   *
-   * @param method method name
-   * @return a {@code MethodFilter} instance
-   */
-  public static MethodFilter ofMethod(@Nonnull String method) {
-    return ofMethod(method, Collections.emptyList());
-  }
-
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -155,6 +165,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   public static class Builder extends BaseFilter.Builder<Builder, MethodFilter> {
     private int flag = NEG;
     private int skipFlag = NEG;
+    private boolean synthetic;
     private int paramSize = NEG;
     private String returnType;
     private Set<String> methodNames;
@@ -169,6 +180,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
       super(instance);
       this.flag = instance.flag;
       this.skipFlag = instance.skipFlag;
+      this.synthetic = instance.synthetic;
       this.paramSize = instance.paramSize;
       this.parameters = instance.parameters;
       this.returnType = instance.returnType;
@@ -181,6 +193,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     @Override
     protected boolean isDefault() {
       return super.isDefault()    &&
+              !synthetic          &&
               flag        == NEG  &&
               skipFlag    == NEG  &&
               paramSize   == NEG  &&
@@ -211,6 +224,22 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     public Builder setMethodNames(@Nonnull String... names) {
       List<String> list = Utils.nonNullList(names);
       this.methodNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Specify whether to include synthetic methods in the search.
+     * <br> <b>Default:</b> disabled
+     * <p>
+     *   Note: If the declaring class of the method is also synthetic, you need to
+     *   {@link ClassFilter.Builder#enableSyntheticClasses(boolean) enable} synthetic classes as well.
+     * </p>
+     * @param enable {@code true} to enable, {@code false} to disable
+     * @return {@code this} builder
+     * @see ClassFilter.Builder#enableSyntheticClasses(boolean) ClassFilter.enableSyntheticClasses()
+     */
+    public Builder enableSyntheticMethods(boolean enable) {
+      this.synthetic = enable;
       return this;
     }
 

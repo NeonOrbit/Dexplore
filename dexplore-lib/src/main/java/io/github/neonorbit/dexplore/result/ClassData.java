@@ -111,13 +111,16 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
 
   /**
    * @param name the name of the method
-   * @param params {@linkplain Class#getName() full names} of method parameter types
-   * @return the {@code MethodData} object of the specified method
+   * @param params parameters or null if no params
+   * @param returnType the return type of the method
+   * @return the {@code MethodData} object of the specified method or null
    */
   @Nullable
-  public MethodData getMethod(@Nonnull String name, @Nonnull String... params) {
-    return getMethods().stream().filter(
-            m -> m.method.equals(name) && Arrays.equals(m.params, params)
+  public MethodData getMethod(@Nonnull String name,
+                              @Nullable List<String> params,
+                              @Nonnull String returnType) {
+    return getMethods().stream().filter(m -> m.method.equals(name) &&
+            m.returnType.equals(returnType) && Utils.isEquals(params, m.params)
     ).findFirst().orElse(null);
   }
 
@@ -137,9 +140,20 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
   }
 
   /**
+   * @param params parameter types if any
+   * @return the {@code MethodData} object of the specified constructor or null
+   */
+  @Nullable
+  public MethodData getConstructor(@Nonnull String... params) {
+    return getMethods().stream().filter(m ->
+            m.isConstructor() && Arrays.equals(params, m.params)
+    ).findFirst().orElse(null);
+  }
+
+  /**
    * Returns a list of {@code MethodData} objects
    * representing all the declared constructors of the class.
-   * <p>Each time the method is invoked, a new list is created.</p>
+   * <p>Note: Each time the method is invoked, a new list is created.</p>
    *
    * @return a list containing the declared constructors of the class
    */
@@ -150,7 +164,7 @@ public final class ClassData implements DexItemData, Comparable<ClassData> {
 
   /**
    * The {@linkplain Class#getName() full name} of the class.
-   * @return class name
+   * @return full name of the class
    */
   @Nonnull
   @Override

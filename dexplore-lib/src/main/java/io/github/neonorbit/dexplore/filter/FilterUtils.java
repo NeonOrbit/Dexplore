@@ -38,40 +38,41 @@ import static java.util.stream.Collectors.toSet;
 
 final class FilterUtils {
   public static boolean containsAllAnnotations(@Nonnull DexBackedClassDef dexClass,
-                                               @Nonnull Set<String> annotations) {
-    return containsAllAnnotations(getAllAnnotations(dexClass), annotations);
+                                               @Nonnull Set<String> annotations, boolean synthetic) {
+    return containsAllAnnotations(getAllAnnotations(dexClass, synthetic), annotations);
   }
 
   public static boolean containsAllAnnotationValues(@Nonnull DexBackedClassDef dexClass,
-                                                    @Nonnull Set<String> annotationValues) {
-    return containsAllAnnotationValues(getAllAnnotations(dexClass), annotationValues);
+                                                    @Nonnull Set<String> annotationValues, boolean synthetic) {
+    return containsAllAnnotationValues(getAllAnnotations(dexClass, synthetic), annotationValues);
   }
 
   public static boolean containsAllAnnotations(@Nonnull DexBackedMethod dexMethod,
                                                @Nonnull Set<String> annotations) {
-    return containsAllAnnotations(dexMethod.getAnnotations(), annotations);
+    Set<? extends Annotation> source = dexMethod.getAnnotations();
+    return source.size() >= annotations.size() && containsAllAnnotations(source.stream(), annotations);
   }
 
   public static boolean containsAllAnnotationValues(@Nonnull DexBackedMethod dexMethod,
                                                     @Nonnull Set<String> annotationValues) {
-    return containsAllAnnotationValues(dexMethod.getAnnotations(), annotationValues);
+    return containsAllAnnotationValues(dexMethod.getAnnotations().stream(), annotationValues);
   }
 
-  public static boolean containsAllAnnotations(@Nonnull Set<? extends Annotation> reader,
-                                               @Nonnull Set<String> annotations) {
-    if (reader.size() < annotations.size()) return false;
-    return reader.stream().map(Annotation::getType).collect(toSet()).containsAll(annotations);
+  private static boolean containsAllAnnotations(@Nonnull Stream<? extends Annotation> source,
+                                                @Nonnull Set<String> annotations) {
+    Set<String> combinedSource = source.map(Annotation::getType).collect(toSet());
+    return combinedSource.size() >= annotations.size() && combinedSource.containsAll(annotations);
   }
 
-  public static boolean containsAllAnnotationValues(@Nonnull Set<? extends Annotation> reader,
-                                                    @Nonnull Set<String> annotationValues) {
+  private static boolean containsAllAnnotationValues(@Nonnull Stream<? extends Annotation> source,
+                                                     @Nonnull Set<String> annotationValues) {
     Set<String> values = new HashSet<>();
-    for (Annotation annot : reader) {
-      if (annot.getType().startsWith("Ldalvik/annotation/")) continue;
-      for (AnnotationElement element : annot.getElements()) {
+    source.forEach(annotation -> {
+      if (annotation.getType().startsWith("Ldalvik/annotation/")) return;
+      for (AnnotationElement element : annotation.getElements()) {
         decode(element.getValue(), values);
       }
-    }
+    });
     return values.containsAll(annotationValues);
   }
 
@@ -98,13 +99,13 @@ final class FilterUtils {
     }
   }
 
-  private static Set<? extends Annotation> getAllAnnotations(DexBackedClassDef dexClass) {
+  private static Stream<Annotation> getAllAnnotations(DexBackedClassDef dexClass, boolean synthetic) {
     Stream<Annotation> members = Stream.concat(
-            StreamSupport.stream(DexUtils.dexMethods(dexClass).spliterator(), false)
+            StreamSupport.stream(DexUtils.dexMethods(dexClass, synthetic).spliterator(), false)
                     .flatMap(m -> m.getAnnotations().stream()),
-            StreamSupport.stream(DexUtils.dexFields(dexClass).spliterator(), false)
+            StreamSupport.stream(DexUtils.dexFields(dexClass, synthetic).spliterator(), false)
                     .flatMap(f -> f.getAnnotations().stream())
     );
-    return Stream.concat(dexClass.getAnnotations().stream(), members).collect(toSet());
+    return Stream.concat(dexClass.getAnnotations().stream(), members);
   }
 }

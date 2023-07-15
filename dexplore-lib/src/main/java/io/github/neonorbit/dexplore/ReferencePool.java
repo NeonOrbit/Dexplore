@@ -85,7 +85,7 @@ public final class ReferencePool {
   }
 
   public static ReferencePool merge(@Nonnull List<ReferencePool> pools) {
-    if (pools.stream().allMatch(ReferencePool::isEmpty)) return EMPTY_POOL;
+    if (pools.isEmpty() || pools.stream().allMatch(ReferencePool::isEmpty)) return EMPTY_POOL;
     return new ReferencePool(
             MergedList.merge(pools, ReferencePool::getStringSection),
             MergedList.merge(pools, ReferencePool::getTypeSection),
@@ -102,21 +102,33 @@ public final class ReferencePool {
     return this == EMPTY_POOL;
   }
 
+  /**
+   * @return a list containing the string references of the pool
+   */
   @Nonnull
   public List<StringRefData> getStringSection() {
     return strings;
   }
 
+  /**
+   * @return a list containing the field references of the pool
+   */
   @Nonnull
   public List<FieldRefData> getFieldSection() {
     return fields;
   }
 
+  /**
+   * @return a list containing the method references of the pool
+   */
   @Nonnull
   public List<MethodRefData> getMethodSection() {
     return methods;
   }
 
+  /**
+   * @return a list containing the type references of the pool
+   */
   @Nonnull
   public List<TypeRefData> getTypeSection() {
     return types;
@@ -124,7 +136,7 @@ public final class ReferencePool {
 
   /**
    * Returns the constructor section of the pool.
-   * <p>Each time the method is invoked, a new list is created.</p>
+   * <p>Note: Each time the method is invoked, a new list is created.</p>
    * @return the constructor section of the pool
    */
   @Nonnull

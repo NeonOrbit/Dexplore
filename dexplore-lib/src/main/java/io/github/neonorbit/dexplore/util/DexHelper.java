@@ -63,14 +63,16 @@ public final class DexHelper {
    * @param dexplore a dexplore instance
    * @param className full name of the declaring class
    * @param methodName name of the method
-   * @param parameters parameters of the method
+   * @param parameters parameters or null if none
+   * @param returnType return type
    * @return a {@code MethodData} object of the specified method name or null
    */
   @Nullable
   public static MethodData getMethod(@Nonnull Dexplore dexplore, @Nonnull String className,
-                                     @Nonnull String methodName, @Nonnull String... parameters) {
+                                     @Nonnull String methodName, @Nullable List<String> parameters,
+                                     @Nonnull String returnType) {
     ClassData cls = dexplore.findClass(ClassFilter.ofClass(className));
-    return cls == null ? null : cls.getMethod(methodName, parameters);
+    return cls == null ? null : cls.getMethod(methodName, parameters, returnType);
   }
 
   /**
@@ -86,7 +88,7 @@ public final class DexHelper {
    *   Integer aStringResId = DexHelper.getResId(rString, "a_string_res_name")
    *   Integer aPageTitleId = DexHelper.getResId(rString, "app_main_page_title")
    * </pre>
-   * @apiNote This method is intended to be used with
+   * API Note: This method is intended to be used with
    *   {@link ClassFilter.Builder#setNumbers(Number...) ClassFilter.setNumbers()}
    *   to assist in locating classes with resource usage.
    * @param resClass {@code ClassData} instance of the resource class

@@ -16,14 +16,13 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.exception.AbortException;
 import io.github.neonorbit.dexplore.filter.ClassFilter;
 import io.github.neonorbit.dexplore.filter.DexFilter;
 import io.github.neonorbit.dexplore.filter.MethodFilter;
-import io.github.neonorbit.dexplore.exception.AbortException;
-import io.github.neonorbit.dexplore.util.DexLog;
-import io.github.neonorbit.dexplore.util.DexUtils;
 import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.iface.Operator;
+import io.github.neonorbit.dexplore.util.DexLog;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
@@ -52,15 +51,22 @@ final class DexOperation {
       for (DexEntry entry : dexContainer.getEntries(dexFilter.preferredList())) {
         if (dexFilter.verify(entry, decoder)) {
           DexBackedDexFile dexFile = entry.getDexFile();
-          DexLog.d("Processing: " + entry.getDexName());
+          logDexProcess(dexFilter, "Searching: " + entry.getDexName());
           if (operator.operate(dexFile) || dexFilter.isUnique()) {
             return;
           }
+        } else {
+          logDexProcess(dexFilter, "Skipping: " + entry.getDexName());
         }
       }
     } catch (AbortException e) {
       if (!e.isSilent()) DexLog.w("Aborted: " + e.getMessage());
+      else logDexProcess(dexFilter, "Skipping remaining dex files");
     }
+  }
+
+  private static void logDexProcess(DexFilter dexFilter, String msg) {
+    if (dexFilter != DexFilter.MATCH_ALL) DexLog.d(msg);
   }
 
   public void onClasses(@Nonnull DexFilter dexFilter,
@@ -70,7 +76,7 @@ final class DexOperation {
     LazyDecoder<DexBackedClassDef> decoder = dexDecoder::decode;
     onDexFiles(dexFilter, dexFile -> {
       try {
-        for (DexBackedClassDef dexClass : DexUtils.dexClasses(dexFile)) {
+        for (DexBackedClassDef dexClass : dexFile.getClasses()) {
           if (classFilter.verify(dexClass, decoder)) {
             if (operator.operate(dexClass) || unique) {
               return true;
@@ -92,7 +98,7 @@ final class DexOperation {
     LazyDecoder<DexBackedMethod> decoder = dexDecoder::decode;
     onClasses(dexFilter, classFilter, dexClass -> {
       try {
-        for (DexBackedMethod dexMethod : DexUtils.dexMethods(dexClass)) {
+        for (DexBackedMethod dexMethod : dexClass.getMethods()) {
           if (methodFilter.verify(dexMethod, decoder)) {
             if (operator.operate(dexMethod)) return true;
             if (methodFilter.isUnique()) break;

@@ -93,6 +93,15 @@ public final class Utils {
     return Collections.unmodifiableList(Arrays.asList(a));
   }
 
+  public static boolean isEquals(@Nullable List<?> list, @Nonnull Object[] array) {
+    if (list == null || list.isEmpty()) return array.length == 0;
+    if (list.size() != array.length) return false;
+    for (int i = 0; i < array.length; i++) {
+      if (!list.get(i).equals(array[i])) return false;
+    }
+    return true;
+  }
+
   public static <T extends Comparable<? super T>> int compare(T[] a, T[] b) {
     if (a == b) return 0;
     int length = Math.min(a.length, b.length);

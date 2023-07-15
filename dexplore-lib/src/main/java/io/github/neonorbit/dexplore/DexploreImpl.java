@@ -95,8 +95,9 @@ final class DexploreImpl implements Dexplore {
   public void onClassResult(@Nonnull DexFilter dexFilter,
                             @Nonnull ClassFilter classFilter,
                             @Nonnull Operator<ClassData> operator) {
+    boolean synth = classFilter.synthItems();
     dexOperation.onClasses(
-            dexFilter, classFilter, dexClass -> operator.operate(Results.ofClass(dexClass))
+            dexFilter, classFilter, dexClass -> operator.operate(Results.ofClass(dexClass, synth))
     );
   }
 
@@ -105,8 +106,9 @@ final class DexploreImpl implements Dexplore {
                              @Nonnull ClassFilter classFilter,
                              @Nonnull MethodFilter methodFilter,
                              @Nonnull Operator<MethodData> operator) {
+    boolean synth = classFilter.synthItems();
     dexOperation.onMethods(
-            dexFilter, classFilter, methodFilter, dexMethod -> operator.operate(Results.ofMethod(dexMethod))
+            dexFilter, classFilter, methodFilter, dexMethod -> operator.operate(Results.ofMethod(dexMethod, synth))
     );
   }
 
@@ -150,9 +152,10 @@ final class DexploreImpl implements Dexplore {
 
   private List<ClassData> classSearch(DexFilter dexFilter,
                                       ClassFilter classFilter, int limit) {
+    boolean synth = classFilter.synthItems();
     List<ClassData> results = new ArrayList<>();
     dexOperation.onClasses(dexFilter, classFilter, dexClass -> {
-      results.add(Results.ofClass(dexClass));
+      results.add(Results.ofClass(dexClass, synth));
       return (limit > 0 && results.size() >= limit);
     });
     return results;
@@ -161,10 +164,11 @@ final class DexploreImpl implements Dexplore {
   private List<MethodData> methodSearch(DexFilter dexFilter,
                                         ClassFilter classFilter,
                                         MethodFilter methodFilter, int limit) {
+    boolean synth = classFilter.synthItems();
     List<MethodData> results = new ArrayList<>();
     AtomicReference<ClassData> shared = new AtomicReference<>();
     dexOperation.onMethods(dexFilter, classFilter, methodFilter, dexMethod -> {
-      MethodData method = Results.ofMethod(dexMethod, shared.get());
+      MethodData method = Results.ofMethod(shared.get(), dexMethod, synth);
       shared.set(method.getClassData());
       results.add(method);
       return (limit > 0 && results.size() >= limit);

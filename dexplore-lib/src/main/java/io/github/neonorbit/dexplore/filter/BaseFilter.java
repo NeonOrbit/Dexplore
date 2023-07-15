@@ -50,10 +50,9 @@ abstract class BaseFilter<T> {
     return builder.types == null || builder.filter == null || builder.types.hasNone();
   }
 
-  protected static abstract class Builder<B extends Builder<B,?>,
-                                          T extends BaseFilter<?>> {
-    private ReferenceTypes types;
-    private ReferenceFilter filter;
+  protected static abstract class Builder<B extends Builder<B,?>, T extends BaseFilter<?>> {
+    protected ReferenceTypes types;
+    protected ReferenceFilter filter;
 
     protected Builder() {}
 
@@ -71,8 +70,8 @@ abstract class BaseFilter<T> {
     public abstract T build();
 
     /**
-     * Specify which types of references to add in the {@link ReferencePool}. <br>
-     * It'll be used when building a {@code ReferencePool} to pass to the {@link ReferenceFilter}.
+     * Specify the types of references to include in the {@link ReferencePool}
+     * when building it to be used with the {@link ReferenceFilter}.
      *
      * @param types a {@code ReferenceTypes} instance
      * @return {@code this} builder
@@ -84,7 +83,7 @@ abstract class BaseFilter<T> {
     }
 
     /**
-     * Set a {@code ReferenceFilter} to apply to each item to determine whether it should be matched.
+     * Set a {@code ReferenceFilter} to apply to each item, determining whether it should be matched.
      *
      * @param filter a {@code ReferenceFilter} instance
      * @return {@code this} builder

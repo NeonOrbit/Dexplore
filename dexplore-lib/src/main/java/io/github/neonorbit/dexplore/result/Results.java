@@ -21,6 +21,7 @@ import io.github.neonorbit.dexplore.ReferencePool;
 import io.github.neonorbit.dexplore.iface.Internal;
 import io.github.neonorbit.dexplore.reference.StringRefData;
 import io.github.neonorbit.dexplore.util.DexUtils;
+import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
@@ -35,19 +36,19 @@ import java.util.Map;
 
 @Internal
 public final class Results {
-  public static ClassData ofClass(@Nonnull DexBackedClassDef dexClass) {
-    return buildClassData(dexClass);
+  public static ClassData ofClass(@Nonnull DexBackedClassDef dexClass, boolean synthetic) {
+    return buildClassData(dexClass, null, synthetic);
   }
 
-  public static MethodData ofMethod(@Nonnull DexBackedMethod dexMethod) {
-    return ofMethod(dexMethod, null);
+  public static MethodData ofMethod(@Nonnull DexBackedMethod dexMethod, boolean synthetic) {
+    return ofMethod(null, dexMethod, synthetic);
   }
 
-  public static MethodData ofMethod(@Nonnull DexBackedMethod dexMethod,
-                                    @Nullable ClassData sharedInstance) {
+  public static MethodData ofMethod(@Nullable ClassData sharedInstance,
+                                    @Nonnull DexBackedMethod dexMethod, boolean synthetic) {
     if (sharedInstance == null || sharedInstance.getMethods().isEmpty() ||
-        !DexUtils.dexClassToJavaTypeName(dexMethod.classDef).equals(sharedInstance.clazz)) {
-      sharedInstance = buildClassData(dexMethod.classDef);
+            !DexUtils.dexClassToJavaTypeName(dexMethod.classDef).equals(sharedInstance.clazz)) {
+      sharedInstance = buildClassData(dexMethod.classDef, dexMethod, synthetic);
     }
     MethodData method = sharedInstance.getMethodBySignature(DexUtils.getMethodSignature(dexMethod));
     if (method == null) {
@@ -56,26 +57,31 @@ public final class Results {
     return method;
   }
 
-  private static ClassData buildClassData(@Nonnull DexBackedClassDef dexClass) {
+  private static ClassData buildClassData(@Nonnull DexBackedClassDef dexClass,
+                                          @Nullable DexBackedMethod forMethod, boolean synthetic) {
     String clazz = DexUtils.dexClassToJavaTypeName(dexClass);
     ClassData instance = new ClassData(clazz);
     List<FieldData> fields = new ArrayList<>();
-    DexUtils.dexFields(dexClass).forEach(dexField -> {
-      FieldData fieldData = buildFieldData(dexField, instance);
+    DexUtils.dexFields(dexClass, synthetic).forEach(dexField -> {
+      FieldData fieldData = buildFieldData(instance, dexField);
       fields.add(fieldData);
     });
     Map<String, MethodData> methods = new LinkedHashMap<>();
-    DexUtils.dexMethods(dexClass).forEach(dexMethod -> {
-      MethodData method = buildMethodData(dexMethod, instance);
+    DexUtils.dexMethods(dexClass, synthetic).forEach(dexMethod -> {
+      MethodData method = buildMethodData(instance, dexMethod);
       methods.put(method.getSignature(), method);
     });
+    if (!synthetic && forMethod != null && AccessFlags.SYNTHETIC.isSet(forMethod.accessFlags)) {
+      MethodData method = buildMethodData(instance, forMethod);
+      methods.put(method.getSignature(), method);
+    }
     instance.setFields(Collections.unmodifiableList(fields));
     instance.setMethods(Collections.unmodifiableMap(methods));
     return instance;
   }
 
-  private static MethodData buildMethodData(@Nonnull DexBackedMethod dexMethod,
-                                            @Nonnull ClassData sharedInstance) {
+  private static MethodData buildMethodData(@Nonnull ClassData sharedInstance,
+                                            @Nonnull DexBackedMethod dexMethod) {
     MethodData instance = new MethodData(
             sharedInstance.clazz,
             dexMethod.getName(),
@@ -87,8 +93,8 @@ public final class Results {
     return instance;
   }
 
-  private static FieldData buildFieldData(@Nonnull DexBackedField dexField,
-                                          @Nonnull ClassData sharedInstance) {
+  private static FieldData buildFieldData(@Nonnull ClassData sharedInstance,
+                                          @Nonnull DexBackedField dexField) {
     FieldData instance = new FieldData(
             sharedInstance.clazz,
             dexField.getName(),
