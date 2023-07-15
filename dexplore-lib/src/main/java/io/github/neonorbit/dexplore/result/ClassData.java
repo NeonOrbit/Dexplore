@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.toList;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class ClassData implements DexItemData, Comparable<ClassData> {
+public final class ClassData extends BaseItemData implements DexItemData, Comparable<ClassData> {
   private static final String DLM = ":";
   private static final String HEADER = "c";
 

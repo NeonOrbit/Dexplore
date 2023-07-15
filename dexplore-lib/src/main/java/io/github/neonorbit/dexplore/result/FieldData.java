@@ -33,7 +33,7 @@ import java.util.Objects;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class FieldData implements DexItemData, Comparable<FieldData> {
+public final class FieldData extends BaseItemData implements DexItemData, Comparable<FieldData> {
   private static final String DLM = ":";
   private static final String HEADER = "f";
 
@@ -106,7 +106,7 @@ public final class FieldData implements DexItemData, Comparable<FieldData> {
 
   /**
    * Returns the declaring class of the field.
-   * @return declaring class {@linkplain Class#getName() name}
+   * @return {@linkplain Class#getName() full name} of the declaring class
    */
   @Nonnull
   @Override

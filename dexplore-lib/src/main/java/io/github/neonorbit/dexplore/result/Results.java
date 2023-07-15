@@ -75,6 +75,7 @@ public final class Results {
       MethodData method = buildMethodData(instance, forMethod);
       methods.put(method.getSignature(), method);
     }
+    instance.setModifier(dexClass.getAccessFlags());
     instance.setFields(Collections.unmodifiableList(fields));
     instance.setMethods(Collections.unmodifiableMap(methods));
     return instance;
@@ -89,6 +90,7 @@ public final class Results {
             DexUtils.dexToJavaTypeName(dexMethod.getReturnType())
     );
     instance.setClassData(sharedInstance);
+    instance.setModifier(dexMethod.accessFlags);
     instance.setReferencePool(DexDecoder.decodeFully(dexMethod));
     return instance;
   }
@@ -100,6 +102,7 @@ public final class Results {
             dexField.getName(),
             DexUtils.dexToJavaTypeName(dexField.getType())
     );
+    instance.setModifier(dexField.accessFlags);
     if (DexUtils.hasValue(dexField)) {
       ReferencePool pool = DexDecoder.decodeFully(dexField);
       List<StringRefData> strings = pool.getStringSection();

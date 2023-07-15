@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * @author NeonOrbit
  * @since 1.0.0
  */
-public final class MethodData implements DexItemData, Comparable<MethodData> {
+public final class MethodData extends BaseItemData implements DexItemData, Comparable<MethodData> {
   private static final String DLM = ":";
   private static final String HEADER = "m";
 
@@ -132,7 +132,7 @@ public final class MethodData implements DexItemData, Comparable<MethodData> {
 
   /**
    * The declaring class of the method.
-   * @return declaring class {@linkplain Class#getName() name}
+   * @return {@linkplain Class#getName() full name} of the declaring class
    */
   @Nonnull
   @Override

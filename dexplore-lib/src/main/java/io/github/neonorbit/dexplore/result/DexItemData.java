@@ -19,8 +19,24 @@ package io.github.neonorbit.dexplore.result;
 import io.github.neonorbit.dexplore.ReferencePool;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Modifier;
 
 public interface DexItemData {
+  /**
+   * <b>Note:</b> Modifiers are only available
+   *  if the item was obtained from a search result.
+   * @return the access {@link Modifier modifiers} of the item
+   * or {@link Integer#MIN_VALUE} if not available.
+   */
+  int getModifiers();
+
+  /**
+   * <b>Note:</b> If the item was NOT obtained from a search result,
+   * it will return false even if it is synthetic. See {@link #getModifiers()}.
+   * @return a boolean indicating whether the item is synthetic
+   */
+  boolean isSynthetic();
+
   /**
    * @see ClassData#getClazz()
    * @see FieldData#getClazz()
