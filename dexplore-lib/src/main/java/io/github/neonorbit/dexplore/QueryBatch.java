@@ -100,7 +100,17 @@ public final class QueryBatch {
 
     /**
      * Add a query to find all the classes that match the specified filters.
-     *
+     * @param key a unique key to identify the query
+     * @param classFilter a filter to find the desired dex classes
+     * @return {@code this} builder
+     * @see #addClassQuery(String, DexFilter, ClassFilter)
+     */
+    public Builder addClassQuery(@Nonnull String key, @Nonnull ClassFilter classFilter) {
+      return addClassQuery(key, DexFilter.MATCH_ALL, classFilter);
+    }
+
+    /**
+     * Add a query to find all the classes that match the specified filters.
      * @param key a unique key to identify the query
      * @param dexFilter a filter to select the desired dex files
      * @param classFilter a filter to find the desired dex classes
@@ -119,7 +129,21 @@ public final class QueryBatch {
 
     /**
      * Add a query to find all the methods that match the specified filters.
-     *
+     * @param key a unique key to identify the query
+     * @param classFilter a filter to select the desired dex classes
+     * @param methodFilter a filter to find the desired dex methods
+     * @return {@code this} builder
+     * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter)
+     */
+    public Builder addMethodQuery(@Nonnull String key,
+                                  @Nonnull ClassFilter classFilter,
+                                  @Nonnull MethodFilter methodFilter) {
+      return addMethodQuery(key, DexFilter.MATCH_ALL, classFilter, methodFilter);
+    }
+
+
+    /**
+     * Add a query to find all the methods that match the specified filters.
      * @param key a unique key to identify the query
      * @param dexFilter a filter to select the desired dex files
      * @param classFilter a filter to select the desired dex classes
