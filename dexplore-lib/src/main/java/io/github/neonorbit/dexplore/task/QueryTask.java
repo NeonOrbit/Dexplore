@@ -43,13 +43,18 @@ public final class QueryTask extends KeyedTask<Object> {
 
   @Override
   public Object run() {
-    if (!(query instanceof MethodQuery)) {
-      ClassQuery q = (ClassQuery) query;
-      dexplore.onClassResult(q.dexFilter, q.classFilter, r -> operator.operate(q.key, r));
+    if (query instanceof MethodQuery) {
+      MethodQuery query = (MethodQuery) this.query;
+      dexplore.onMethodResult(query.dexFilter, query.classFilter, query.methodFilter, this::map);
     } else {
-      MethodQuery q = (MethodQuery) query;
-      dexplore.onMethodResult(q.dexFilter, q.classFilter, q.methodFilter, r -> operator.operate(q.key, r));
+      ClassQuery query = (ClassQuery) this.query;
+      dexplore.onClassResult(query.dexFilter, query.classFilter, this::map);
     }
     return null;
+  }
+
+  private boolean map(DexItemData result) {
+    DexItemData mapped = query.map(result);
+    return mapped != null && operator.operate(query.key, mapped);
   }
 }
