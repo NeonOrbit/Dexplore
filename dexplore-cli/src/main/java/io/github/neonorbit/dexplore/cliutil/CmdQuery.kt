@@ -27,6 +27,7 @@ class CmdQuery(
     classRegex: String,
     referenceTypes: String,
     val references: List<String>,
+    referenceRegex: String,
     val signatures: List<String>,
     val sources: List<String>,
     numbers: List<String>,
@@ -36,7 +37,8 @@ class CmdQuery(
 ) {
     val refTypes = buildRefTypes(referenceTypes)
     val numbers: List<Number> = parseNumbers(numbers)
-    val classPattern = if (classRegex.isEmpty()) null else Pattern.compile(classRegex)
+    val clsPattern = if (classRegex.isEmpty()) null else Pattern.compile(classRegex)
+    val refPattern = if (referenceRegex.isEmpty()) null else Pattern.compile(referenceRegex, Pattern.DOTALL)
 
     companion object {
         private fun parseNumbers(numbers: List<String>): List<Number> {

@@ -63,10 +63,11 @@ internal class DexSearchEngine(private val classMode: Boolean) {
     ) {
         checkEngineState(false)
         this.numberLiterals = cmdQuery.numbers
-        this.patternExists = cmdQuery.classPattern != null
+        this.patternExists = cmdQuery.clsPattern != null
         val filter = if (cmdQuery.refTypes.hasNone()) null else ReferenceFilter { pool ->
-            val result = cmdQuery.references.stream().allMatch { pool.contains(it) }
-            result and cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
+            var result = cmdQuery.references.all { pool.contains(it) }
+            result = result && cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
+            result && (cmdQuery.refPattern?.matcher(pool.toString())?.find() != false)
         }
         dexFilter = DexFilter.MATCH_ALL
         classFilter = ClassFilter
@@ -74,7 +75,7 @@ internal class DexSearchEngine(private val classMode: Boolean) {
             .setPackages(*cmdQuery.packages.toTypedArray())
             .setClasses(*cmdQuery.classes.toTypedArray())
             .setClassSimpleNames(*cmdQuery.classNames.toTypedArray())
-            .setClassPattern(cmdQuery.classPattern)
+            .setClassPattern(cmdQuery.clsPattern)
             .setReferenceTypes(cmdQuery.refTypes)
             .setReferenceFilter(filter)
             .setSourceNames(*cmdQuery.sources.toTypedArray())
