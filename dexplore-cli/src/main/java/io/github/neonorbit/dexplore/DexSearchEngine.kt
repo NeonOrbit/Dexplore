@@ -66,7 +66,7 @@ internal class DexSearchEngine(private val classMode: Boolean) {
         this.patternExists = cmdQuery.clsPattern != null
         val filter = if (cmdQuery.refTypes.hasNone()) null else ReferenceFilter { pool ->
             var result = cmdQuery.references.all { pool.contains(it) }
-            result = result && cmdQuery.signatures.stream().allMatch { pool.toString().contains(it) }
+            result = result && cmdQuery.signatures.all { pool.containsSignature(it) }
             result && (cmdQuery.refPattern?.matcher(pool.toString())?.find() != false)
         }
         dexFilter = DexFilter.MATCH_ALL

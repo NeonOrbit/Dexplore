@@ -35,6 +35,7 @@ internal class DexDecompiler(private val loader: DexInputLoader,
                              private val includeSource: Boolean,
                              private val includeResource: Boolean) : Closeable {
     private val args: JadxArgs = JadxArgs().apply {
+        isReplaceConsts = false
         isShowInconsistentCode = true
         isInlineAnonymousClasses = false
         deobfuscationMapFileMode = IGNORE

@@ -61,16 +61,16 @@ internal class DecodeCommand : Command {
 
     @Parameter(
         order = 4,
-        names = ["-reg", "--cls-regex"],
+        names = ["-clx", "--cls-regex"],
         description = "Filter classes with java regex pattern (against full name)"
     )
     var classRegex = ""
 
     @Parameter(
-            order = 5,
-            variableArity = true,
-            names = ["-pkg", "--packages"],
-            description = "Decompile a list of packages. Default: all"
+        order = 5,
+        variableArity = true,
+        names = ["-pkg", "--packages"],
+        description = "Decompile a list of packages. Default: all"
     )
     var packages = ArrayList<String>()
 
@@ -83,9 +83,9 @@ internal class DecodeCommand : Command {
     var resources = ArrayList<String>()
 
     @Parameter(
-            order = 7,
-            names = ["-job", "--jobs"],
-            description = "The number of threads to use. Default: [core-size]"
+        order = 7,
+        names = ["-job", "--jobs"],
+        description = "The number of threads to use. Default: [core-size]"
     )
     private var threadCount = CommandUtils.cores()
 
@@ -118,9 +118,9 @@ internal class DecodeCommand : Command {
     private var pauseSupport = false
 
     @Parameter(
-            order = 12,
-            names = ["-o", "--output"],
-            description = "Output directory. Default: dexplore-out"
+        order = 12,
+        names = ["-o", "--output"],
+        description = "Output directory. Default: dexplore-out"
     )
     private var output = "dexplore-out"
 
@@ -148,10 +148,10 @@ internal class DecodeCommand : Command {
 
     private fun buildResFilter(): Predicate<String>? {
         return resources.takeIf { it.isNotEmpty() }?.map {
-            "res/$it"
-        }?.let { mapped ->
+            Regex("^res/$it[\\d_]*\\b.*\$")
+        }?.let { patterns ->
             Predicate { entry ->
-                mapped.stream().anyMatch { entry.startsWith(it) }
+                patterns.any { it.matches(entry) }
             }
         }
     }
