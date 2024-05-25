@@ -27,16 +27,18 @@ import java.util.Objects;
 /**
  * A factory class for loading dex files.
  * <p>
- *   <b>Supported types:</b> apk, zip, dex, odex, oat
- * </p>
- * <b>Available methods:</b>
+ * Supported types: apk, zip, dex, odex, oat.
+ * <p>
+ * <b>Note:</b>
+ * Thread safety is ensured for {@linkplain Dexplore dexplore} instances created via this class.
+ * <p>
+ * Available methods:
  * <ul>
- *   <li>{@link #load(String)}</li>
- *   <li>{@link #load(String, DexOptions)}</li>
- *   <li>{@link #load(byte[])}</li>
- *   <li>{@link #load(byte[], DexOptions)}</li>
+ *   <li>{@link #load(String) load(path)}</li>
+ *   <li>{@link #load(String, DexOptions) load(path, options)}</li>
+ *   <li>{@link #load(byte[]) load(buffer)}</li>
+ *   <li>{@link #load(byte[], DexOptions) load(buffer, options)}</li>
  * </ul>
- * <b>Note:</b> The {@code Dexplore} instances created by this class are thread-safe.
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -44,16 +46,14 @@ import java.util.Objects;
 public final class DexFactory {
   /**
    * Loads a file containing one or more dex files.
-   * <p>
-   *   <b>Note:</b> The returned instance is thread-safe.
-   * </p><br>
-   * See also: {@link #load(String, DexOptions)}
+   * <p><b>Note:</b> The returned instance is thread-safe.</p>
    *
    * @param path the path of the file to open
    * @return A {@code Dexplore} for the given file
-   * @throws DexException if something goes wrong
+   * @throws DexException if failed to load the file
    * @throws FileNotFoundException if the given file does not exist
    * @throws UnsupportedFileException if the given file is not a valid dex file
+   * @see #load(String, DexOptions) Dexplore.load(path, options)
    */
   @Nonnull
   public static Dexplore load(@Nonnull String path) {
@@ -62,17 +62,15 @@ public final class DexFactory {
 
   /**
    * Loads a file containing one or more dex files.
-   * <p>
-   *   <b>Note:</b> The returned instance is thread-safe.
-   * </p><br>
-   * See also: {@link #load(String)}
+   * <p><b>Note:</b> The returned instance is thread-safe.</p>
    *
    * @param path the path of the file to open
    * @param options a set of options to apply
    * @return A {@code Dexplore} for the given file
-   * @throws DexException if something goes wrong
+   * @throws DexException if failed to load the file
    * @throws FileNotFoundException if the given file does not exist
    * @throws UnsupportedFileException if the given file is not a valid dex file
+   * @see #load(String) Dexplore.load(path)
    */
   @Nonnull
   public static Dexplore load(@Nonnull String path,
@@ -90,14 +88,12 @@ public final class DexFactory {
 
   /**
    * Loads a dex or odex file from memory.
-   * <p>
-   *   <b>Note:</b> The returned instance is thread-safe.
-   * </p><br>
-   * See also: {@link #load(byte[], DexOptions)}
+   * <p><b>Note:</b> The returned instance is thread-safe.</p>
    *
    * @param buffer a byte array containing the dex file
    * @return A {@code Dexplore} instance for the given file
    * @throws UnsupportedFileException if the given file is not a valid dex file
+   * @see #load(byte[], DexOptions) Dexplore.load(buffer, options)
    */
   @Nonnull
   public static Dexplore load(@Nonnull byte[] buffer) {
@@ -106,15 +102,13 @@ public final class DexFactory {
 
   /**
    * Loads a dex or odex file from memory.
-   * <p>
-   *   <b>Note:</b> The returned instance is thread-safe.
-   * </p><br>
-   * See also: {@link #load(byte[])}
+   * <p><b>Note:</b> The returned instance is thread-safe.</p>
    *
    * @param buffer a byte array containing the dex file
    * @param options a set of dex options to apply
    * @return A {@code Dexplore} instance for the given file
    * @throws UnsupportedFileException if the given file is not a valid dex file
+   * @see #load(byte[]) Dexplore.load(buffer)
    */
   @Nonnull
   public static Dexplore load(@Nonnull byte[] buffer,

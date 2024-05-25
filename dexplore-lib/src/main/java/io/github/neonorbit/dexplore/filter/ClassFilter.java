@@ -40,9 +40,10 @@ import static io.github.neonorbit.dexplore.util.Utils.isValidName;
 
 /**
  * A filter used to select dex classes of interest.
- * <p><br>
- *   Note: The filter will match only if all the specified conditions are satisfied.
- * </p>
+ * <p>
+ * <b>Note:</b> The filter matches only if all the specified conditions are satisfied.
+ * <p>
+ * Use the {@link Builder Builder} class to create filter instances.
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -102,10 +103,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     boolean result = (
             (flag == NEG || (classAccessFlags & flag) == flag) &&
             (skipFlag == NEG || (classAccessFlags & skipFlag) == 0) &&
+            (sourceNames == null || containsSourceFileName(dexClass.getSourceFile())) &&
             (superClass == null || superClass.equals(dexClass.getSuperclass())) &&
             (pkgPattern == null || pkgPattern.matcher(dexClass.getType()).matches()) &&
             (interfaces == null || dexClass.getInterfaces().equals(interfaces)) &&
-            (sourceNames == null || containsSourceFileName(dexClass.getSourceFile())) &&
             (annotations == null || FilterUtils.containsAllAnnotations(dexClass, annotations, synthItems)) &&
             (annotValues == null || FilterUtils.containsAllAnnotationValues(dexClass, annotValues, synthItems)) &&
             (numLiterals == null || DexDecoder.decodeNumberLiterals(dexClass, synthItems).containsAll(numLiterals)) &&
@@ -133,16 +134,13 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
   }
 
   /**
-   * This is equivalent to:
-   * <blockquote><pre>
-   *   new ClassFilter.Builder()
-   *                  .{@link Builder#setClasses(String...)
-   *                          setClasses(clazz)}
-   *                  .build();
-   * </pre></blockquote>
-   *
-   * @param clazz class name
-   * @return a {@code ClassFilter} instance
+   * Creates an instance that matches a single class with the specified class name.
+   * <p>
+   *   <b>Reminder:</b> Inner class names are separated by a {@code $} sign, not a {@code dot}.
+   *   <br>Such as: {@code app.pkg.OuterClassName$InnerClassName}
+   * </p>
+   * @param clazz {@linkplain Class#getName() full name} of the desired class
+   * @return a {@code ClassFilter} instance that matches the specified class
    */
   public static ClassFilter ofClass(@Nonnull String clazz) {
     return builder().setClasses(Objects.requireNonNull(clazz)).build();
@@ -156,6 +154,21 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     return new Builder();
   }
 
+  /**
+   * Builder for creating {@code ClassFilter} instances.
+   * <p>
+   * <b>Note:</b> The filter matches only if all the specified conditions are satisfied.
+   * <p>Example:
+   * <pre>{@code
+   *  ClassFilter.builder()
+   *      .setReferenceTypes(ReferenceTypes.STRINGS_ONLY)
+   *      .setReferenceFilter(pool -> pool.contains("..."))
+   *      .setModifiers(Modifier.PUBLIC)
+   *      .......
+   *      .build()
+   *  ...
+   * }</pre>
+   */
   public static class Builder extends BaseFilter.Builder<Builder, ClassFilter> {
     private int flag = NEG;
     private int skipFlag = NEG;
@@ -226,15 +239,14 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes from the specified packages only.
+     * Set a condition to match classes only from the given packages.
      * <p>
-     *   <b>Note:</b> This will silently overwrite {@link #skipPackages(List, List) skipPackages()}.
-     *   <br>
-     *   <b>Remark:</b> This condition uses regex pattern internally.
+     *   <b>Note:</b> This silently overwrites {@link #skipPackages(List, List) skipPackages()}.
+     *   <br><b>Remark:</b> This condition uses a regex pattern internally.
      * </p>
-     *
      * @param packages package names
      * @return {@code this} builder
+     * @see #skipPackages(List, List) skipPackages()
      */
     public Builder setPackages(@Nonnull String... packages) {
       List<String> pkg = Utils.nonNullList(packages);
@@ -251,14 +263,13 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     /**
      * Specify a list of packages that should be excluded.
      * <p>
-     *   <b>Note:</b> This will silently overwrite {@link #setPackages(String...) setPackages()}.
-     *   <br>
-     *   <b>Remark:</b> This condition uses regex pattern internally.
+     *   <b>Note:</b> This silently overwrites {@link #setPackages(String...) setPackages()}.
+     *   <br><b>Remark:</b> This condition uses regex pattern internally.
      * </p>
-     *
      * @param packages a list of packages to exclude
      * @param exception an exception list to allow sub packages (can be null)
      * @return {@code this} builder
+     * @see #setPackages(String...)
      */
     public Builder skipPackages(@Nullable List<String> packages,
                                 @Nullable List<String> exception) {
@@ -273,11 +284,7 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a regex pattern for filtering classes by their full names.
-     * <p><b>Note:</b>
-     * The pattern will be matched against the {@linkplain Class#getName() full names} of classes.
-     * </p>
-     *
+     * Set a regex pattern for filtering classes by matching against their {@linkplain Class#getName() full names}.
      * @param regex pattern to match against classes
      * @return {@code this} builder
      */
@@ -287,15 +294,28 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that match with any of the specified class names.
+     * Set a condition to match only the classes from the specified source files.
+     * <p> Example: <pre>{@code setSourceNames("Application.java", "FileName.java", ...)}</pre>
+     * @param sources source file names
+     * @return {@code this} builder
+     */
+    public Builder setSourceNames(@Nonnull String... sources) {
+      List<String> list = Utils.nonNullList(sources);
+      this.sourceNames = list.isEmpty() ? null : Utils.optimizedSet(list);
+      return this;
+    }
+
+    /**
+     * Set a condition to match only the classes specified by the given class names.
      * <p>
-     *   <b>Note:</b> This method takes the {@linkplain Class#getName() full names} of classes
-     *   <i>(eg: java.io.FileReader)</i>.
-     *   If you want to search with simple class names (eg: FileReader),
-     *   use {@link #setClassSimpleNames(String...) setClassSimpleNames()} instead.
-     * </p>
+     * <b>Note:</b> This method accepts the {@linkplain Class#getName() full} names of classes.
+     * If you prefer to match using the {@linkplain Class#getSimpleName() simple} names of classes,
+     * please use the {@link #setClassSimpleNames(String...) setClassSimpleNames()} method instead.
+     * <p>
+     * <b>Reminder:</b> Inner class names are separated by a dollar {@code $} sign, not a {@code dot}.
+     * <br>Such as: {@code app.pkg.OuterClassName$InnerClassName}
      *
-     * @param classes {@linkplain Class#getName() full names} of classes
+     * @param classes {@linkplain Class#getName() full names} of the classes
      * @return {@code this} builder
      * @see #setClassSimpleNames(String...) setClassSimpleNames(names)
      */
@@ -309,14 +329,13 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that match with any of the specified class simple-names.
+     * Set a condition to match only the classes that match any of the specified simple names.
      * <p>
-     *   <b>Note:</b> This method takes the {@link Class#getSimpleName() Simple Names} of classes.
-     *   This is different from {@link #setClasses(String...) setClasses()},
-     *   which takes the full names instead.
+     *   <b>Note:</b> This method accepts the {@linkplain Class#getSimpleName() simple} names of classes.
+     *   This is different from the {@link #setClasses(String...) setClasses()} method,
+     *   which accepts the full names of classes instead.
      * </p>
-     *
-     * @param names simple names of classes
+     * @param names {@linkplain Class#getSimpleName() simple} names of the classes
      * @return {@code this} builder
      * @see #setClasses(String...) setClasses(classes)
      */
@@ -335,9 +354,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Specify whether to include synthetic classes in the search.
-     * <br> <b>Default:</b> disabled
+     * <p> <b>Default:</b> disabled
      * @param enable {@code true} to enable, {@code false} to disable
      * @return {@code this} builder
+     * @see #enableSyntheticMembers(boolean)
      */
     public Builder enableSyntheticClasses(boolean enable) {
       this.synthClass = enable;
@@ -346,20 +366,20 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
 
     /**
      * Specify whether the synthetic items of the class should also be checked.
-     * <p>
-     * Synthetic items are
-     * {@link #setReferenceFilter(ReferenceFilter) references},
+     * <p>Synthetic items are
      * {@link #setNumbers(Number...) numbers},
+     * {@link #setReferenceFilter(ReferenceFilter) references},
      * {@link #containsAnnotations(String...) annotations},
      * {@link #containsAnnotationValues(String...) annotation-values}
      * of synthetic members (synthetic fields and methods).
      * <p>
-     *   <b>Note:</b> This will also include synthetic members (synthetic fields and methods)
-     *   and their references in the resulting {@code ClassData} object.
+     *   <b>Note:</b> This also includes the synthetic members
+     *   and their references in the resulting {@code ClassData} objects.
      * </p>
-     * <b>Default:</b> disabled <br>
+     * <b>Default:</b> disabled
      * @param enable {@code true} to enable, {@code false} to disable
      * @return {@code this} builder
+     * @see #enableSyntheticClasses(boolean)
      */
     public Builder enableSyntheticMembers(boolean enable) {
       this.synthItems = enable;
@@ -367,14 +387,12 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes with the specified class modifiers.
-     * <br>
-     * Examples:
-     *    <blockquote> setModifiers({@link Modifier#PUBLIC}) </blockquote>
-     * Use {@code |} operator to set multiple modifiers:
-     *    <blockquote> setModifiers({@link Modifier#PUBLIC} | {@link Modifier#FINAL}) </blockquote>
-     *
-     * @param modifiers class {@link Class#getModifiers() modifiers}, or -1 to reset
+     * Set a condition to match only the classes with the specified class {@linkplain Class#getModifiers() modifiers}.
+     * <blockquote>Examples:
+     *    <pre> setModifiers({@linkplain Modifier#PUBLIC}) </pre>
+     *    <pre> setModifiers({@linkplain Modifier#PUBLIC} | {@linkplain Modifier#FINAL}) </pre>
+     * </blockquote>
+     * @param modifiers class {@link Class#getModifiers() modifiers}, or -1 to unset
      * @return {@code this} builder
      * @see #skipModifiers(int)
      */
@@ -384,9 +402,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Classes with the specified class modifiers will be skipped.
-     *
-     * @param modifiers class {@link Class#getModifiers() modifiers}, or -1 to reset
+     * Classes matching the specified {@linkplain Class#getModifiers() modifiers} are omitted from the search process.
+     * @param modifiers class {@linkplain Class#getModifiers() modifiers}, or -1 to unset
      * @return {@code this} builder
      * @see #setModifiers(int)
      */
@@ -396,10 +413,10 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes with the specified superclass.
-     *
-     * @param superclass {@linkplain Class#getName() full name} of a superclass
+     * Set a condition to match only the classes with the specified superclass.
+     * @param superclass {@linkplain Class#getName() full name} of the superclass
      * @return {@code this} builder
+     * @see #defaultSuperClass()
      */
     public Builder setSuperClass(@Nullable String superclass) {
       this.superClass = superclass == null ? null : DexUtils.javaToDexTypeName(superclass);
@@ -407,9 +424,8 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * This is equivalent to calling:
-     * <blockquote> {@code setSuperClass(Object.class.getName())} </blockquote>
-     *
+     * Set a condition to match only the classes that do not have any explicit superclass.
+     * <p>This is equivalent to calling: <pre> {@code setSuperClass(Object.class.getName())} </pre>
      * @return {@code this} builder
      * @see #setSuperClass(String)
      */
@@ -419,21 +435,23 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes with the specified interfaces.
-     * <p>Note: Interface list must match exactly.</p>
-     *
-     * @param iFaces {@linkplain Class#getName() full names} of interfaces
+     * Set a condition to match only the classes with the specified interfaces.
+     * <p>
+     *   <b>Note:</b> The interface list must precisely match in the correct order.
+     *   An empty list exclusively matches classes with no interfaces.
+     * </p>
+     * @param interfaces an ordered list of the interfaces ({@linkplain Class#getName() full names})
      * @return {@code this} builder
      * @see #noInterfaces()
      */
-    public Builder setInterfaces(@Nullable List<String> iFaces) {
-      this.interfaces = iFaces == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(iFaces));
+    public Builder setInterfaces(@Nullable List<String> interfaces) {
+      this.interfaces = interfaces == null ? null : Utils.optimizedList(DexUtils.javaToDexTypeName(interfaces));
       return this;
     }
 
     /**
-     * Add a condition to the filter to match classes that do not have any interfaces.
-     *
+     * Set a condition to match only the classes that do not have any interfaces.
+     * <p> This is equivalent to calling: <pre> {@code setInterfaces(Collections.emptyList())} </pre>
      * @return {@code this} builder
      * @see #setInterfaces(List)
      */
@@ -442,22 +460,11 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes from the specified source files.
-     * <p>Examples: "Application.java", "AnyFileName.java" etc.</p>
-     *
-     * @param sources source file names
-     * @return {@code this} builder
-     */
-    public Builder setSourceNames(@Nonnull String... sources) {
-      List<String> list = Utils.nonNullList(sources);
-      this.sourceNames = list.isEmpty() ? null : Utils.optimizedSet(list);
-      return this;
-    }
-
-    /**
-     * Add a condition to the filter to match classes that contain all the specified annotations.
-     *
-     * @param annotations {@linkplain Class#getName() full names} of annotation classes
+     * Set a condition to match only the classes that contain all the specified annotations.
+     * <p>
+     *   <b>Note:</b> This also checks the annotations from class members.
+     * </p>
+     * @param annotations {@linkplain Class#getName() full names} of the annotation types
      * @return {@code this} builder
      * @see #containsAnnotationValues(String...)
      */
@@ -468,16 +475,16 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that contain all the specified annotation values.
-     *
-     * <p>Currently supports only string and type values.</p>
-     * <pre>
-     *   STRING Values: @SomeAnnot("string") @AnotherAnnot({"string1", "string2"})
-     *   Example: filter.containsAnnotationValues("string", "string1")
-     *
-     *   TYPE Values: @Annot(Runnable.class), @Annot(Thread.class)
-     *   Example: filter.containsAnnotationValues("java.lang.Runnable", "java.lang.Thread")
-     * </pre>
+     * Set a condition to match only the classes that contain all the specified annotation values.
+     * <p>
+     * <b>Note:</b> This also checks the annotation values from class members.
+     * <p>
+     * <b>Note:</b> Currently, only String and Type values are supported.
+     * <p>
+     * String values: <pre>{@code @Annotation("apple") @Annotation({"banana", "cherry"})}</pre>
+     * Filter example: <pre>{@code builder.containsAnnotationValues("apple", "banana", "cherry")}</pre>
+     * Type values: <pre>{@code @Annotation(Runnable.class), @Annotation(Thread.class)}</pre>
+     * Filter example: <pre>{@code builder.containsAnnotationValues("java.lang.Runnable", Thread.class.getName())}</pre>
      *
      * @param annotationValues annotation values
      * @return {@code this} builder
@@ -490,10 +497,9 @@ public final class ClassFilter extends BaseFilter<DexBackedClassDef> {
     }
 
     /**
-     * Add a condition to the filter to match classes that contain all the specified numbers.
-     * <p>Note: Each float value must end with an 'f' character.</p>
-     *
-     * @param numbers list of numbers to match
+     * Set a condition to match only the classes that contain all the specified numbers.
+     * <p> <b>Note:</b> Each float value must end with an {@code f} character.
+     * @param numbers list of numbers
      * @return {@code this} builder
      */
     public Builder setNumbers(@Nonnull Number... numbers) {

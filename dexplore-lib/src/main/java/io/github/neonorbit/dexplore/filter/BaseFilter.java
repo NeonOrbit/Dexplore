@@ -70,10 +70,10 @@ abstract class BaseFilter<T> {
     public abstract T build();
 
     /**
-     * Specify the types of references to include in the {@link ReferencePool}
-     * when building it to be used with the {@link ReferenceFilter}.
+     * Determines which types of references should be added in the {@link ReferencePool} objects
+     * for use with the {@linkplain #setReferenceFilter(ReferenceFilter) reference filter}.
      *
-     * @param types a {@code ReferenceTypes} instance
+     * @param types the {@code ReferenceTypes} instance
      * @return {@code this} builder
      * @see #setReferenceFilter(ReferenceFilter)
      */
@@ -83,16 +83,33 @@ abstract class BaseFilter<T> {
     }
 
     /**
-     * Set a {@code ReferenceFilter} to apply to each item, determining whether it should be matched.
+     * Set a {@code ReferenceFilter} to apply to the {@link ReferencePool} of each item,
+     * determining whether the item should be matched.
      *
-     * @param filter a {@code ReferenceFilter} instance
+     * <p><b>Note:</b> The ReferenceFilter is expensive and is applied after all other conditions.
+     * It is recommended to set additional conditions to filter out as many items as possible.
+     *
+     * <p>Example:
+     * <pre>{@code
+     *  ClassFilter.builder()
+     *      .setReferenceTypes(ReferenceTypes.STRINGS_ONLY)
+     *      .setReferenceFilter(pool ->
+     *          pool.contains("a string inside the desired class")
+     *      )
+     *      .setModifiers(Modifier.PUBLIC)  // Additional: search in public classes only
+     *      .build()
+     *  // This matches classes only if they contain the given string in their reference pool.
+     *  ...
+     * }</pre>
+     *
+     * @param filter the filter to apply to the {@code ReferencePool} of each item
      * @return {@code this} builder
-     * @throws IllegalStateException if {@code ReferenceTypes} was not specified
+     * @throws IllegalStateException if reference {@link #setReferenceTypes(ReferenceTypes) types} were not specified
      * @see #setReferenceTypes(ReferenceTypes)
      */
     public B setReferenceFilter(@Nullable ReferenceFilter filter) {
       if (this.types == null) {
-        throw new IllegalStateException("ReferenceTypes was not specified");
+        throw new IllegalStateException("Reference types were not specified");
       }
       this.filter = filter;
       return getThis();

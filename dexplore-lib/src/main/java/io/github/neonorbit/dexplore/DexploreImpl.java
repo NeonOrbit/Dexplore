@@ -35,7 +35,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,9 +54,9 @@ final class DexploreImpl implements Dexplore {
     this.dexOperation = new DexOperation(buffer, options);
   }
 
-  private synchronized TaskHandler<Object> getTaskHandler() {
-    if (taskHandler == null || taskHandler.isDirty()) {
-      taskHandler = new TaskHandler<>();
+  private synchronized TaskHandler<Object> getTaskHandler(int size) {
+    if (taskHandler == null || taskHandler.isDirty() || taskHandler.poolSize() != size) {
+      taskHandler = new TaskHandler<>(size, false);
     }
     return taskHandler;
   }
@@ -115,7 +115,7 @@ final class DexploreImpl implements Dexplore {
   @Nonnull
   @Override
   public Map<String, List<DexItemData>> findAll(@Nonnull QueryBatch batch, int limit) {
-    Map<String, List<DexItemData>> results = batch.isParallel() ? new ConcurrentHashMap<>() : new HashMap<>();
+    Map<String, List<DexItemData>> results = batch.isParallel() ? new ConcurrentHashMap<>() : new LinkedHashMap<>();
     int capacity = limit > 0 ? limit : 10;
     onQueryResult(batch, (key, item) -> {
       if (limit == 1) {
@@ -142,7 +142,7 @@ final class DexploreImpl implements Dexplore {
 
   private synchronized void runInParallel(QueryBatch batch,
                                           QueryTaskFactory factory) {
-    TaskHandler<Object> taskHandler = getTaskHandler();
+    TaskHandler<Object> taskHandler = getTaskHandler(batch.threadCount());
     batch.getQueries().forEach(query -> {
       QueryTask task = factory.newTask(query);
       taskHandler.dispatch(task);

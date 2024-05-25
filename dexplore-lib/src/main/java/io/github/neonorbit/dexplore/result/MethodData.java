@@ -31,6 +31,14 @@ import java.util.stream.Stream;
 
 /**
  * Represents a dex method.
+ * <p>
+ * Properties:
+ * <ul>
+ *   <li>{@link #clazz} - the declaring class of the method.</li>
+ *   <li>{@link #method} - the name of the method.</li>
+ *   <li>{@link #params} - the parameters of the method.</li>
+ *   <li>{@link #returnType} - the return type of the method.</li>
+ * </ul>
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -41,10 +49,13 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
 
   /** The declaring class of the method. */
   @Nonnull public final String clazz;
+
   /** The name of the method. */
   @Nonnull public final String method;
+
   /** The parameters of the method. */
   @Nonnull public final String[] params;
+
   /** The return type of the method. */
   @Nonnull public final String returnType;
 
@@ -99,6 +110,11 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
     this.referencePool = referencePool;
   }
 
+  /**
+   * Loads the {@code Method} object associated with the dex method.
+   * @param classLoader the class loader to use
+   * @return the {@code Method} object representing the dex method, or null if not found
+   */
   @Nullable
   public Method loadMethod(@Nonnull ClassLoader classLoader) {
     try {
@@ -113,7 +129,7 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
   }
 
   /**
-   * @return whether the method is a constructor
+   * @return a boolean indicating whether the method is a constructor
    */
   public boolean isConstructor() {
     return method.equals("<init>");
@@ -125,14 +141,14 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
   @Nonnull
   public ClassData getClassData() {
     if (classData == null) {
-      classData = ClassData.deserialize(clazz);
+      classData = ClassData.of(clazz);
     }
     return classData;
   }
 
   /**
-   * The declaring class of the method.
-   * @return {@linkplain Class#getName() full name} of the declaring class
+   * Returns the declaring class of the method.
+   * @return full name of the declaring class
    */
   @Nonnull
   @Override
@@ -141,11 +157,13 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
   }
 
   /**
-   * Returns the {@code ReferencePool} of the method.
-   * <p>It contains all the {@linkplain io.github.neonorbit.dexplore.reference references}
-   * present in the method.</p>
+   * Returns the {@code ReferencePool} associated with the dex method.
+   * <p>
+   *   The returned pool contains all the {@linkplain io.github.neonorbit.dexplore.reference references}
+   *   found within the method.
+   * </p>
    *
-   * @return the {@code ReferencePool} of the method
+   * @return the {@code ReferencePool} of the dex method
    */
   @Nonnull
   @Override
@@ -157,8 +175,12 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
   }
 
   /**
-   * Signature: class.<b>method</b>(param1,param2,...paramN):returnType
-   * <p> Example: com.util.Time.<b>setNow</b>(int,java.lang.String,int):int </p>
+   * Returns the signature of the method.
+   * <p>
+   * Format: class.<b>method</b>(param1,param2,...paramN):returnType <br>
+   * Example: java.lang.Byte.<b><u>{@linkplain Byte#parseByte parseByte}</u></b>(java.lang.String,int):byte
+   * <p>
+   * <b>Note:</b> A new signature string is generated with each method invocation.
    *
    * @return method signature
    */
@@ -171,8 +193,10 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
   /**
    * Serializes the object into a string.
    * <p>
-   *   Includes: {@link #clazz}, {@link #method}, {@link #params}, {@link #returnType}
-   * </p>
+   * Includes: {@link #clazz}, {@link #method}, {@link #params}, {@link #returnType}
+   * <p>
+   * <b>Note:</b> The serialized object can be deserialized
+   * using the {@link #deserialize(String) deserialize()} method.
    *
    * @return the serialized string
    */
@@ -190,9 +214,8 @@ public final class MethodData extends BaseItemData implements DexItemData, Compa
 
   /**
    * De-serializes the given string.
-   *
-   * @param serialized the string to be de-serialized
-   * @return the de-serialized object
+   * @param serialized the string to be deserialized
+   * @return the deserialized object
    * @throws IllegalArgumentException if the given string is not serializable
    */
   @Nonnull

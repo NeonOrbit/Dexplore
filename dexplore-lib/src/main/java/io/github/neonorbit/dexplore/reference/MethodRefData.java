@@ -24,11 +24,19 @@ import org.jf.dexlib2.iface.reference.MethodReference;
 import org.jf.dexlib2.immutable.reference.ImmutableMethodReference;
 
 import javax.annotation.Nonnull;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a method.
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a method identifier.
+ * <p>
+ * Constant values:
+ * <ul>
+ *   <li>{@link #getDeclaringClass() class} - the declaring class of the method.</li>
+ *   <li>{@link #getName() name} - the name of the method.</li>
+ *   <li>{@link #getParameterTypes() params} - the parameters of the method.</li>
+ *   <li>{@link #getReturnType() return} - the return type of the method.</li>
+ * </ul>
+ *
  * @see ReferencePool
  *
  * @author NeonOrbit
@@ -62,8 +70,7 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Method#getName()}
-   * @return method name
+   * @return the method name
    */
   @Nonnull
   public String getName() {
@@ -71,8 +78,7 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Method#getReturnType()}
-   * @return return type
+   * @return {@linkplain Class#getName() full name} of the method return type
    */
   @Nonnull
   public String getReturnType() {
@@ -80,8 +86,7 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Method#getParameterTypes()}
-   * @return parameter types
+   * @return {@linkplain Class#getName() full names} of the method parameter types
    */
   @Nonnull
   @SuppressWarnings("unchecked")
@@ -90,8 +95,7 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Method#getDeclaringClass()}
-   * @return declaring class
+   * @return {@linkplain Class#getName() full name} of the declaring class of the method
    */
   @Nonnull
   public String getDeclaringClass() {
@@ -99,14 +103,17 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
-   * @return whether the method is a constructor
+   * @return a boolean indicating whether the method is a constructor
    */
   public boolean isConstructor() {
     return getName().equals("<init>");
   }
 
   /**
-   * Checks whether any items of this {@code MethodReference} match the specified string
+   * Checks if the reference contains the specified value.
+   * <p>
+   * More precisely, it returns {@code true} if at least one
+   * {@link MethodRefData constant} value of the reference is {@code equal} to the specified value.
    */
   @Override
   public boolean contains(@Nonnull String value) {
@@ -116,20 +123,25 @@ public final class MethodRefData implements DexRefData {
   }
 
   /**
-   * Signature: class.<b>method</b>(param1,param2,...paramN):returnType
-   * <p> Example: com.util.Time.<b>setNow</b>(int,java.lang.String,int):int </p>
-   * <p>Each time the method is invoked, a new string is generated.</p>
-   *
+   * Returns the signature of the method.
+   * <p>
+   * Format: class.<b>method</b>(param1,param2,...paramN):returnType <br>
+   * Example: java.lang.Byte.<b><u>{@linkplain Byte#parseByte parseByte}</u></b>(java.lang.String,int):byte
+   * <p>
+   * <b>Note:</b> A new signature string is generated with each method invocation.
    * @return method signature
    */
+  @Nonnull
+  @Override
   public String getSignature() {
     return !details ? DexUtils.getMethodSignature(getName()) :
             DexUtils.getMethodSignature(getDeclaringClass(), getName(), getParameterTypes(), getReturnType());
   }
 
   /**
-   * @return a {@code MethodData} object representing the method
+   * @return a {@link MethodData} object representing the method
    */
+  @Nonnull
   public MethodData toMethodData() {
     return MethodData.of(this);
   }

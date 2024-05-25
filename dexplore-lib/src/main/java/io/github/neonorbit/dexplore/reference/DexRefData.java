@@ -16,12 +16,87 @@
 
 package io.github.neonorbit.dexplore.reference;
 
+import javax.annotation.Nonnull;
+
+/**
+ * Represents a dex {@linkplain io.github.neonorbit.dexplore.reference reference}.
+ *
+ * @see StringRefData
+ * @see TypeRefData
+ * @see FieldRefData
+ * @see MethodRefData
+ *
+ * @author NeonOrbit
+ * @since 1.0.0
+ */
 public interface DexRefData {
   /**
-   * Checks whether any items of this {@code Object} match the specified string.
+   * Returns the signature of the reference.
+   * <p>
+   * Signature Formats:
+   * <ul>
+   *   <li>
+   *     {@linkplain StringRefData}: <br>
+   *     Format: string-literal <br>
+   *     Example: "StringLiteral" <br>
+   *     .
+   *   </li>
+   *   <li>
+   *     {@linkplain TypeRefData}: <br>
+   *     Format: FullClassName <br>
+   *     Example: java.lang.Byte <br>
+   *     .
+   *   </li>
+   *   <li>
+   *     {@linkplain FieldRefData}: <br>
+   *     Format: class.<b>fieldName</b>:fieldType <br>
+   *     Example: java.lang.Byte.<b><u>{@linkplain Byte#BYTES BYTES}</u></b>:int <br>
+   *     .
+   *   </li>
+   *   <li>
+   *     {@linkplain MethodRefData}: <br>
+   *     Format: class.<b>method</b>(param1,param2,paramN):returnType <br>
+   *     Example: java.lang.Byte.<b><u>{@linkplain Byte#parseByte parseByte}</u></b>(java.lang.String,int):byte
+   *   </li>
+   * </ul>
    *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Object} contains the specified string
+   * @return reference signature
    */
-  boolean contains(String value);
+  @Nonnull
+  String getSignature();
+
+  /**
+   * Checks if the reference contains the specified value.
+   * <p>
+   * <b>Note:</b> A dex reference can consist of one or more constant values.
+   * This method returns true if at least one constant within the reference {@code equals} the specified value.
+   * <p>
+   * Constants in References:
+   * <ul>
+   *   <li>
+   *     {@linkplain io.github.neonorbit.dexplore.reference.StringRefData}: string-literal.
+   *   </li>
+   *   <li>
+   *     {@linkplain io.github.neonorbit.dexplore.reference.TypeRefData}:
+   *     type name (eg: full class name).
+   *   </li>
+   *   <li>
+   *     {@linkplain io.github.neonorbit.dexplore.reference.FieldRefData}:
+   *     field name, field type, declaring class.
+   *   </li>
+   *   <li>
+   *     {@linkplain io.github.neonorbit.dexplore.reference.MethodRefData}:
+   *     method name, parameters, return type, declaring class.
+   *   </li>
+   * </ul>
+   *
+   * @param value the value to compare against
+   * @return {@code true} if the reference contains the specified value
+   *
+   * @see StringRefData#contains(String)
+   * @see TypeRefData#contains(String)
+   * @see FieldRefData#contains(String)
+   * @see MethodRefData#contains(String)
+   */
+  boolean contains(@Nonnull String value);
 }

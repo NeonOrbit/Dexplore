@@ -23,8 +23,12 @@ import org.jf.dexlib2.immutable.reference.ImmutableStringReference;
 import javax.annotation.Nonnull;
 
 /**
- * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference}
- * to a literal string.
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a string literal.
+ * <p>
+ * Constant value:
+ * <ul>
+ *   <li>{@link #getString() string} - the literal string.</li>
+ * </ul>
  * @see ReferencePool
  *
  * @author NeonOrbit
@@ -65,11 +69,26 @@ public final class StringRefData implements DexRefData {
   }
 
   /**
-   * Checks whether the value of this {@code StringReference} matches the specified string
+   * Checks if the reference contains the specified value.
+   * <p>
+   * More precisely, it returns {@code true} if the literal
+   * {@link #getString() string} is {@code equal} to the specified value.
    */
   @Override
   public boolean contains(@Nonnull String value) {
-    return getData().getString().equals(value);
+    return getString().equals(value);
+  }
+
+  /**
+   * Returns the signature of the string reference.
+   * <p>
+   * <b>Note:</b> This method is similar to {@linkplain #getString()}
+   * and is included for compatibility with other reference types.
+   */
+  @Nonnull
+  @Override
+  public String getSignature() {
+    return getString();
   }
 
   @Override
@@ -84,8 +103,11 @@ public final class StringRefData implements DexRefData {
     );
   }
 
+  /**
+   * Equivalent to {@link #getSignature()}
+   */
   @Override
   public String toString() {
-    return getData().getString();
+    return getSignature();
   }
 }

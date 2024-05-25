@@ -25,8 +25,13 @@ import org.jf.dexlib2.immutable.reference.ImmutableTypeReference;
 import javax.annotation.Nonnull;
 
 /**
- * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference}
- * to a type (eg: the {@linkplain Class#getName() full name} of a class).
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a type.
+ * <p>
+ * Constant value:
+ * <ul>
+ *   <li>{@link #getType() type} - type name (typically the {@linkplain Class#getName() full name} of a class).</li>
+ * </ul>
+ *
  * @see ReferencePool
  *
  * @author NeonOrbit
@@ -61,16 +66,36 @@ public final class TypeRefData implements DexRefData {
   }
 
   /**
-   * Checks whether the value of this {@code TypeReference} matches the specified string
+   * Checks if the reference contains the specified value.
+   * <p>
+   * More precisely, it returns {@code true} if the
+   * {@link #getType() type name} is {@code equal} to the specified value.
    */
   @Override
   public boolean contains(@Nonnull String value) {
-    return getData().getType().equals(value);
+    return getType().equals(value);
+  }
+
+  /**
+   * Returns the signature of the type.
+   * <p>
+   * Format: FullClassName <br>
+   * Example: java.lang.Byte
+   * <p>
+   * <b>Note:</b> This method is similar to {@linkplain #getType()}
+   * and is included for compatibility with other reference types.
+   * @return type signature
+   */
+  @Nonnull
+  @Override
+  public String getSignature() {
+    return getType();
   }
 
   /**
    * @return a {@code ClassData} object representing the type (class)
    */
+  @Nonnull
   public ClassData toClassData() {
     return ClassData.of(this);
   }
@@ -87,8 +112,11 @@ public final class TypeRefData implements DexRefData {
     );
   }
 
+  /**
+   * Equivalent to {@link #getSignature()}
+   */
   @Override
   public String toString() {
-    return getData().getType();
+    return getSignature();
   }
 }

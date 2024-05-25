@@ -34,6 +34,11 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Represents a dex class.
+ * <p>
+ * Properties:
+ * <ul>
+ *   <li>{@link #clazz} - full class name.</li>
+ * </ul>
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -42,7 +47,7 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   private static final String DLM = ":";
   private static final String HEADER = "c";
 
-  /** The {@linkplain Class#getName() full name} of the class. */
+  /** The full name of the class. */
   @Nonnull public final String clazz;
 
   private List<FieldData> fields;
@@ -53,14 +58,17 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
     this.clazz = clazz;
   }
 
+  @Nonnull
   public static ClassData of(@Nonnull String clazz) {
     return new ClassData(Objects.requireNonNull(clazz));
   }
 
+  @Nonnull
   public static ClassData of(@Nonnull TypeRefData type) {
     return of(Objects.requireNonNull(type).getType());
   }
 
+  @Nonnull
   public static ClassData of(@Nonnull Class<?> clazz) {
     return of(Objects.requireNonNull(clazz).getName());
   }
@@ -77,6 +85,11 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
     return Objects.requireNonNull(methods).get(signature);
   }
 
+  /**
+   * Loads the {@code Class} object associated with the dex class.
+   * @param classLoader the class loader to use
+   * @return the {@code Class} object representing the class, or null if not found
+   */
   @Nullable
   public Class<?> loadClass(@Nonnull ClassLoader classLoader) {
     try {
@@ -87,12 +100,21 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Returns a list of {@code FieldData} objects
-   * representing all the fields of the class.
-   * <p>The returned list is unmodifiable.</p>
-   *
-   * @return a list containing the fields of the class
+   * Returns the specified field of the dex class.
+   * @param name the name of the field
+   * @return the {@code FieldData} object of the specified field or null
    */
+  @Nullable
+  public FieldData getField(@Nonnull String name) {
+    return getFields().stream().filter(f -> f.field.equals(name)).findFirst().orElse(null);
+  }
+
+  /**
+   * Returns a list containing all the declared fields of the dex class.
+   * <p>The returned list is unmodifiable.</p>
+   * @return a list of {@code FieldData} objects representing all the declared fields of the dex class
+   */
+  @Nonnull
   public List<FieldData> getFields() {
     if (fields == null) {
       fields = Collections.emptyList();
@@ -101,23 +123,15 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * @param name the name of the field
-   * @return the {@code FieldData} object of the specified field
-   */
-  @Nullable
-  public FieldData getField(@Nonnull String name) {
-    return getFields().stream().filter(f -> f.field.equals(name)).findFirst().orElse(null);
-  }
-
-  /**
+   * Returns the specified method of the dex class.
    * @param name the name of the method
-   * @param params parameters or null if no params
+   * @param params params or empty list if none
    * @param returnType the return type of the method
    * @return the {@code MethodData} object of the specified method or null
    */
   @Nullable
   public MethodData getMethod(@Nonnull String name,
-                              @Nullable List<String> params,
+                              @Nonnull List<String> params,
                               @Nonnull String returnType) {
     return getMethods().stream().filter(m -> m.method.equals(name) &&
             m.returnType.equals(returnType) && Utils.isEquals(params, m.params)
@@ -125,11 +139,9 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Returns a list containing {@code MethodData} objects
-   * representing all the declared methods of the class.
+   * Returns a list containing all the declared methods of the dex class.
    * <p>The returned list is unmodifiable.</p>
-   *
-   * @return a list containing the declared methods of the class
+   * @return a list of {@code MethodData} objects representing all the declared methods of the dex class
    */
   @Nonnull
   public List<MethodData> getMethods() {
@@ -140,6 +152,8 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
+   * Returns the constructor with specified parameters.
+   * <p>Call without any parameters to get the default constructor.</p>
    * @param params parameter types if any
    * @return the {@code MethodData} object of the specified constructor or null
    */
@@ -151,11 +165,9 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Returns a list of {@code MethodData} objects
-   * representing all the declared constructors of the class.
-   * <p>Note: Each time the method is invoked, a new list is created.</p>
-   *
-   * @return a list containing the declared constructors of the class
+   * Returns a list containing all the declared constructors of the dex class.
+   * <p><b>Note:</b> A new list is created with each method invocation.</p>
+   * @return a list of {@code MethodData} objects representing all the declared constructors of the dex class
    */
   @Nonnull
   public List<MethodData> getConstructors() {
@@ -163,7 +175,7 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * The {@linkplain Class#getName() full name} of the class.
+   * Returns the full name of the class.
    * @return full name of the class
    */
   @Nonnull
@@ -173,11 +185,12 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Returns the {@code ReferencePool} of the class.
-   * <p>It contains all the {@linkplain io.github.neonorbit.dexplore.reference references}
-   * present in the class.</p>
-   *
-   * @return the {@code ReferencePool} of the class
+   * Returns the {@code ReferencePool} associated with the dex class.
+   * <p>
+   *   The returned pool contains all the {@linkplain io.github.neonorbit.dexplore.reference references}
+   *   found within the class.
+   * </p>
+   * @return the {@code ReferencePool} of the dex class
    */
   @Nonnull
   @Override
@@ -192,9 +205,11 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Signature: fullClassName
-   * <p>Example: java.lang.Byte
-   *
+   * Returns the signature of the class.
+   * <p>
+   *   Format: FullClassName <br>
+   *   Example: java.lang.Byte
+   * </p>
    * @return class signature
    */
   @Nonnull
@@ -205,7 +220,11 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
 
   /**
    * Serializes the object into a string.
-   * <p> Includes: {@link #clazz} </p>
+   * <p>
+   *   Includes: {@link #clazz}
+   * <p>
+   * <b>Note:</b> The serialized object can be deserialized
+   * using the {@link #deserialize(String) deserialize()} method.
    *
    * @return the serialized string
    */
@@ -218,8 +237,8 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
   /**
    * De-serializes the given string.
    *
-   * @param serialized the string to be de-serialized
-   * @return the de-serialized object
+   * @param serialized the string to be deserialized
+   * @return the deserialized object
    * @throws IllegalArgumentException if the given string is not serializable
    */
   @Nonnull
@@ -256,6 +275,6 @@ public final class ClassData extends BaseItemData implements DexItemData, Compar
    */
   @Override
   public String toString() {
-    return clazz;
+    return getSignature();
   }
 }

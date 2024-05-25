@@ -48,6 +48,8 @@ public final class MergedList<T, E> extends AbstractList<E> {
   /**
    * @param list a list of objects, each of which can be mapped to a {@code List<E>}.
    * @param mapper A function that transforms each object into a {@code List<E>}.
+   * @param <T> object type
+   * @param <E> element type
    * @return a merged view of all the containing lists
    */
   public static <T, E> List<E> merge(List<T> list, Function<T, List<E>> mapper) {
@@ -56,6 +58,7 @@ public final class MergedList<T, E> extends AbstractList<E> {
 
   /**
    * @param lists a list of lists
+   * @param <E> element type
    * @return a merged view of all the specified lists
    */
   public static <E> List<E> merge(List<List<E>> lists) {

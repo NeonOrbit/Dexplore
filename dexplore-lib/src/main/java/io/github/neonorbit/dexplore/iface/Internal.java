@@ -27,7 +27,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
 /**
- * Indicates that the annotated element must not be considered as a public API
+ * Indicates that the annotated element must not be considered as a public API.
  *
  * @author NeonOrbit
  * @since 1.0.0

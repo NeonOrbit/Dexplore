@@ -17,17 +17,23 @@
 package io.github.neonorbit.dexplore.reference;
 
 import io.github.neonorbit.dexplore.ReferencePool;
-import io.github.neonorbit.dexplore.result.ClassData;
 import io.github.neonorbit.dexplore.result.FieldData;
 import io.github.neonorbit.dexplore.util.DexUtils;
 import org.jf.dexlib2.iface.reference.FieldReference;
 import org.jf.dexlib2.immutable.reference.ImmutableFieldReference;
 
 import javax.annotation.Nonnull;
-import java.lang.reflect.Field;
 
 /**
- * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a field.
+ * This class represents a {@linkplain io.github.neonorbit.dexplore.reference reference} to a field identifier.
+ * <p>
+ * Constant values:
+ * <ul>
+ *   <li>{@link #getDeclaringClass() class} - the declaring class of the field.</li>
+ *   <li>{@link #getName() name} - the name of the field.</li>
+ *   <li>{@link #getType() type} - the type of the field.</li>
+ * </ul>
+ *
  * @see ReferencePool
  *
  * @author NeonOrbit
@@ -60,8 +66,7 @@ public final class FieldRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Field#getName()}
-   * @return field name
+   * @return the field name
    */
   @Nonnull
   public String getName() {
@@ -69,8 +74,7 @@ public final class FieldRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Field#getType()}
-   * @return field type
+   * @return {@linkplain Class#getName() full name} of the field type
    */
   @Nonnull
   public String getType() {
@@ -78,8 +82,7 @@ public final class FieldRefData implements DexRefData {
   }
 
   /**
-   * Equivalent to {@link Field#getDeclaringClass()}
-   * @return declaring class
+   * @return {@linkplain Class#getName() full name} of the declaring class of the field
    */
   @Nonnull
   public String getDeclaringClass() {
@@ -87,7 +90,10 @@ public final class FieldRefData implements DexRefData {
   }
 
   /**
-   * Checks whether any items of this {@code FieldReference} match the specified string
+   * Checks if the reference contains the specified value.
+   * <p>
+   * More precisely, it returns {@code true} if at least one
+   * {@link FieldRefData constant} value of the reference is {@code equal} to the specified value.
    */
   @Override
   public boolean contains(@Nonnull String value) {
@@ -97,21 +103,25 @@ public final class FieldRefData implements DexRefData {
   }
 
   /**
-   * Signature: className.<b>fieldName</b>:fieldType
-   * <p>Example: java.lang.Byte.<b>SIZE</b>:int</p>
-   *
-   * <p>Each time the method is invoked, a new string is generated.</p>
-   *
+   * Returns the signature of the field.
+   * <p>
+   * Format: class.<b>fieldName</b>:fieldType <br>
+   * Example: java.lang.Byte.<b><u>{@linkplain Byte#BYTES BYTES}</u></b>:int
+   * <p>
+   * <b>Note:</b> A new signature string is generated with each method invocation.
    * @return field signature
    */
+  @Nonnull
+  @Override
   public String getSignature() {
     return !details ? DexUtils.getFieldSignature(getName()) :
             DexUtils.getFieldSignature(getDeclaringClass(), getName(), getType());
   }
 
   /**
-   * @return a {@code FieldData} object representing the field
+   * @return a {@link FieldData} object representing the field
    */
+  @Nonnull
   public FieldData toFieldData() {
     return FieldData.of(this);
   }

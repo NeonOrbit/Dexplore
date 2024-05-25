@@ -42,12 +42,12 @@ final class RefPoolBuffer {
     this.methodDetails = types.hasMethodDetails();
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
+  // TO-DO: Bad idea
   private void resolve() {
-    strings.forEach(StringRefData::toString);
-    types.forEach(TypeRefData::toString);
-    fields.forEach(FieldRefData::toString);
-    methods.forEach(MethodRefData::toString);
+    strings.forEach(StringRefData::getString);
+    types.forEach(TypeRefData::getType);
+    fields.forEach(FieldRefData::getName);
+    methods.forEach(MethodRefData::getName);
   }
 
   @Nonnull

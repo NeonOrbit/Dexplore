@@ -17,8 +17,8 @@
 package io.github.neonorbit.dexplore;
 
 /**
- * Options for {@code Dexplore}.
- * <p><br>
+ * Represents a set of dexplore options.
+ * <p>
  * List of available options:
  * <ul>
  *   <li>{@link #opcodes}</li>
@@ -32,25 +32,31 @@ package io.github.neonorbit.dexplore;
 public final class DexOptions {
   /**
    * Dalvik/ART Opcodes.
-   * <p><b>Default:</b> {@code auto}</p>
+   * <p>
+   *   <b>Default:</b> {@code auto}
+   * </p>
    * @since 1.0.0
    */
   public DexOpcodes opcodes = DexOpcodes.auto();
 
   /**
-   * This is useful if you want to search for multiple items
-   * on a single dexplore instance.
-   * <p><b>Default:</b> {@code false}</p>
+   * Enables dexplore cache.
+   * <p>
+   * Useful for conducting multiple dex queries on a single dexplore instance.
+   * <p>
+   *   <b>Default:</b> {@code false}
+   * </p>
    * @since 1.0.0
    */
   public boolean enableCache = false;
 
   /**
-   * Root dex files are:
-   * <blockquote>
-   *   [Classes.dex, Classes2.dex ... ClassesN.dex]
-   * </blockquote>
-   * <p><b>Default:</b> {@code false}</p>
+   * If enabled, only the root dex files of an apk are loaded.
+   * <p>
+   * Root dex files are:<br> [Classes.dex, Classes2.dex ... ClassesN.dex]
+   * <p>
+   *   <b>Default:</b> {@code false}
+   * </p>
    * @since 1.0.0
    */
   public boolean rootDexOnly = false;

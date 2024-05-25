@@ -34,7 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * <b>This is an internal API.</b>
  * <p>
- * A single instance of this class should not be used from multiple threads.
+ * An instance of this class should not be used from multiple threads.
  * Only {@link #pause()} and {@link #resume()} are thread safe.
  *
  * @author NeonOrbit
@@ -42,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Internal
 public final class TaskHandler<V> {
   private int total, completed;
+  private final int threadPoolSize;
   private final TaskGuard taskGuard;
   private final ThreadPoolExecutor boundedThreads;
   private final CompletionService<V> taskDispatcher;
@@ -53,6 +54,7 @@ public final class TaskHandler<V> {
   }
 
   public TaskHandler(int poolSize, boolean pauseSupport) {
+    this.threadPoolSize = poolSize;
     this.taskGuard = TaskGuard.newGuard(pauseSupport);
     this.submittedTasks = new ArrayList<>();
     this.completedTasks = new LinkedBlockingQueue<>();
@@ -64,9 +66,6 @@ public final class TaskHandler<V> {
 
   public void resume() { taskGuard.unlock(); }
 
-  /**
-   * @param task submit a task for execution.
-   */
   public void dispatch(@Nonnull Callable<V> task) {
     dispatchAndUpdate(task);
   }
@@ -166,6 +165,10 @@ public final class TaskHandler<V> {
 
   public boolean isDirty() {
     return boundedThreads.isShutdown() || hasTask();
+  }
+
+  public int poolSize() {
+    return threadPoolSize;
   }
 
   private static int getIdealThreadPoolSize() {

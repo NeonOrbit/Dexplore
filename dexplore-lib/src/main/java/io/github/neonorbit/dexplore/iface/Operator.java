@@ -19,8 +19,8 @@ package io.github.neonorbit.dexplore.iface;
 /**
  * A callback interface to operate on search results.
  * <p>
- *   {@link #operate operate(item)} will be called for each result that is produced,
- *   and should return a boolean to indicate whether the callback should be terminated.
+ *   The {@link #operate operate()} method is invoked for each result.
+ *   Returning true from the callback terminates it immediately.
  * </p>
  *
  * @author NeonOrbit
@@ -28,6 +28,8 @@ package io.github.neonorbit.dexplore.iface;
  */
 public interface Operator<T> {
   /**
+   * A {@linkplain Operator callback} method to operate on search results.
+   *
    * @param item the item to operate on.
    * @return {@code true} to terminate, {@code false} to continue.
    */

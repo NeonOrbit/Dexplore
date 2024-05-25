@@ -27,9 +27,10 @@ import java.util.List;
 
 /**
  * A filter that determines the dex files to be loaded for searching.
- * <p><br>
- *   Note: The filter will match only if all the specified conditions are satisfied.
- * </p>
+ * <p>
+ * <b>Note:</b> The filter matches only if all the specified conditions are satisfied.
+ * <p>
+ * Use the {@link Builder Builder} class to create filter instances.
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -71,7 +72,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
   }
 
   /**
-   * <b>DEPRECATED</b>: Currently does nothing.
+   * Currently does nothing.
    * @deprecated {@link
    *    ClassFilter.Builder#setClasses(String...)
    *    ClassFilter.setClasses()
@@ -93,6 +94,19 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     return new Builder();
   }
 
+  /**
+   * Builder for creating {@code DexFilter} instances.
+   * <p>
+   * <b>Note:</b> The filter matches only if all the specified conditions are satisfied.
+   * <p>Example:
+   * <pre>{@code
+   *  DexFilter.builder()
+   *      .setPreferredDexNames(...)
+   *      .......
+   *      .build()
+   *  ...
+   * }</pre>
+   */
   public static class Builder extends BaseFilter.Builder<Builder, DexFilter> {
     private boolean preferredDexOnly;
     private List<String> preferredDexNames;
@@ -150,7 +164,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
     }
 
     /**
-     * <b>DEPRECATED</b>: Currently does nothing.
+     * Currently does nothing.
      * @deprecated {@link
      *    ClassFilter.Builder#setSourceNames(String...)
      *    ClassFilter.setSourceNames()
@@ -159,13 +173,13 @@ public final class DexFilter extends BaseFilter<DexEntry> {
      * @return {@code this} builder
      */
     @Deprecated
-    @SuppressWarnings("unused")
+    @SuppressWarnings("all")
     public Builder setStoredSources(@Nonnull String... sources) {
       return this;
     }
 
     /**
-     * <b>DEPRECATED</b>: Currently does nothing.
+     * Currently does nothing.
      * @deprecated {@link
      *    ClassFilter.Builder#setClasses(String...)
      *    ClassFilter.setClasses()
@@ -174,7 +188,7 @@ public final class DexFilter extends BaseFilter<DexEntry> {
      * @return {@code this} builder
      */
     @Deprecated
-    @SuppressWarnings("unused")
+    @SuppressWarnings("all")
     public Builder setDefinedClasses(@Nonnull String... classes) {
       return this;
     }

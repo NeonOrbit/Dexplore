@@ -29,42 +29,71 @@ import io.github.neonorbit.dexplore.util.Utils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.Collections.unmodifiableMap;
+
 /**
- * A class representing a batch of queries.
+ * Represents a batch of dex queries.
  * <p>
- *   Note: Use {@link Builder Builder} to build a batch.
- * </p>
- * @see Builder#setParallel(boolean) setParallel()
- * @see Builder#addClassQuery(String, DexFilter, ClassFilter) addClassQuery()
- * @see Builder#addMethodQuery(String, DexFilter, ClassFilter, MethodFilter) addMethodQuery()
+ * Note: The order of queries is preserved,
+ * unless the batch is {@linkplain Builder#setParallel(boolean) parallel}.
+ * <p>
+ * Use the {@link Builder Builder} class to create query batches.
  *
  * @author NeonOrbit
  * @since 1.4.0
  */
 public final class QueryBatch {
+  private final int threadCount;
   private final boolean parallel;
   private final Map<String, Query> map;
 
   private QueryBatch(Builder builder) {
     this.parallel = builder.parallel;
-    this.map = Collections.unmodifiableMap(new HashMap<>(builder.map));
+    this.threadCount = builder.threadCount;
+    this.map = unmodifiableMap(new LinkedHashMap<>(builder.map));
   }
 
-  Collection<Query> getQueries() {
-    return map.values();
-  }
-
+  /**
+   * @return a boolean indicating whether the batch is parallel
+   */
   public boolean isParallel() {
-    return size() > 1 && parallel;
+    return parallel && threadCount > 1 && size() > 1;
   }
 
+  /**
+   * @return the number of threads to use
+   */
+  public int threadCount() {
+    return threadCount;
+  }
+
+  /**
+   * @return a set of all query keys
+   */
+  @Nonnull
   public Set<String> getKeys() {
     return map.keySet();
+  }
+
+  /**
+   * @param key the key of a query
+   * @return the query associated with the key
+   */
+  @Nullable
+  public Query getQuery(@Nonnull String key) {
+    return map.get(key);
+  }
+
+  /**
+   * @return a collection of all queries
+   */
+  @Nonnull
+  public Collection<Query> getQueries() {
+    return map.values();
   }
 
   /**
@@ -79,22 +108,24 @@ public final class QueryBatch {
   }
 
   /**
-   * QueryBatch Builder
-   *
-   * @see Builder#setParallel(boolean) setParallel()
-   * @see #addClassQuery(String, DexFilter, ClassFilter) addClassQuery()
-   * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter) addMethodQuery()
+   * Builder for creating {@code QueryBatch} instances.
+   * <p>
+   * Note: The order of queries is preserved,
+   * unless the batch is {@linkplain Builder#setParallel(boolean) parallel}.
    */
   public static class Builder {
+    private int threadCount;
     private boolean parallel;
-    private final Map<String, Query> map = new HashMap<>();
+    private final Map<String, Query> map = new LinkedHashMap<>();
 
     public QueryBatch build() {
       return new QueryBatch(this);
     }
 
     /**
-     * Process queries in parallel
+     * Determines whether the batch should run in parallel.
+     * <p>See Also: {@link #setThreadCount(int)}</p>
+     *
      * @param parallel {@code true} to set, {@code false} to unset.
      * @return {@code this} builder
      */
@@ -104,9 +135,24 @@ public final class QueryBatch {
     }
 
     /**
-     * Add a query to find all the classes that match the specified filters.
+     * Sets the number of threads to use in parallel mode.
+     * <p>Note: {@link #setParallel(boolean) Parallel} mode must be enabled first.
+     * <p><b>Default:</b> Optimized for core-count.
+     *
+     * @param threadCount the number of threads to use
+     * @return {@code this} builder
+     * @throws IllegalStateException if {@link #setParallel(boolean) parallel} mode is not enabled
+     */
+    public Builder setThreadCount(int threadCount) {
+      this.threadCount = threadCount;
+      return this;
+    }
+
+    /**
+     * Adds a query to find all classes matching the specified filter.
+     *
      * @param key a unique key to identify the query
-     * @param classFilter a filter to find the desired dex classes
+     * @param classFilter filter to select desired dex classes
      * @return {@code this} builder
      * @see #addClassQuery(String, DexFilter, ClassFilter)
      */
@@ -115,12 +161,13 @@ public final class QueryBatch {
     }
 
     /**
-     * Add a query to find all the classes that match the specified filters.
+     * Adds a query to find all classes matching the specified filters.
+     *
      * @param key a unique key to identify the query
-     * @param dexFilter a filter to select the desired dex files
-     * @param classFilter a filter to find the desired dex classes
+     * @param dexFilter filter to select desired dex files
+     * @param classFilter filter to select desired dex classes
      * @return {@code this} builder
-     * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter)
+     * @see #addClassQuery(String, ClassFilter)
      */
     public Builder addClassQuery(@Nonnull String key,
                                  @Nonnull DexFilter dexFilter,
@@ -129,20 +176,18 @@ public final class QueryBatch {
     }
 
     /**
-     * Add a query to find all the classes that match the specified filters.
-     * <p><br>
-     *   <b>Note:</b> The mapper can be used to transform the result into a different dex item.
-     *   If the mapper returns null, the result will be excluded,
-     *   and the search will continue for the next match.
-     *   ({@linkplain Mapper see details}).
+     * Adds a query to find all classes matching the specified filters.
+     * <p>
+     *   <b>Note:</b> The mapper can be used to transform a result into a different dex item.
+     *   If the mapper returns null for a given result, that result is excluded,
+     *   and the search continues for the next match. ({@linkplain Mapper see details}).
      * </p>
-     *
      * @param key a unique key to identify the query
-     * @param dexFilter a filter to select the desired dex files
-     * @param classFilter a filter to find the desired dex classes
+     * @param dexFilter filter to select desired dex files
+     * @param classFilter filter to select desired dex classes
      * @param mapper a mapper to transform the result into a different dex item
      * @return {@code this} builder
-     * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter, Mapper)
+     * @see #addClassQuery(String, DexFilter, ClassFilter)
      */
     public Builder addClassQuery(@Nonnull String key,
                                  @Nonnull DexFilter dexFilter,
@@ -156,10 +201,11 @@ public final class QueryBatch {
     }
 
     /**
-     * Add a query to find all the methods that match the specified filters.
+     * Adds a query to find all methods matching the specified filters.
+     *
      * @param key a unique key to identify the query
-     * @param classFilter a filter to select the desired dex classes
-     * @param methodFilter a filter to find the desired dex methods
+     * @param classFilter filter to select desired dex classes
+     * @param methodFilter filter to select desired dex methods
      * @return {@code this} builder
      * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter)
      */
@@ -170,13 +216,14 @@ public final class QueryBatch {
     }
 
     /**
-     * Add a query to find all the methods that match the specified filters.
+     * Adds a query to find all methods matching the specified filters.
+     *
      * @param key a unique key to identify the query
-     * @param dexFilter a filter to select the desired dex files
-     * @param classFilter a filter to select the desired dex classes
-     * @param methodFilter a filter to find the desired dex methods
+     * @param dexFilter filter to select desired dex files
+     * @param classFilter filter to select desired dex classes
+     * @param methodFilter filter to select desired dex methods
      * @return {@code this} builder
-     * @see #addClassQuery(String, DexFilter, ClassFilter)
+     * @see #addMethodQuery(String, ClassFilter, MethodFilter)
      */
     public Builder addMethodQuery(@Nonnull String key,
                                   @Nonnull DexFilter dexFilter,
@@ -186,21 +233,20 @@ public final class QueryBatch {
     }
 
   /**
-   * Add a query to find all the methods that match the specified filters.
-   * <p><br>
+   * Adds a query to find all methods matching the specified filters.
+   * <p>
    *   <b>Note:</b> The mapper can be used to transform the result into a different dex item.
    *   If the mapper returns null, the result will be excluded,
    *   and the search will continue for the next match.
    *   ({@linkplain Mapper see details}).
    * </p>
-   *
    * @param key a unique key to identify the query
-   * @param dexFilter a filter to select the desired dex files
-   * @param classFilter a filter to select the desired dex classes
-   * @param methodFilter a filter to find the desired dex methods
+   * @param dexFilter filter to select desired dex files
+   * @param classFilter filter to select desired dex classes
+   * @param methodFilter filter to select desired dex methods
    * @param mapper a mapper to transform the result into a different dex item
    * @return {@code this} builder
-   * @see #addClassQuery(String, DexFilter, ClassFilter, Mapper)
+   * @see #addMethodQuery(String, DexFilter, ClassFilter, MethodFilter)
    */
   public Builder addMethodQuery(@Nonnull String key,
                                 @Nonnull DexFilter dexFilter,

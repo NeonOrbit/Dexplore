@@ -19,8 +19,9 @@ package io.github.neonorbit.dexplore.iface;
 /**
  * A callback interface to operate on key-based search results.
  * <p>
- *   {@link #operate operate(key, item)} will be called for each result that is produced,
- *   and should return a boolean to indicate whether the callback should be terminated for the given key.
+ *   The {@link #operate operate(key, item)} method is invoked for each result.
+ *   Returning {@code true} for a given key immediately terminates the callback for that key
+ *   and proceeds to the next key.
  * </p>
  *
  * @author NeonOrbit
@@ -28,6 +29,8 @@ package io.github.neonorbit.dexplore.iface;
  */
 public interface KOperator<T> {
   /**
+   * A {@linkplain KOperator callback} method to operate on key-based search results.
+   *
    * @param key the key associated with the item.
    * @param item the item to operate on.
    * @return {@code true} to terminate for the given key, {@code false} to continue.

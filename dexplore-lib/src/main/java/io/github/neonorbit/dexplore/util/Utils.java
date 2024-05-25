@@ -93,8 +93,8 @@ public final class Utils {
     return Collections.unmodifiableList(Arrays.asList(a));
   }
 
-  public static boolean isEquals(@Nullable List<?> list, @Nonnull Object[] array) {
-    if (list == null || list.isEmpty()) return array.length == 0;
+  public static boolean isEquals(@Nonnull List<?> list, @Nonnull Object[] array) {
+    if (list.isEmpty()) return array.length == 0;
     if (list.size() != array.length) return false;
     for (int i = 0; i < array.length; i++) {
       if (!list.get(i).equals(array[i])) return false;

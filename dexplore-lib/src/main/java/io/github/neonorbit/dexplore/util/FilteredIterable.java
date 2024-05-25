@@ -18,6 +18,7 @@ package io.github.neonorbit.dexplore.util;
 
 import io.github.neonorbit.dexplore.iface.Internal;
 
+import javax.annotation.Nonnull;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
@@ -34,6 +35,7 @@ public class FilteredIterable<T> implements Iterable<T> {
     this.filter = filter;
   }
 
+  @Nonnull
   @Override
   public Iterator<T> iterator() {
     return new FilteredIterator();

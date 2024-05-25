@@ -24,20 +24,23 @@ import io.github.neonorbit.dexplore.result.DexItemData;
 import javax.annotation.Nonnull;
 
 /**
- * A {@linkplain #map(DexItemData) mapper} function that transforms a given DexItemData into a different DexItemData,
- * usually by extracting references from the provided item's ReferencePool.
- * <br><br>
- * Note: The references in the ReferencePool can be transformed into different types of DexItemData
- * using the following methods: <br>
- * {@link TypeRefData#toClassData()} -- {@link FieldRefData#toFieldData()} -- {@link MethodRefData#toMethodData()}
+ * A {@linkplain #map(DexItemData) mapper} function that transforms a given DexItemData into a different DexItemData.
+ * <p> This is typically achieved by extracting references from the provided item's ReferencePool.
  * <br><br>
  * Examples:
  * <pre>{@code
  * item -> item.getReferencePool().getMethodSection().get(0).toMethodData();
  * item -> item.getFields().stream().filter(field -> field.type.equals("int")).findFirst().get();
  * }</pre>
+ * <br>
+ * Note: The references found in a ReferencePool can easily be transformed into different types of DexItemData:
+ * <ul>
+ *   <li>{@link TypeRefData#toClassData()}</li>
+ *   <li>{@link FieldRefData#toFieldData()}</li>
+ *   <li>{@link MethodRefData#toMethodData()}</li>
+ * </ul>
  *
- * @param <T> type of the given item
+ * @param <T> type of the item to be transformed
  * @see #map(DexItemData) map(item)
  * @author NeonOrbit
  * @since 1.4.7

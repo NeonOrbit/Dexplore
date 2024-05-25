@@ -30,28 +30,28 @@ interface TaskGuard {
   }
 
   /**
-   * Hold the gate and prevent it from being locked,
-   * but let others {@linkplain #pass() pass} freely.
+   * Holds the gate and prevents it from being locked
+   * but allows others to {@linkplain #pass() pass} freely.
    */
   void hold();
 
   /**
-   * Release the gate from hold.
+   * Releases the gate from hold.
    */
   void release();
 
   /**
-   * Acquire the gate pass, wait if necessary.
+   * Acquires the gate pass, awaits if necessary.
    */
   void pass() throws InterruptedException;
 
   /**
-   * Lock the gate and prevent others from holding it.
+   * Locks the gate and prevents others from holding it.
    */
   void lock();
 
   /**
-   * Unlock the gate.
+   * Unlocks the gate.
    */
   void unlock();
 }

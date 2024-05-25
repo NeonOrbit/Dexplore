@@ -16,6 +16,7 @@
 
 package io.github.neonorbit.dexplore;
 
+import io.github.neonorbit.dexplore.reference.DexRefData;
 import io.github.neonorbit.dexplore.reference.FieldRefData;
 import io.github.neonorbit.dexplore.reference.MethodRefData;
 import io.github.neonorbit.dexplore.reference.StringRefData;
@@ -31,8 +32,9 @@ import java.util.StringJoiner;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An instance of this class holds the {@linkplain io.github.neonorbit.dexplore.reference references}
- * present in a dex file, class or method.
+ * Represents a container for storing the references found within a specific dex file, class, or method.
+ * <p>
+ * See the detailed explanation <b>{@linkplain io.github.neonorbit.dexplore.reference here}</b>.
  *
  * @see StringRefData
  * @see TypeRefData
@@ -103,7 +105,8 @@ public final class ReferencePool {
   }
 
   /**
-   * @return a list containing the string references of the pool
+   * Returns the string section of the pool.
+   * @return a list containing the {@linkplain StringRefData string} references of the pool
    */
   @Nonnull
   public List<StringRefData> getStringSection() {
@@ -111,23 +114,8 @@ public final class ReferencePool {
   }
 
   /**
-   * @return a list containing the field references of the pool
-   */
-  @Nonnull
-  public List<FieldRefData> getFieldSection() {
-    return fields;
-  }
-
-  /**
-   * @return a list containing the method references of the pool
-   */
-  @Nonnull
-  public List<MethodRefData> getMethodSection() {
-    return methods;
-  }
-
-  /**
-   * @return a list containing the type references of the pool
+   * Returns the type section of the pool.
+   * @return a list containing the {@linkplain TypeRefData type} references of the pool
    */
   @Nonnull
   public List<TypeRefData> getTypeSection() {
@@ -135,9 +123,29 @@ public final class ReferencePool {
   }
 
   /**
+   * Returns the field section of the pool.
+   * @return a list containing the {@linkplain FieldRefData field} references of the pool
+   */
+  @Nonnull
+  public List<FieldRefData> getFieldSection() {
+    return fields;
+  }
+
+  /**
+   * Returns the method section of the pool.
+   * @return a list containing the {@linkplain MethodRefData method} references of the pool
+   */
+  @Nonnull
+  public List<MethodRefData> getMethodSection() {
+    return methods;
+  }
+
+  /**
    * Returns the constructor section of the pool.
-   * <p>Note: Each time the method is invoked, a new list is created.</p>
-   * @return the constructor section of the pool
+   * <p>
+   *   <b>Note:</b> A new list is created with each method invocation.
+   * </p>
+   * @return a list containing the constructor references of the pool
    */
   @Nonnull
   public List<MethodRefData> getConstructorSection() {
@@ -145,82 +153,126 @@ public final class ReferencePool {
   }
 
   /**
-   * Checks whether any items of this {@code Pool} contain the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Pool} contains the given string
+   * Returns {@code true} if the pool contains the specified {@code value}.
+   * <p>
+   *   More precisely, it returns {@code true} if and only if at least one reference within the pool
+   *   satisfies the condition {@link DexRefData#contains(String) DexRefData.contains(value)}.
+   * </p>
+   * @param value the value to compare against
+   * @return {@code true} if the pool contains the specified value
+   * @see #containsSignature(String)
    */
   public boolean contains(@Nonnull String value) {
-    return stringsContain(value) || typesContain(value) ||
-            fieldsContain(value) || methodsContain(value);
+    return stringsContain(value) || typesContain(value) || fieldsContain(value) || methodsContain(value);
   }
 
   /**
-   * Checks whether any {@code String} items of this {@code Pool} contain the specified string
+   * Returns {@code true} if the pool contains the specified signature.
+   * <p>
+   *   More precisely, it returns {@code true} if and only if at least one reference
+   *   {@link DexRefData#getSignature() signature} within the pool matches the specified signature.
+   * </p>
+   * @param signature the signature to compare against
+   * @return {@code true} if the pool contains the specified signature
+   * @see #contains(String)
+   */
+  public boolean containsSignature(@Nonnull String signature) {
+    return stringsContain(signature) || typesContain(signature) ||
+            fieldSignaturesContain(signature) || methodSignaturesContain(signature);
+  }
+
+  /**
+   * Returns {@code true} if the pool contains the specified value in its {@code string} references.
+   * <p>
+   *   This is equivalent to {@link #contains(String) contains(value)},
+   *   except that it only checks within the {@code string} references of the pool.
+   * </p>
    *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Pool} contains the given string in its {@code String} section
+   * @param value the value to compare against
+   * @return {@code true} if the specified value is found within the string references of the pool
+   * @see #getStringSection()
    */
   public boolean stringsContain(@Nonnull String value) {
     return strings.stream().anyMatch(s -> s.contains(value));
   }
 
   /**
-   * Checks whether any {@code Field} items of this {@code Pool} contain the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Pool} contains the given string in its {@code Field} section
-   */
-  public boolean fieldsContain(@Nonnull String value) {
-    return fields.stream().anyMatch(f -> f.contains(value));
-  }
-
-  /**
-   * Checks whether any {@code Method} items of this {@code Pool} contain the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Pool} contains the given string in its {@code Method} section
-   */
-  public boolean methodsContain(@Nonnull String value) {
-    return methods.stream().anyMatch(m -> m.contains(value));
-  }
-
-  /**
-   * Checks whether any {@code Type} items of this {@code Pool} contain the specified string
-   *
-   * @param value The string to compare against
-   * @return {@code true} if this {@code Pool} contains the given string in its {@code Type} section
+   * Returns {@code true} if the pool contains the specified value in its {@code type} references.
+   * <p>
+   *   This is equivalent to {@link #contains(String) contains(value)},
+   *   except that it only checks within the {@code type} references of the pool.
+   * </p>
+   * @param value the value to compare against
+   * @return {@code true} if the specified value is found within the type references of the pool
+   * @see #getTypeSection()
    */
   public boolean typesContain(@Nonnull String value) {
     return types.stream().anyMatch(t -> t.contains(value));
   }
 
   /**
-   * Checks whether any {@code Field} items of this {@code Pool} contain
-   * the specified {@link FieldRefData#getSignature() signature}.
+   * Returns {@code true} if the pool contains the specified value in its {@code field} references.
+   * <p>
+   *   This is equivalent to {@link #contains(String) contains(value)},
+   *   except that it only checks within the {@code field} references of the pool.
+   * </p>
+   * @param value the value to compare against
+   * @return {@code true} if the specified value is found within the field references of the pool
+   * @see #getFieldSection()
+   */
+  public boolean fieldsContain(@Nonnull String value) {
+    return fields.stream().anyMatch(f -> f.contains(value));
+  }
+
+  /**
+   * Returns {@code true} if the pool contains the specified value in its {@code method} references.
+   * <p>
+   *   This is equivalent to {@link #contains(String) contains(value)},
+   *   except that it only checks within the {@code method} references of the pool.
+   * </p>
+   * @param value the value to compare against
+   * @return {@code true} if the specified value is found within the method references of the pool
+   * @see #getMethodSection()
+   */
+  public boolean methodsContain(@Nonnull String value) {
+    return methods.stream().anyMatch(m -> m.contains(value));
+  }
+
+  /**
+   * Returns {@code true} if the pool contains the specified signature in its {@code field} references.
+   * <p>
+   * This is equivalent to {@link #containsSignature(String) containsSignature(sig)},
+   * except that it only checks within the {@code field} references of the pool.
+   * <p>
+   * See Also: {@linkplain FieldRefData#getSignature() Field Signature}.
    *
-   * @param signature The signature to compare against
-   * @return {@code true} if this {@code Pool} contains the given signature
+   * @param signature the signature to compare against
+   * @return {@code true} if the specified signature is found within the field references of the pool
    */
   public boolean fieldSignaturesContain(@Nonnull String signature) {
-    return fields.stream().anyMatch(f -> f.getSignature().contains(signature));
+    return fields.stream().anyMatch(f -> f.getSignature().equals(signature));
   }
 
   /**
-   * Checks whether any {@code Method} items of this {@code Pool} contain
-   * the specified {@link MethodRefData#getSignature() signature}.
+   * Returns {@code true} if the pool contains the specified signature in its {@code method} references.
+   * <p>
+   * This is equivalent to {@link #containsSignature(String) containsSignature(sig)},
+   * except that it only checks within the {@code method} references of the pool.
+   * <p>
+   * See Also: {@linkplain MethodRefData#getSignature() Method Signature}.
    *
-   * @param signature The signature to compare against
-   * @return {@code true} if this {@code Pool} contains the given signature
+   * @param signature the signature to compare against
+   * @return {@code true} if the specified signature is found within the method references of the pool
    */
   public boolean methodSignaturesContain(@Nonnull String signature) {
-    return methods.stream().anyMatch(m -> m.getSignature().contains(signature));
+    return methods.stream().anyMatch(m -> m.getSignature().equals(signature));
   }
 
   /**
-   * Returns a string containing all the reference signatures (separated by newline).
-   * <p>Each time the method is invoked, a new string is generated.</p>
-   * @return a string representing all the reference signatures
+   * Returns a string representing all the reference signatures of the pool, each separated by a newline.
+   * <p><b>Note:</b> A new string is generated with each method invocation.</p>
+   *
+   * @return a string representing all the reference signatures of the pool
    */
   @Override
   public String toString() {

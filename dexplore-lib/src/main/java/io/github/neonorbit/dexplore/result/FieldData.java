@@ -29,6 +29,13 @@ import java.util.Objects;
 
 /**
  * Represents a dex field.
+ * <p>
+ * Properties:
+ * <ul>
+ *   <li>{@link #clazz} - the declaring class of the field.</li>
+ *   <li>{@link #field} - the name of the field.</li>
+ *   <li>{@link #type} - the type of the field.</li>
+ * </ul>
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -39,8 +46,10 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
 
   /** The declaring class of the field. */
   @Nonnull public final String clazz;
+
   /** The name of the field. */
   @Nonnull public final String field;
+
   /** The type of the field. */
   @Nonnull public final String type;
 
@@ -81,6 +90,11 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
     this.referencePool = referencePool;
   }
 
+  /**
+   * Loads the {@code Field} object associated with the dex field.
+   * @param classLoader the class loader to use
+   * @return the {@code Field} object representing the dex field, or null if not found
+   */
   @Nullable
   public Field loadField(@Nonnull ClassLoader classLoader) {
     try {
@@ -92,12 +106,16 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
 
   /**
    * If the field is a compile-time constant,
-   * returns its value, otherwise returns null.<br><br>
-   * Note: Make sure to check the field type and cast it accordingly.<br>
+   * returns its value, otherwise returns null.
+   * <p>
+   * <b>Note:</b> Make sure to check the field type and cast it accordingly.<br>
    * Examples:
-   *   <pre>  if (field.getValue() instanceof Long) {...}</pre>
-   *   <pre>  if (field.type.equals(long.class.getName())) {...}</pre>
-   * @return the initial value of the field
+   * <pre>{@code
+   *   if (field.getInitialValue() instanceof Long) {...}
+   *   // OR
+   *   if (field.type.equals(long.class.getName())) {...}
+   * }</pre>
+   * @return the initial value of the field or null
    */
   @Nullable
   public Object getInitialValue() {
@@ -106,7 +124,7 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
 
   /**
    * Returns the declaring class of the field.
-   * @return {@linkplain Class#getName() full name} of the declaring class
+   * @return full name of the declaring class
    */
   @Nonnull
   @Override
@@ -115,10 +133,12 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Returns the {@code ReferencePool} of the field.
-   * <p>Note: If the field is a compile-time constant and its type is String,
-   * the returned pool will have a single item containing the String.
-   * Otherwise an empty pool is returned.</p>
+   * Returns the {@code ReferencePool} associated with the field.
+   * <p>
+   *   Note: If the field is a compile-time constant and its type is String,
+   *   the returned pool will have a single item containing the string.
+   *   Otherwise an empty pool is returned.
+   * </p>
    *
    * @return the {@code ReferencePool} of the field
    */
@@ -132,8 +152,12 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
   }
 
   /**
-   * Signature: className.<b>fieldName</b>:fieldType
-   * <p>Example: java.lang.Byte.<b>SIZE</b>:int</p>
+   * Returns the signature of the field.
+   * <p>
+   * Format: class.<b>fieldName</b>:fieldType <br>
+   * Example: java.lang.Byte.<b><u>{@linkplain Byte#BYTES BYTES}</u></b>:int
+   * <p>
+   * <b>Note:</b> A new signature string is generated with each method invocation.
    *
    * @return field signature
    */
@@ -146,8 +170,10 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
   /**
    * Serializes the object into a string.
    * <p>
-   *   Includes: {@link #clazz}, {@link #field}, {@link #type}
-   * </p>
+   * Includes: {@link #clazz}, {@link #field}, {@link #type}
+   * <p>
+   * <b>Note:</b> The serialized object can be deserialized
+   * using the {@link #deserialize(String) deserialize()} method.
    *
    * @return the serialized string
    */
@@ -159,9 +185,8 @@ public final class FieldData extends BaseItemData implements DexItemData, Compar
 
   /**
    * De-serializes the given string.
-   *
-   * @param serialized the string to be de-serialized
-   * @return the de-serialized object
+   * @param serialized the string to be deserialized
+   * @return the deserialized object
    * @throws IllegalArgumentException if the given string is not serializable
    */
   @Nonnull

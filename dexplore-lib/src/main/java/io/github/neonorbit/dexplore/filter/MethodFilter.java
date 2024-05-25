@@ -35,9 +35,10 @@ import java.util.stream.Collectors;
 
 /**
  * A filter used to select dex methods of interest.
- * <p><br>
- *   Note: The filter will match only if all the specified conditions are satisfied.
- * </p>
+ * <p>
+ * <b>Note:</b> The filter matches only if all the specified conditions are satisfied.
+ * <p>
+ * Use the {@link Builder Builder} class to create filter instances.
  *
  * @author NeonOrbit
  * @since 1.0.0
@@ -115,39 +116,21 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
   }
 
   /**
-   * This is equivalent to:
-   * <blockquote><pre>
-   *   new MethodFilter.Builder()
-   *                   .{@link MethodFilter.Builder#setMethodNames(String...)
-   *                           setMethodNames(method)}
-   *                   .{@link MethodFilter.Builder#setParamList(List)
-   *                           setParamList(Collections.emptyList())}
-   *                   .build();
-   * </pre></blockquote>
-   * Matches a single method with the specified name and no parameters.
-   *
-   * @param method method name
-   * @return a {@code MethodFilter} instance
-   * @see #ofMethod(String, List) MethodFilter.ofMethod(method, params)
+   * Creates an instance that matches a single method with the specified method name and no parameters.
+   * @param method name of the desired method
+   * @return a {@code MethodFilter} instance that matches the specified method
+   * @see #ofMethod(String, List) ofMethod(method, params)
    */
   public static MethodFilter ofMethod(@Nonnull String method) {
     return ofMethod(method, Collections.emptyList());
   }
 
   /**
-   * This is equivalent to:
-   * <blockquote><pre>
-   *   new MethodFilter.Builder()
-   *                   .{@link MethodFilter.Builder#setMethodNames(String...)
-   *                           setMethodNames(method)}
-   *                   .{@link MethodFilter.Builder#setParamList(List)
-   *                           setParamList(params)}
-   *                   .build();
-   * </pre></blockquote>
-   *
-   * @param method method name
-   * @param params {@linkplain Class#getName() full names} of method parameter types
-   * @return a {@code MethodFilter} instance
+   * Creates an instance that matches a single method with the specified method name and parameters.
+   * @param method name of the desired method
+   * @param params an ordered list of the parameters
+   * @return a {@code MethodFilter} instance that matches the specified method
+   * @see #ofMethod(String) ofMethod(method)
    */
   public static MethodFilter ofMethod(@Nonnull String method,
                                       @Nonnull List<String> params) {
@@ -162,6 +145,21 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     return new Builder();
   }
 
+  /**
+   * Builder for creating {@code MethodFilter} instances.
+   * <p>
+   * <b>Note:</b> The filter matches only if all the specified conditions are satisfied.
+   * <p>Example:
+   * <pre>{@code
+   *  MethodFilter.builder()
+   *      .setReferenceTypes(ReferenceTypes.STRINGS_ONLY)
+   *      .setReferenceFilter(pool -> pool.contains("..."))
+   *      .setModifiers(Modifier.PUBLIC)
+   *      .......
+   *      .build()
+   *  ...
+   * }</pre>
+   */
   public static class Builder extends BaseFilter.Builder<Builder, MethodFilter> {
     private int flag = NEG;
     private int skipFlag = NEG;
@@ -216,8 +214,7 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods that match with any of the specified method names.
-     *
+     * Set a condition to match only the methods specified by the given method names.
      * @param names method names
      * @return {@code this} builder
      */
@@ -229,11 +226,11 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
 
     /**
      * Specify whether to include synthetic methods in the search.
-     * <br> <b>Default:</b> disabled
      * <p>
-     *   Note: If the declaring class of the method is also synthetic, you need to
-     *   {@link ClassFilter.Builder#enableSyntheticClasses(boolean) enable} synthetic classes as well.
-     * </p>
+     * <b>Note:</b> This does not cover methods from synthetic classes unless they are also enabled
+     * in {@link ClassFilter.Builder#enableSyntheticClasses(boolean) ClassFilter.enableSyntheticClasses()}.
+     * <p>
+     * <b>Default:</b> disabled
      * @param enable {@code true} to enable, {@code false} to disable
      * @return {@code this} builder
      * @see ClassFilter.Builder#enableSyntheticClasses(boolean) ClassFilter.enableSyntheticClasses()
@@ -244,14 +241,12 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods with the specified method modifiers.
-     * <br>
-     * Examples:
-     *    <blockquote> setModifiers({@link Modifier#PUBLIC}) </blockquote>
-     * Use {@code |} operator to set multiple modifiers:
-     *    <blockquote> setModifiers({@link Modifier#PUBLIC} | {@link Modifier#STATIC}) </blockquote>
-     *
-     * @param modifiers method {@link Method#getModifiers() modifiers}, or -1 to reset
+     * Set a condition to match only the methods with the specified method {@linkplain Method#getModifiers() modifiers}.
+     * <blockquote>Examples:
+     *    <pre> setModifiers({@linkplain Modifier#PUBLIC}) </pre>
+     *    <pre> setModifiers({@linkplain Modifier#PUBLIC} | {@linkplain Modifier#FINAL}) </pre>
+     * </blockquote>
+     * @param modifiers method {@linkplain Method#getModifiers() modifiers}, or -1 to unset
      * @return {@code this} builder
      * @see #skipModifiers(int)
      */
@@ -261,9 +256,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Methods with the specified method modifiers will be skipped.
-     *
-     * @param modifiers method {@link Method#getModifiers() modifiers}, or -1 to reset
+     * Methods matching the specified {@linkplain Method#getModifiers() modifiers} are omitted from the search process.
+     * @param modifiers method {@linkplain Method#getModifiers() modifiers}, or -1 to unset
      * @return {@code this} builder
      * @see #setModifiers(int)
      */
@@ -273,9 +267,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods with the specified method return type.
-     *
-     * @param returnType {@linkplain Class#getName() full name} of method return type
+     * Set a condition to match only the methods with the specified method return type.
+     * @param returnType {@linkplain Class#getName() full name} of the return type
      * @return {@code this} builder
      */
     public Builder setReturnType(@Nullable String returnType) {
@@ -284,9 +277,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods with the specified method parameter size.
-     *
-     * @param size number of method parameters, or -1 to reset
+     * Set a condition to match only the methods with the specified number of method parameters.
+     * @param size number of method parameters, or -1 to unset
      * @return {@code this} builder
      */
     public Builder setParamSize(int size) {
@@ -295,13 +287,12 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods with the specified parameter list.
+     * Set a condition to match only the methods with the specified parameters.
      * <p>
-     *   Note: Parameter list must match exactly. <br>
-     *   Note: Pass an empty list to match methods that have no parameters.
+     *   <b>Note:</b> The parameter list must precisely match in the correct order.
+     *   An empty list match only the methods with no parameters.
      * </p>
-     *
-     * @param params {@linkplain Class#getName() full names} of method parameter types
+     * @param params an ordered list of the parameter types ({@linkplain Class#getName() full names})
      * @return {@code this} builder
      */
     public Builder setParamList(@Nullable List<String> params) {
@@ -310,9 +301,8 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods that contain all the specified annotations.
-     *
-     * @param annotations {@linkplain Class#getName() full names} of annotation classes
+     * Set a condition to match only the methods that contain all the specified annotations.
+     * @param annotations {@linkplain Class#getName() full names} of the annotation types
      * @return {@code this} builder
      * @see #containsAnnotationValues(String...)
      */
@@ -323,16 +313,14 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods that contain all the specified annotation values.
-     *
-     * <p>Currently supports only string and type values.</p>
-     * <pre>
-     *   STRING Values: @SomeAnnot("string") @AnotherAnnot({"string1", "string2"})
-     *   Example: filter.containsAnnotationValues("string", "string1")
-     *
-     *   TYPE Values: @Annot(Runnable.class), @Annot(Thread.class)
-     *   Example: filter.containsAnnotationValues("java.lang.Runnable", "java.lang.Thread")
-     * </pre>
+     * Set a condition to match only the methods that contain all the specified annotation values.
+     * <p>
+     * <b>Note:</b> Currently, only String and Type values are supported.
+     * <p>
+     * String values: <pre>{@code @Annotation("apple") @Annotation({"banana", "cherry"})}</pre>
+     * Filter example: <pre>{@code builder.containsAnnotationValues("apple", "banana", "cherry")}</pre>
+     * Type values: <pre>{@code @Annotation(Runnable.class), @Annotation(Thread.class)}</pre>
+     * Filter example: <pre>{@code builder.containsAnnotationValues("java.lang.Runnable", Thread.class.getName())}</pre>
      *
      * @param annotationValues annotation values
      * @return {@code this} builder
@@ -345,10 +333,9 @@ public final class MethodFilter extends BaseFilter<DexBackedMethod> {
     }
 
     /**
-     * Add a condition to the filter to match methods that contain all the specified numbers.
-     * <p>Note: Each float value must end with an 'f' character.</p>
-     *
-     * @param numbers list of numbers to match
+     * Set a condition to match only the methods that contain all the specified numbers.
+     * <p> <b>Note:</b> Each float value must end with an {@code f} character.
+     * @param numbers list of numbers
      * @return {@code this} builder
      */
     public Builder setNumbers(@Nonnull Number... numbers) {

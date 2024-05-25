@@ -19,11 +19,12 @@ package io.github.neonorbit.dexplore.util;
 import io.github.neonorbit.dexplore.iface.Internal;
 
 /**
- * The default logger used to log info during the dex analyzing process.
- * <p>By default, the logger is disabled. Use {@link #enable()} to enable the logger.</p>
- *
- * <p>If you want to redirect the logs, set your own logger with {@link #setLogger(DexLogger)}.</p>
- *
+ * The default logger used to log information throughout various dex processes.
+ * <p>
+ * The logger is initially inactive by default. You can enable it with the {@link #enable()} method.
+ * <p>
+ * If you wish to redirect the logs, simply set your custom logger using {@link #setLogger(DexLogger)}.
+ * <p>
  * Example:
  * <pre>{@code
  *   DexLog.enable();
